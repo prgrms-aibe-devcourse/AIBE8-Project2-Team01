@@ -36,7 +36,7 @@ public class Member {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    private LocalDateTime tokenInValidBefore; // 토큰 무효화 기준 시간
+    private LocalDateTime tokenInvalidBefore; // 토큰 무효화 기준 시간
 
     private LocalDateTime deletedAt; // 값이 있으면 탈퇴한 회원
 

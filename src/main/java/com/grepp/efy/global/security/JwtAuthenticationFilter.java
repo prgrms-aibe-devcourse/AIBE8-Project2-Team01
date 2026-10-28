@@ -64,7 +64,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
 
                 if (member != null
-                        && (member.getTokenInValidBefore() == null || !issuedAt.isBefore(member.getTokenInValidBefore()))) {
+                        && (member.getTokenInvalidBefore() == null || !issuedAt.isBefore(member.getTokenInvalidBefore()))) {
                     UsernamePasswordAuthenticationToken authentication =
                             getUsernamePasswordAuthenticationToken(member);
 

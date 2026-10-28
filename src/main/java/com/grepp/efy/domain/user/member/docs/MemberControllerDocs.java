@@ -142,7 +142,7 @@ public interface MemberControllerDocs {
     ResponseEntity<MemberResponse> updateMember(CustomUserDetails userDetails, MemberUpdateRequest request);
 
     @Operation(summary = "회원 권한 변경",
-            description = "관리자만 다른 회원의 권한을 USER·EXPERT·ADMIN으로 변경할 수 있습니다. 본인의 관리자 권한은 변경할 수 없으며 대상 회원의 로그인은 유지됩니다.")
+            description = "관리자만 호출할 수 있습니다. 다른 회원의 권한을 USER·EXPERT·ADMIN으로 변경합니다. 본인의 관리자 권한은 변경할 수 없으며 대상 회원의 로그인은 유지됩니다.")
     @ApiResponse(responseCode = "200", description = "변경 성공. 변경된 회원 정보 반환")
     @ApiResponse(responseCode = "400", description = "요청 데이터가 유효하지 않거나 본인의 관리자 권한을 변경하려는 요청",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
@@ -208,7 +208,7 @@ public interface MemberControllerDocs {
     ResponseEntity<Void> deleteMember(CustomUserDetails userDetails);
 
     @Operation(summary = "관리자 회원 삭제",
-            description = "관리자만 회원을 논리 삭제할 수 있습니다. 대상 회원의 개인정보를 정리하고 기존 Access·Refresh 토큰을 차단합니다.")
+            description = "관리자만 호출할 수 있습니다. 회원을 논리 삭제합니다. 대상 회원의 개인정보를 정리하고 기존 Access·Refresh 토큰을 차단합니다.")
     @ApiResponse(responseCode = "204", description = "삭제 성공. 응답 본문 없음")
     @ApiResponse(responseCode = "400", description = "회원 ID가 올바른 숫자 형식이 아님",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {

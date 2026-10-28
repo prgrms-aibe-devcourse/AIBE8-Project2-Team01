@@ -124,7 +124,7 @@ public class MemberService {
 
     private void invalidateTokens(Member member) {
         refreshTokenRepository.deleteByMemberId(member.getId());
-        member.setTokenInValidBefore(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(1));
+        member.setTokenInvalidBefore(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(1));
     }
 
     private void ensureNotReserved(String email, String nickname) {

@@ -88,6 +88,6 @@ public class AuthService {
         refreshTokenRepository.deleteByMemberId(memberId);
 
         // 같은 초에 발급된 Access 토큰까지 무효화한다.
-        member.setTokenInValidBefore(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(1));
+        member.setTokenInvalidBefore(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(1));
     }
 }

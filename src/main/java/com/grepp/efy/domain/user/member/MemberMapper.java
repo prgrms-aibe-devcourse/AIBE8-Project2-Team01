@@ -13,7 +13,7 @@ public interface MemberMapper {
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "role", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "tokenInValidBefore", ignore = true)
+    @Mapping(target = "tokenInvalidBefore", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
     Member toEntity(MemberCreateRequest memberCreateRequest);
 
