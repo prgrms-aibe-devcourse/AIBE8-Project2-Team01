@@ -7,5 +7,5 @@ public interface SecondCategoryRepository extends JpaRepository<SecondCategory, 
 
     List<SecondCategory> findByFirstCategoryIdOrderByIdAsc(Long firstCategoryId);
 
-    boolean existsByNameIgnoreCaseAndFirstCategoryIdAndIdNot(String name, Long firstCategoryId, Long id);
+    boolean existsByNameIgnoreCaseAndFirstCategoryId(String name, Long firstCategoryId);
 }

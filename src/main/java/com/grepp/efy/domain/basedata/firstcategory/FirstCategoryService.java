@@ -19,21 +19,25 @@ public class FirstCategoryService {
     private final FirstCategoryMapper firstCategoryMapper;
 
     public List<FirstCategoryResponse> getFirstCategories() {
-        return firstCategoryRepository.findAllByOrderByIdAsc().stream()
-                .map(firstCategoryMapper::toResponse).toList();
+        List<FirstCategory> firstCategoryList = firstCategoryRepository.findAllByOrderByIdAsc();
+        return firstCategoryMapper.toResponseList(firstCategoryList);
     }
 
     @Transactional
     public FirstCategoryResponse createFirstCategory(FirstCategoryRequest request) {
-        checkDuplicate(request, 0L);
+        checkDuplicateName(request);
         FirstCategory entity = firstCategoryMapper.toEntity(request);
-        return firstCategoryMapper.toResponse(firstCategoryRepository.save(entity));
+        FirstCategory savedFirstCategory = firstCategoryRepository.save(entity);
+        return firstCategoryMapper.toResponse(savedFirstCategory);
     }
 
     @Transactional
     public FirstCategoryResponse updateFirstCategory(Long id, FirstCategoryRequest request) {
         FirstCategory entity = getFirstCategoryEntity(id);
-        checkDuplicate(request, id);
+        boolean nameChanged = !entity.getName().equalsIgnoreCase(request.getName());
+        if (nameChanged) {
+            checkDuplicateName(request);
+        }
         entity.setName(request.getName());
         return firstCategoryMapper.toResponse(entity);
     }
@@ -44,7 +48,6 @@ public class FirstCategoryService {
         FirstCategoryResponse response = firstCategoryMapper.toResponse(entity);
         // FK로 참조 중이면 DB가 삭제를 거절하고 공통 핸들러가 409로 응답한다.
         firstCategoryRepository.delete(entity);
-        firstCategoryRepository.flush();
         return response;
     }
 
@@ -53,9 +56,9 @@ public class FirstCategoryService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND_EXCEPTION));
     }
 
-    private void checkDuplicate(FirstCategoryRequest request, Long id) {
-        if (firstCategoryRepository.existsByNameIgnoreCaseAndIdNot(
-                request.getName(), id)) {
+    private void checkDuplicateName(FirstCategoryRequest request) {
+        if (firstCategoryRepository.existsByNameIgnoreCase(
+                request.getName())) {
             throw new BusinessException(ErrorCode.DUPLICATE_CATEGORY_EXCEPTION);
         }
     }

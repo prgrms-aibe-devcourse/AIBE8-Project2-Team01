@@ -2,7 +2,7 @@ package com.grepp.efy.domain.basedata.firstregion;
 
 import com.grepp.efy.domain.basedata.firstregion.dto.FirstRegionRequest;
 import com.grepp.efy.domain.basedata.firstregion.dto.FirstRegionResponse;
-import com.grepp.efy.domain.basedata.region.RegionCodeService;
+import com.grepp.efy.domain.basedata.secondregion.SecondRegionRepository;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -18,26 +18,33 @@ public class FirstRegionService {
 
     private final FirstRegionRepository firstRegionRepository;
     private final FirstRegionMapper firstRegionMapper;
-    private final RegionCodeService regionCodeService;
+    private final SecondRegionRepository secondRegionRepository;
 
     public List<FirstRegionResponse> getFirstRegions() {
-        return firstRegionRepository.findAllByOrderByIdAsc().stream()
-                .map(firstRegionMapper::toResponse).toList();
+        List<FirstRegion> firstRegionList = firstRegionRepository.findAllByOrderByIdAsc();
+        return firstRegionMapper.toResponseList(firstRegionList);
     }
 
     @Transactional
     public FirstRegionResponse createFirstRegion(FirstRegionRequest request) {
-        regionCodeService.lockForWrite();
-        checkDuplicate(request, 0L);
+        checkDuplicateName(request);
+        checkDuplicateCode(request.getCode());
         FirstRegion entity = firstRegionMapper.toEntity(request);
-        return firstRegionMapper.toResponse(firstRegionRepository.save(entity));
+        FirstRegion savedFirstRegion = firstRegionRepository.save(entity);
+        return firstRegionMapper.toResponse(savedFirstRegion);
     }
 
     @Transactional
     public FirstRegionResponse updateFirstRegion(Long id, FirstRegionRequest request) {
-        regionCodeService.lockForWrite();
         FirstRegion entity = getFirstRegionEntity(id);
-        checkDuplicate(request, id);
+        boolean nameChanged = !entity.getName().equalsIgnoreCase(request.getName());
+        if (nameChanged) {
+            checkDuplicateName(request);
+        }
+        boolean codeChanged = !entity.getCode().equals(request.getCode());
+        if (codeChanged) {
+            checkDuplicateCode(request.getCode());
+        }
         entity.setName(request.getName());
         entity.setCode(request.getCode());
         return firstRegionMapper.toResponse(entity);
@@ -49,7 +56,6 @@ public class FirstRegionService {
         FirstRegionResponse response = firstRegionMapper.toResponse(entity);
         // FK로 참조 중이면 DB가 삭제를 거절하고 공통 핸들러가 409로 응답한다.
         firstRegionRepository.delete(entity);
-        firstRegionRepository.flush();
         return response;
     }
 
@@ -58,11 +64,18 @@ public class FirstRegionService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND_EXCEPTION));
     }
 
-    private void checkDuplicate(FirstRegionRequest request, Long id) {
-        if (firstRegionRepository.existsByNameIgnoreCaseAndIdNot(
-                request.getName(), id)) {
+    private void checkDuplicateName(FirstRegionRequest request) {
+        if (firstRegionRepository.existsByNameIgnoreCase(
+                request.getName())) {
             throw new BusinessException(ErrorCode.DUPLICATE_REGION_EXCEPTION);
         }
-        regionCodeService.checkDuplicate(request.getCode(), id, null);
+    }
+
+    private void checkDuplicateCode(String code) {
+        boolean duplicate = firstRegionRepository.existsByCode(code)
+                || secondRegionRepository.existsByCode(code);
+        if (duplicate) {
+            throw new BusinessException(ErrorCode.DUPLICATE_REGION_CODE_EXCEPTION);
+        }
     }
 }

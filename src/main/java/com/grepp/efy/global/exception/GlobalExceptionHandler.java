@@ -15,6 +15,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
@@ -54,6 +55,14 @@ public class GlobalExceptionHandler {
         }
         return ResponseEntity.status(ErrorCode.INVALID_INPUT_EXCEPTION.getStatus())
                 .body(new ErrorResponse(ErrorCode.INVALID_INPUT_EXCEPTION.getMessage(), errors));
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponse> handleHandlerMethodValidationException(HandlerMethodValidationException e) {
+        if (e.isForReturnValue()) {
+            return toResponse(ErrorCode.INTERNAL_SERVER_ERROR_EXCEPTION);
+        }
+        return toResponse(ErrorCode.INVALID_INPUT_EXCEPTION);
     }
 
     // [스프링] 400 요청 본문이 없거나 JSON 형식이 잘못됨

@@ -7,7 +7,7 @@ public interface FirstRegionRepository extends JpaRepository<FirstRegion, Long> 
 
     List<FirstRegion> findAllByOrderByIdAsc();
 
-    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+    boolean existsByNameIgnoreCase(String name);
 
-    boolean existsByCodeAndIdNot(String code, Long id);
+    boolean existsByCode(String code);
 }

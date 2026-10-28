@@ -30,15 +30,15 @@ public class FirstCategoryController implements FirstCategoryControllerDocs {
         return ResponseEntity.status(HttpStatus.CREATED).body(firstCategoryService.createFirstCategory(request));
     }
 
-    @PutMapping("/admin/first-categories/{id}")
+    @PutMapping("/admin/first-categories/{firstCategoryId}")
     @Override
-    public ResponseEntity<FirstCategoryResponse> updateFirstCategory(@PathVariable Long id, @Valid @RequestBody FirstCategoryRequest request) {
-        return ResponseEntity.ok(firstCategoryService.updateFirstCategory(id, request));
+    public ResponseEntity<FirstCategoryResponse> updateFirstCategory(@PathVariable Long firstCategoryId, @Valid @RequestBody FirstCategoryRequest request) {
+        return ResponseEntity.ok(firstCategoryService.updateFirstCategory(firstCategoryId, request));
     }
 
-    @DeleteMapping("/admin/first-categories/{id}")
+    @DeleteMapping("/admin/first-categories/{firstCategoryId}")
     @Override
-    public ResponseEntity<FirstCategoryResponse> deleteFirstCategory(@PathVariable Long id) {
-        return ResponseEntity.ok(firstCategoryService.deleteFirstCategory(id));
+    public ResponseEntity<FirstCategoryResponse> deleteFirstCategory(@PathVariable Long firstCategoryId) {
+        return ResponseEntity.ok(firstCategoryService.deleteFirstCategory(firstCategoryId));
     }
 }

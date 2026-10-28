@@ -1,8 +1,10 @@
 package com.grepp.efy.domain.basedata.secondcategory;
 
 import com.grepp.efy.domain.basedata.secondcategory.dto.SecondCategoryRequest;
+import com.grepp.efy.domain.basedata.secondcategory.dto.SecondCategoryCreateRequest;
 import com.grepp.efy.domain.basedata.secondcategory.dto.SecondCategoryResponse;
 import com.grepp.efy.domain.basedata.firstcategory.FirstCategoryService;
+import com.grepp.efy.domain.basedata.firstcategory.FirstCategory;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -22,24 +24,29 @@ public class SecondCategoryService {
 
     public List<SecondCategoryResponse> getSecondCategories(Long firstCategoryId) {
         firstCategoryService.getFirstCategoryEntity(firstCategoryId);
-        return secondCategoryRepository.findByFirstCategoryIdOrderByIdAsc(firstCategoryId).stream()
-                .map(secondCategoryMapper::toResponse).toList();
+        List<SecondCategory> secondCategoryList = secondCategoryRepository.findByFirstCategoryIdOrderByIdAsc(firstCategoryId);
+        return secondCategoryMapper.toResponseList(secondCategoryList);
     }
 
     @Transactional
-    public SecondCategoryResponse createSecondCategory(SecondCategoryRequest request) {
-        var firstCategory = firstCategoryService.getFirstCategoryEntity(request.getFirstCategoryId());
-        checkDuplicate(request, 0L);
+    public SecondCategoryResponse createSecondCategory(Long firstCategoryId, SecondCategoryCreateRequest request) {
+        FirstCategory firstCategory = firstCategoryService.getFirstCategoryEntity(firstCategoryId);
+        checkDuplicateName(request.getName(), firstCategoryId);
         SecondCategory entity = secondCategoryMapper.toEntity(request);
         entity.setFirstCategory(firstCategory);
-        return secondCategoryMapper.toResponse(secondCategoryRepository.save(entity));
+        SecondCategory savedSecondCategory = secondCategoryRepository.save(entity);
+        return secondCategoryMapper.toResponse(savedSecondCategory);
     }
 
     @Transactional
     public SecondCategoryResponse updateSecondCategory(Long id, SecondCategoryRequest request) {
         SecondCategory entity = getSecondCategoryEntity(id);
-        var firstCategory = firstCategoryService.getFirstCategoryEntity(request.getFirstCategoryId());
-        checkDuplicate(request, id);
+        FirstCategory firstCategory = firstCategoryService.getFirstCategoryEntity(request.getFirstCategoryId());
+        boolean nameChanged = !entity.getName().equalsIgnoreCase(request.getName());
+        boolean parentChanged = !entity.getFirstCategory().getId().equals(request.getFirstCategoryId());
+        if (nameChanged || parentChanged) {
+            checkDuplicateName(request.getName(), request.getFirstCategoryId());
+        }
         entity.setName(request.getName());
         entity.setFirstCategory(firstCategory);
         return secondCategoryMapper.toResponse(entity);
@@ -51,7 +58,6 @@ public class SecondCategoryService {
         SecondCategoryResponse response = secondCategoryMapper.toResponse(entity);
         // FK로 참조 중이면 DB가 삭제를 거절하고 공통 핸들러가 409로 응답한다.
         secondCategoryRepository.delete(entity);
-        secondCategoryRepository.flush();
         return response;
     }
 
@@ -60,9 +66,9 @@ public class SecondCategoryService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND_EXCEPTION));
     }
 
-    private void checkDuplicate(SecondCategoryRequest request, Long id) {
-        if (secondCategoryRepository.existsByNameIgnoreCaseAndFirstCategoryIdAndIdNot(
-                request.getName(), request.getFirstCategoryId(), id)) {
+    private void checkDuplicateName(String name, Long firstCategoryId) {
+        if (secondCategoryRepository.existsByNameIgnoreCaseAndFirstCategoryId(
+                name, firstCategoryId)) {
             throw new BusinessException(ErrorCode.DUPLICATE_CATEGORY_EXCEPTION);
         }
     }

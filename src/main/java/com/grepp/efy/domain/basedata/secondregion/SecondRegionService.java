@@ -1,9 +1,11 @@
 package com.grepp.efy.domain.basedata.secondregion;
 
 import com.grepp.efy.domain.basedata.secondregion.dto.SecondRegionRequest;
+import com.grepp.efy.domain.basedata.secondregion.dto.SecondRegionCreateRequest;
 import com.grepp.efy.domain.basedata.secondregion.dto.SecondRegionResponse;
 import com.grepp.efy.domain.basedata.firstregion.FirstRegionService;
-import com.grepp.efy.domain.basedata.region.RegionCodeService;
+import com.grepp.efy.domain.basedata.firstregion.FirstRegion;
+import com.grepp.efy.domain.basedata.firstregion.FirstRegionRepository;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -20,30 +22,38 @@ public class SecondRegionService {
     private final SecondRegionRepository secondRegionRepository;
     private final SecondRegionMapper secondRegionMapper;
     private final FirstRegionService firstRegionService;
-    private final RegionCodeService regionCodeService;
+    private final FirstRegionRepository firstRegionRepository;
 
     public List<SecondRegionResponse> getSecondRegions(Long firstRegionId) {
         firstRegionService.getFirstRegionEntity(firstRegionId);
-        return secondRegionRepository.findByFirstRegionIdOrderByIdAsc(firstRegionId).stream()
-                .map(secondRegionMapper::toResponse).toList();
+        List<SecondRegion> secondRegionList = secondRegionRepository.findByFirstRegionIdOrderByIdAsc(firstRegionId);
+        return secondRegionMapper.toResponseList(secondRegionList);
     }
 
     @Transactional
-    public SecondRegionResponse createSecondRegion(SecondRegionRequest request) {
-        regionCodeService.lockForWrite();
-        var firstRegion = firstRegionService.getFirstRegionEntity(request.getFirstRegionId());
-        checkDuplicate(request, 0L);
+    public SecondRegionResponse createSecondRegion(Long firstRegionId, SecondRegionCreateRequest request) {
+        FirstRegion firstRegion = firstRegionService.getFirstRegionEntity(firstRegionId);
+        checkDuplicateName(request.getName(), firstRegionId);
+        checkDuplicateCode(request.getCode());
         SecondRegion entity = secondRegionMapper.toEntity(request);
         entity.setFirstRegion(firstRegion);
-        return secondRegionMapper.toResponse(secondRegionRepository.save(entity));
+        SecondRegion savedSecondRegion = secondRegionRepository.save(entity);
+        return secondRegionMapper.toResponse(savedSecondRegion);
     }
 
     @Transactional
     public SecondRegionResponse updateSecondRegion(Long id, SecondRegionRequest request) {
-        regionCodeService.lockForWrite();
         SecondRegion entity = getSecondRegionEntity(id);
-        var firstRegion = firstRegionService.getFirstRegionEntity(request.getFirstRegionId());
-        checkDuplicate(request, id);
+        FirstRegion firstRegion = firstRegionService.getFirstRegionEntity(request.getFirstRegionId());
+        boolean nameChanged = !entity.getName().equalsIgnoreCase(request.getName());
+        boolean parentChanged = !entity.getFirstRegion().getId().equals(request.getFirstRegionId());
+        if (nameChanged || parentChanged) {
+            checkDuplicateName(request.getName(), request.getFirstRegionId());
+        }
+        boolean codeChanged = !entity.getCode().equals(request.getCode());
+        if (codeChanged) {
+            checkDuplicateCode(request.getCode());
+        }
         entity.setName(request.getName());
         entity.setCode(request.getCode());
         entity.setFirstRegion(firstRegion);
@@ -56,7 +66,6 @@ public class SecondRegionService {
         SecondRegionResponse response = secondRegionMapper.toResponse(entity);
         // FK로 참조 중이면 DB가 삭제를 거절하고 공통 핸들러가 409로 응답한다.
         secondRegionRepository.delete(entity);
-        secondRegionRepository.flush();
         return response;
     }
 
@@ -65,11 +74,18 @@ public class SecondRegionService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND_EXCEPTION));
     }
 
-    private void checkDuplicate(SecondRegionRequest request, Long id) {
-        if (secondRegionRepository.existsByNameIgnoreCaseAndFirstRegionIdAndIdNot(
-                request.getName(), request.getFirstRegionId(), id)) {
+    private void checkDuplicateName(String name, Long firstRegionId) {
+        if (secondRegionRepository.existsByNameIgnoreCaseAndFirstRegionId(
+                name, firstRegionId)) {
             throw new BusinessException(ErrorCode.DUPLICATE_REGION_EXCEPTION);
         }
-        regionCodeService.checkDuplicate(request.getCode(), null, id);
+    }
+
+    private void checkDuplicateCode(String code) {
+        boolean duplicate = firstRegionRepository.existsByCode(code)
+                || secondRegionRepository.existsByCode(code);
+        if (duplicate) {
+            throw new BusinessException(ErrorCode.DUPLICATE_REGION_CODE_EXCEPTION);
+        }
     }
 }

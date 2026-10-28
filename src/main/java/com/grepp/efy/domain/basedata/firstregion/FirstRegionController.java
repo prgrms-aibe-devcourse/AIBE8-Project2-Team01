@@ -30,15 +30,15 @@ public class FirstRegionController implements FirstRegionControllerDocs {
         return ResponseEntity.status(HttpStatus.CREATED).body(firstRegionService.createFirstRegion(request));
     }
 
-    @PutMapping("/admin/first-regions/{id}")
+    @PutMapping("/admin/first-regions/{firstRegionId}")
     @Override
-    public ResponseEntity<FirstRegionResponse> updateFirstRegion(@PathVariable Long id, @Valid @RequestBody FirstRegionRequest request) {
-        return ResponseEntity.ok(firstRegionService.updateFirstRegion(id, request));
+    public ResponseEntity<FirstRegionResponse> updateFirstRegion(@PathVariable Long firstRegionId, @Valid @RequestBody FirstRegionRequest request) {
+        return ResponseEntity.ok(firstRegionService.updateFirstRegion(firstRegionId, request));
     }
 
-    @DeleteMapping("/admin/first-regions/{id}")
+    @DeleteMapping("/admin/first-regions/{firstRegionId}")
     @Override
-    public ResponseEntity<FirstRegionResponse> deleteFirstRegion(@PathVariable Long id) {
-        return ResponseEntity.ok(firstRegionService.deleteFirstRegion(id));
+    public ResponseEntity<FirstRegionResponse> deleteFirstRegion(@PathVariable Long firstRegionId) {
+        return ResponseEntity.ok(firstRegionService.deleteFirstRegion(firstRegionId));
     }
 }

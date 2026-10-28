@@ -2,6 +2,7 @@ package com.grepp.efy.domain.basedata.firstregion;
 
 import com.grepp.efy.domain.basedata.firstregion.dto.FirstRegionRequest;
 import com.grepp.efy.domain.basedata.firstregion.dto.FirstRegionResponse;
+import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -9,8 +10,9 @@ import org.mapstruct.Mapping;
 public interface FirstRegionMapper {
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "normalizedName", ignore = true)
     FirstRegion toEntity(FirstRegionRequest request);
 
     FirstRegionResponse toResponse(FirstRegion firstRegion);
+
+    List<FirstRegionResponse> toResponseList(List<FirstRegion> firstRegionList);
 }
