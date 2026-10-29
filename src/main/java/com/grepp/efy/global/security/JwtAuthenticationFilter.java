@@ -1,7 +1,8 @@
 package com.grepp.efy.global.security;
 
 import com.grepp.efy.domain.user.member.Member;
-import com.grepp.efy.domain.user.member.MemberRepository;
+import com.grepp.efy.domain.user.member.MemberService;
+import com.grepp.efy.global.exception.BusinessException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -16,15 +17,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @NullMarked
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
-    private final MemberRepository memberRepository;
+    private final MemberService memberService;
 
     private static @Nullable String resolveToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
@@ -57,20 +57,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Claims claims = jwtProvider.parseToken(token);
 
                 Long memberId = Long.valueOf(claims.getSubject());
-                Member member = memberRepository.findByIdAndDeletedAtIsNull(memberId).orElse(null);
+                Member member = memberService.getMemberEntity(memberId);
 
-                LocalDateTime issuedAt = LocalDateTime.ofInstant(
-                        claims.getIssuedAt().toInstant(), ZoneId.systemDefault()
-                );
+                Long tokenVersion = claims.get("tokenVersion", Long.class);
 
-                if (member != null
-                        && (member.getTokenInvalidBefore() == null || !issuedAt.isBefore(member.getTokenInvalidBefore()))) {
+                if (member != null && Objects.equals(tokenVersion, member.getTokenVersion())) {
                     UsernamePasswordAuthenticationToken authentication =
                             getUsernamePasswordAuthenticationToken(member);
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
-            } catch (JwtException | IllegalArgumentException e) {
+            } catch (JwtException | IllegalArgumentException | BusinessException e) {
                 SecurityContextHolder.clearContext();
             }
         }

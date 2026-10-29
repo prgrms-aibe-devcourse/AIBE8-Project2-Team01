@@ -5,7 +5,6 @@ import com.grepp.efy.domain.user.auth.dto.LoginResult;
 import com.grepp.efy.domain.user.auth.dto.RefreshResult;
 import com.grepp.efy.domain.user.member.Member;
 import com.grepp.efy.domain.user.member.MemberMapper;
-import com.grepp.efy.domain.user.member.MemberRepository;
 import com.grepp.efy.domain.user.member.MemberService;
 import com.grepp.efy.domain.user.member.dto.MemberCreateRequest;
 import com.grepp.efy.domain.user.member.dto.MemberResponse;
@@ -21,9 +20,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -34,8 +30,6 @@ public class AuthService {
 
     private final MemberService memberService;
     private final MemberMapper memberMapper;
-    private final MemberRepository memberRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
 
     // TODO: 비밀번호를 잊은 회원을 위해 본인 확인 후 비밀번호를 재설정하는 API를 추가합니다.
 
@@ -62,9 +56,9 @@ public class AuthService {
         if (!(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
             throw new BusinessException(ErrorCode.LOGIN_FAILED_EXCEPTION);
         }
-
+        Member member = memberService.getMemberEntity(userDetails.getMemberId());
         String accessToken = jwtProvider.createToken(userDetails);
-        String refreshToken = refreshTokenService.issued(userDetails.getMemberId());
+        String refreshToken = refreshTokenService.issued(member);
         return new LoginResult(accessToken, refreshToken);
     }
 
@@ -82,12 +76,11 @@ public class AuthService {
 
     @Transactional
     public void logout(Long memberId) {
-        Member member = memberRepository.findByIdAndDeletedAtIsNull(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND_EXCEPTION));
-
-        refreshTokenRepository.deleteByMemberId(memberId);
-
-        // 같은 초에 발급된 Access 토큰까지 무효화한다.
-        member.setTokenInvalidBefore(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(1));
+        Member member = memberService.getMemberEntity(memberId);
+        refreshTokenService.deleteByMemberId(memberId);
+        // 이전 버전으로 발급한 Access 토큰을 무효화
+        member.setTokenVersion(member.getTokenVersion() + 1);
     }
+
+
 }

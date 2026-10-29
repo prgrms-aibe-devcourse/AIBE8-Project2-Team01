@@ -31,6 +31,7 @@ public class JwtProvider {
                 .subject(String.valueOf(userDetails.getMemberId()))
                 .claim("email", userDetails.getEmail())
                 .claim("role", userDetails.getRole().name())
+                .claim("tokenVersion", userDetails.getTokenVersion())
                 .issuedAt(now)
                 .expiration(expiration)
                 .signWith(secretKey)

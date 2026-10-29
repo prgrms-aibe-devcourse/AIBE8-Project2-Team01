@@ -2,7 +2,6 @@ package com.grepp.efy.domain.user.auth;
 
 import com.grepp.efy.domain.user.auth.dto.RefreshResult;
 import com.grepp.efy.domain.user.member.Member;
-import com.grepp.efy.domain.user.member.MemberRepository;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
 import com.grepp.efy.global.security.CustomUserDetails;
@@ -18,23 +17,18 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
-    private final MemberRepository memberRepository;
     private final long refreshExpirationMillis;
 
     public RefreshTokenService(
             RefreshTokenRepository refreshTokenRepository,
-            MemberRepository memberRepository,
             @Value("${jwt.refresh-expiration}") long refreshExpirationMillis
     ) {
         this.refreshTokenRepository = refreshTokenRepository;
-        this.memberRepository = memberRepository;
         this.refreshExpirationMillis = refreshExpirationMillis;
     }
 
     @Transactional
-    public String issued(Long memberId) {
-        // 인증된 회원의 ID로 연관관계를 설정한다.
-        Member member = memberRepository.getReferenceById(memberId);
+    public String issued(Member member) {
 
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setMember(member);
@@ -71,7 +65,12 @@ public class RefreshTokenService {
         }
 
         CustomUserDetails userDetails = new CustomUserDetails(member);
-        String newRefreshToken = issued(member.getId());
+        String newRefreshToken = issued(member);
         return new RefreshResult(userDetails, newRefreshToken);
+    }
+
+    @Transactional
+    public void deleteByMemberId(Long memberId) {
+        refreshTokenRepository.deleteByMemberId(memberId);
     }
 }

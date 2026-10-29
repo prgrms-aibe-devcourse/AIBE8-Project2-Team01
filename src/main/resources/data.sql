@@ -158,13 +158,13 @@ VALUES (189, '렌탈', 11),
 
 -- 로컬 테스트 회원: 공통 비밀번호 1234 (BCrypt 암호화)
 -- EXPERT 계정은 권한 테스트용이며 고수 프로필은 포함하지 않습니다.
-INSERT INTO member (email, password, nickname, phone, role, created_at)
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
 VALUES ('customer1@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '고객하나', '01012345678',
-        'USER', CURRENT_TIMESTAMP),
+        'USER', CURRENT_TIMESTAMP, 0),
        ('expert1@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '고수하나', '01023456789',
-        'EXPERT', CURRENT_TIMESTAMP),
+        'EXPERT', CURRENT_TIMESTAMP, 0),
        ('admin1@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '관리자', '01034567890',
-        'ADMIN', CURRENT_TIMESTAMP);
+        'ADMIN', CURRENT_TIMESTAMP, 0);
 
 -- 지역 초기 데이터
 -- 출처: https://www.code.go.kr/stdcode/regCodeL.do

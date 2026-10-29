@@ -20,12 +20,14 @@ public class CustomUserDetails implements UserDetails {
     private final String email;
     private final @Nullable String password;
     private final MemberRole role;
+    private final long tokenVersion;
 
     public CustomUserDetails(Member member) {
         this.memberId = member.getId();
         this.email = member.getEmail();
         this.password = member.getPassword();
         this.role = member.getRole();
+        this.tokenVersion = member.getTokenVersion();
     }
 
     @Override

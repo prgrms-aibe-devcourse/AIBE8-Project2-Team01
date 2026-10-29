@@ -1,7 +1,10 @@
 package com.grepp.efy.domain.user.member;
 
-import com.grepp.efy.domain.user.auth.RefreshTokenRepository;
-import com.grepp.efy.domain.user.member.dto.*;
+import com.grepp.efy.domain.user.auth.RefreshTokenService;
+import com.grepp.efy.domain.user.member.dto.MemberCreateRequest;
+import com.grepp.efy.domain.user.member.dto.MemberResponse;
+import com.grepp.efy.domain.user.member.dto.MemberRoleUpdateRequest;
+import com.grepp.efy.domain.user.member.dto.MemberUpdateRequest;
 import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
@@ -14,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -26,7 +28,18 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final MemberRepository memberRepository;
     private final MemberMapper memberMapper;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenService refreshTokenService;
+
+    public PageResponse<MemberResponse> getMembers(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        Pageable pageable = PageableFactory.create(pageNumber, pageSize, sortBy, sortOrder, SORTABLE_FIELDS);
+        Page<Member> page = memberRepository.findByDeletedAtIsNull(pageable);
+        return PageResponse.of(page, page.getContent().stream().map(memberMapper::toResponse).toList());
+    }
+
+    public MemberResponse getCurrentMember(Long memberId) {
+        Member member = getMemberEntity(memberId);
+        return memberMapper.toResponse(member);
+    }
 
     @Transactional
     public Member create(MemberCreateRequest memberCreateRequest) {
@@ -51,17 +64,6 @@ public class MemberService {
         // 가입 시 일반 사용자 권한을 준다.
         member.setRole(MemberRole.USER);
         return memberRepository.save(member);
-    }
-
-    public PageResponse<MemberResponse> getMembers(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
-        Pageable pageable = PageableFactory.create(pageNumber, pageSize, sortBy, sortOrder, SORTABLE_FIELDS);
-        Page<Member> page = memberRepository.findByDeletedAtIsNull(pageable);
-        return PageResponse.of(page, page.getContent().stream().map(memberMapper::toResponse).toList());
-    }
-
-    public MemberResponse getCurrentMember(Long memberId) {
-        Member member = getMemberEntity(memberId);
-        return memberMapper.toResponse(member);
     }
 
     @Transactional
@@ -112,14 +114,21 @@ public class MemberService {
         invalidateTokens(member);
     }
 
+    // 탈퇴 회원은 제외하고 없으면 MEMBER_NOT_FOUND_EXCEPTION 발생
     public Member getMemberEntity(Long memberId) {
         return memberRepository.findByIdAndDeletedAtIsNull(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND_EXCEPTION));
     }
 
+    // 탈퇴 회원은 제외하고, 없으면 MEMBER_NOT_FOUND_EXCEPTION 발생
+    public Member getMemberEntityByEmail(String email) {
+        return memberRepository.findByEmailAndDeletedAtIsNull(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND_EXCEPTION));
+    }
+
     private void invalidateTokens(Member member) {
-        refreshTokenRepository.deleteByMemberId(member.getId());
-        member.setTokenInvalidBefore(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(1));
+        refreshTokenService.deleteByMemberId(member.getId());
+        member.setTokenVersion(member.getTokenVersion() + 1);
     }
 
     private void ensureNotReserved(String email, String nickname) {
@@ -128,4 +137,5 @@ public class MemberService {
             throw new BusinessException(ErrorCode.RESERVED_MEMBER_VALUE_EXCEPTION);
         }
     }
+
 }

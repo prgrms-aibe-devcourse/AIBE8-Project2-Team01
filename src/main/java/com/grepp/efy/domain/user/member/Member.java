@@ -36,7 +36,8 @@ public class Member {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    private LocalDateTime tokenInvalidBefore; // 토큰 무효화 기준 시간
+    @Column(nullable = false)
+    private long tokenVersion = 0L; // 토큰 버전 관리 => 로그아웃·회원 탈퇴 시 증가시켜 기존 Access 토큰을 무효화
 
     private LocalDateTime deletedAt; // 값이 있으면 탈퇴한 회원
 

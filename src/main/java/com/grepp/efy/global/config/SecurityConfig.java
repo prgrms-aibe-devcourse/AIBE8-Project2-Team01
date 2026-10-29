@@ -1,6 +1,6 @@
 package com.grepp.efy.global.config;
 
-import com.grepp.efy.domain.user.member.MemberRepository;
+import com.grepp.efy.domain.user.member.MemberService;
 import com.grepp.efy.global.security.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -42,7 +42,7 @@ public class SecurityConfig {
             CustomAuthenticationEntryPoint authenticationEntryPoint,
             CustomAccessDeniedHandler accessDeniedHandler,
             JwtProvider jwtProvider,
-            MemberRepository memberRepository) throws Exception {
+            MemberService memberService) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_URLS).permitAll()
@@ -57,7 +57,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtProvider, memberRepository),
+                        new JwtAuthenticationFilter(jwtProvider, memberService),
                         UsernamePasswordAuthenticationFilter.class
                 );
 
