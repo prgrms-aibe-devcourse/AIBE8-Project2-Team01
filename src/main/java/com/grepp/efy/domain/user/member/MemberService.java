@@ -64,11 +64,6 @@ public class MemberService {
         return memberMapper.toResponse(member);
     }
 
-    public MemberPublicResponse getMemberById(Long memberId) {
-        Member member = getMemberEntity(memberId);
-        return memberMapper.toPublicResponse(member);
-    }
-
     @Transactional
     public MemberResponse updateMember(Long memberId, MemberUpdateRequest request) {
         Member member = getMemberEntity(memberId);

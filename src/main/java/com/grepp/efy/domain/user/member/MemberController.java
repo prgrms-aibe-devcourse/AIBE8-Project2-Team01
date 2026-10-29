@@ -1,7 +1,6 @@
 package com.grepp.efy.domain.user.member;
 
 import com.grepp.efy.domain.user.member.docs.MemberControllerDocs;
-import com.grepp.efy.domain.user.member.dto.MemberPublicResponse;
 import com.grepp.efy.domain.user.member.dto.MemberResponse;
 import com.grepp.efy.domain.user.member.dto.MemberRoleUpdateRequest;
 import com.grepp.efy.domain.user.member.dto.MemberUpdateRequest;
@@ -39,13 +38,6 @@ public class MemberController implements MemberControllerDocs {
     @Override
     public ResponseEntity<MemberResponse> getMyData(@AuthenticationPrincipal CustomUserDetails userDetails) {
         MemberResponse response = memberService.getCurrentMember(userDetails.getMemberId());
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/public/members/{memberId}")
-    @Override
-    public ResponseEntity<MemberPublicResponse> getMember(@PathVariable Long memberId) {
-        MemberPublicResponse response = memberService.getMemberById(memberId);
         return ResponseEntity.ok(response);
     }
 
