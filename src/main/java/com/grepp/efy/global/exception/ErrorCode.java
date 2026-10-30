@@ -61,6 +61,7 @@ public enum ErrorCode {
     DUPLICATE_SERVICE_REQUEST_EXCEPTION(HttpStatus.CONFLICT, "해당 카테고리에 이미 유효한 요청서가 존재합니다."),
     DUPLICATE_ANSWER_EXCEPTION(HttpStatus.BAD_REQUEST, "동일한 질문에 중복 답변할 수 없습니다."),
     REQUEST_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "요청서를 찾을 수 없습니다."),
+    INVALID_REQUEST_STATUS_EXCEPTION(HttpStatus.BAD_REQUEST, "취소할 수 없는 상태의 요청서입니다."),
 
     // ⑥ 리뷰·찜·좋아요
 
