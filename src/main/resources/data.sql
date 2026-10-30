@@ -467,6 +467,73 @@ VALUES ('어떤 서비스가 필요하신가요?', TRUE, 1),
        ('생각하고 계신 예산이 있나요?', FALSE, 3),
        ('고수에게 전달하고 싶은 추가 요청사항이 있나요?', FALSE, 4);
 
+-- 서비스 요청서 3개
+INSERT INTO service_request (member_id, second_category_id, second_region_id, request_status, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'customer1@example.com'),
+        101, 39, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+
+       ((SELECT id FROM member WHERE email = 'customer1@example.com'),
+        102, 38, 'OPEN', DATEADD('HOUR', -2, CURRENT_TIMESTAMP)),
+
+       ((SELECT id FROM member WHERE email = 'customer1@example.com'),
+        139, 30, 'OPEN', DATEADD('HOUR', -3, CURRENT_TIMESTAMP));
+
+-- 요청서 1: 이사
+INSERT INTO request_answer (service_request_id, question_id, question_content, content)
+SELECT sr.id,
+       q.id,
+       q.content,
+       CASE q.display_order
+           WHEN 1 THEN '원룸 이사를 요청합니다.'
+           WHEN 2 THEN '11월 10일 오전을 희망합니다.'
+           WHEN 3 THEN '예산은 30만 원입니다.'
+           WHEN 4 THEN '침대와 책상 운반이 필요합니다.'
+           END
+FROM service_request sr
+         JOIN member m ON sr.member_id = m.id
+         JOIN question q ON q.display_order BETWEEN 1 AND 4
+WHERE m.email = 'customer1@example.com'
+  AND sr.second_category_id = 101
+  AND sr.second_region_id = 39;
+
+-- 요청서 2: 입주 청소
+INSERT INTO request_answer
+    (service_request_id, question_id, question_content, content)
+SELECT sr.id,
+       q.id,
+       q.content,
+       CASE q.display_order
+           WHEN 1 THEN '20평 아파트 입주 청소가 필요합니다.'
+           WHEN 2 THEN '11월 15일 오후를 희망합니다.'
+           WHEN 3 THEN '예산은 25만 원입니다.'
+           WHEN 4 THEN '창틀과 화장실을 집중적으로 청소해 주세요.'
+           END
+FROM service_request sr
+         JOIN member m ON sr.member_id = m.id
+         JOIN question q ON q.display_order BETWEEN 1 AND 4
+WHERE m.email = 'customer1@example.com'
+  AND sr.second_category_id = 102
+  AND sr.second_region_id = 38;
+
+-- 요청서 3: 개발 외주
+INSERT INTO request_answer
+    (service_request_id, question_id, question_content, content)
+SELECT sr.id,
+       q.id,
+       q.content,
+       CASE q.display_order
+           WHEN 1 THEN 'Spring Boot 기반 REST API 개발이 필요합니다.'
+           WHEN 2 THEN '11월 말까지 완료하고 싶습니다.'
+           WHEN 3 THEN '예산은 100만 원입니다.'
+           WHEN 4 THEN 'JPA와 MySQL을 사용해 주세요.'
+           END
+FROM service_request sr
+         JOIN member m ON sr.member_id = m.id
+         JOIN question q ON q.display_order BETWEEN 1 AND 4
+WHERE m.email = 'customer1@example.com'
+  AND sr.second_category_id = 139
+  AND sr.second_region_id = 30;
+
 
 -- H2 로컬: 고정 ID 시드 다음 번호부터 새 항목을 등록합니다.
 ALTER TABLE first_category
