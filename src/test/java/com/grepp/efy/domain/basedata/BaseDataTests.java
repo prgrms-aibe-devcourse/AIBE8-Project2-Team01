@@ -256,9 +256,9 @@ class BaseDataTests {
 
     @Test
     void 회원당_고수_프로필은_최대_하나이며_회원_FK는_필수다() {
-        jdbcTemplate.update("insert into expert_profile(member_id, short_intro, description) values (1, '테스트 소개', '테스트 상세 설명입니다.')");
-        assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update("insert into expert_profile(member_id, short_intro, description) values (1, '테스트 소개', '테스트 상세 설명입니다.')"));
-        assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update("insert into expert_profile(member_id, short_intro, description) values (null, '테스트 소개', '테스트 상세 설명입니다.')"));
+        jdbcTemplate.update("insert into expert_profile(member_id, short_intro, description, primary_category_id) values (1, '테스트 소개', '테스트 상세 설명입니다.', 101)");
+        assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update("insert into expert_profile(member_id, short_intro, description, primary_category_id) values (1, '테스트 소개', '테스트 상세 설명입니다.', 101)"));
+        assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update("insert into expert_profile(member_id, short_intro, description, primary_category_id) values (null, '테스트 소개', '테스트 상세 설명입니다.', 101)"));
     }
 
     @Test

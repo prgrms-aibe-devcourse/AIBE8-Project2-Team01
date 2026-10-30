@@ -1,10 +1,14 @@
 package com.grepp.efy.domain.user.expertprofile;
 
+import com.grepp.efy.domain.basedata.secondcategory.SecondCategory;
 import com.grepp.efy.domain.user.member.Member;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -30,4 +34,11 @@ public class ExpertProfile {
 
     @Column(columnDefinition = "TEXT")
     private String careerDescription; // 경력 설명
+
+    @ManyToMany
+    private Set<SecondCategory> services = new HashSet<>(); // 제공 서비스 목록
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "primary_category_id", nullable = false)
+    private SecondCategory primaryCategory; // 대표 서비스
 }
