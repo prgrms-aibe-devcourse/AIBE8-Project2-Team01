@@ -12,10 +12,7 @@ import com.grepp.efy.domain.estimate.requestanswer.RequestAnswerMapper;
 import com.grepp.efy.domain.estimate.requestanswer.RequestAnswerRepository;
 import com.grepp.efy.domain.estimate.requestanswer.RequestAnswerService;
 import com.grepp.efy.domain.estimate.requestanswer.dto.AnswerResponse;
-import com.grepp.efy.domain.estimate.servicerequest.dto.AnswerRequest;
-import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestCreateRequest;
-import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestCreateResponse;
-import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestResponse;
+import com.grepp.efy.domain.estimate.servicerequest.dto.*;
 import com.grepp.efy.domain.user.member.Member;
 import com.grepp.efy.domain.user.member.MemberRole;
 import com.grepp.efy.domain.user.member.MemberService;
@@ -45,6 +42,18 @@ public class ServiceRequestService {
     private final QuestionService questionService;
     private final ServiceRequestMapper serviceRequestMapper;
     private final RequestAnswerMapper requestAnswerMapper;
+
+    public List<ServiceRequestListResponse> getMyRequests(Long memberId) {
+        Member member = memberService.getMemberEntity(memberId);
+
+        if (member.getRole() != MemberRole.USER) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        List<ServiceRequest> requests = getRequestsList(member);
+
+        return serviceRequestMapper.toRequestListResponse(requests);
+    }
 
     public ServiceRequestResponse getRequest(Long memberId, Long requestId) {
         Member member = memberService.getMemberEntity(memberId);
@@ -132,8 +141,12 @@ public class ServiceRequestService {
                 .orElseThrow(() -> new BusinessException(QUESTION_NOT_FOUND_EXCEPTION));
     }
 
-    private ServiceRequest getRequestEntity(Long requestId) {
+    public ServiceRequest getRequestEntity(Long requestId) {
         return serviceRequestRepository.findById(requestId)
                 .orElseThrow(() -> new BusinessException(REQUEST_NOT_FOUND_EXCEPTION));
+    }
+
+    private List<ServiceRequest> getRequestsList(Member member) {
+        return serviceRequestRepository.findByMemberIdOrderByCreatedAtDesc(member.getId());
     }
 }

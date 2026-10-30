@@ -2,6 +2,7 @@ package com.grepp.efy.domain.estimate.servicerequest.docs;
 
 import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestCreateRequest;
 import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestCreateResponse;
+import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestListResponse;
 import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,11 +15,27 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.List;
+
 @Tag(
         name = "서비스 요청서",
         description = "서비스 요청서 작성 및 관리 API"
 )
 public interface ServiceRequestControllerDocs {
+
+    @Operation(
+            summary = "본인 요청서 목록 조회",
+            description = "로그인한 일반 회원이 본인이 작성한 서비스 요청서 목록을 최신순으로 조회합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "요청서 목록 조회 성공 (요청서가 없으면 빈 배열 반환)"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+            @ApiResponse(responseCode = "403", description = "일반 회원(USER) 권한이 아닌 사용자")
+    })
+    ResponseEntity<List<ServiceRequestListResponse>> getMyRequests(
+            @Parameter(hidden = true)
+            CustomUserDetails userDetails
+    );
 
     @Operation(
             summary = "서비스 요청서 상세 조회",
