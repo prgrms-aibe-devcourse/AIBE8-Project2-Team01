@@ -1,6 +1,8 @@
 package com.grepp.efy.domain.user.expertprofile;
 
+import com.grepp.efy.domain.basedata.firstregion.FirstRegion;
 import com.grepp.efy.domain.basedata.secondcategory.SecondCategory;
+import com.grepp.efy.domain.basedata.secondregion.SecondRegion;
 import com.grepp.efy.domain.user.member.Member;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -41,4 +43,13 @@ public class ExpertProfile {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "primary_category_id", nullable = false)
     private SecondCategory primaryCategory; // 대표 서비스
+
+    @Column(name = "is_nationwide", nullable = false)
+    private boolean nationwide = false; // 전국 활동 여부
+
+    @ManyToMany
+    private Set<FirstRegion> wholeRegions = new HashSet<>(); // 전체 활동을 선택한 시도
+
+    @ManyToMany
+    private Set<SecondRegion> regions = new HashSet<>(); // 개별 선택한 시군구
 }

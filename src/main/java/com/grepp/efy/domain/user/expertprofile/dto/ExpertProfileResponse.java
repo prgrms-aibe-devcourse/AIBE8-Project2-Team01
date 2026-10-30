@@ -1,6 +1,8 @@
 package com.grepp.efy.domain.user.expertprofile.dto;
 
+import com.grepp.efy.domain.basedata.firstregion.dto.FirstRegionResponse;
 import com.grepp.efy.domain.basedata.secondcategory.dto.SecondCategoryResponse;
+import com.grepp.efy.domain.basedata.secondregion.dto.SecondRegionResponse;
 
 import java.util.Set;
 
@@ -11,6 +13,9 @@ public record ExpertProfileResponse(
         Integer careerYears,
         String careerDescription,
         Set<SecondCategoryResponse> services,
-        SecondCategoryResponse primaryCategory
+        SecondCategoryResponse primaryCategory,
+        boolean nationwide,
+        Set<FirstRegionResponse> wholeRegions,
+        Set<SecondRegionResponse> regions
 ) {
 }
