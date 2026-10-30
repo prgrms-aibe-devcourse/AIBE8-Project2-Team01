@@ -49,7 +49,7 @@ public enum ErrorCode {
 
 
     // ③ 고수
-
+    EXPERT_PROFILE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "고수 프로필을 찾을 수 없습니다."),
 
     // ④ 커뮤니티
 
