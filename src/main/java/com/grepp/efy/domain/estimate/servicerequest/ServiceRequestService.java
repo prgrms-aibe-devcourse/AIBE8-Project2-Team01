@@ -46,7 +46,7 @@ public class ServiceRequestService {
     public List<ServiceRequestListResponse> getMyRequests(Long memberId) {
         Member member = memberService.getMemberEntity(memberId);
 
-        if (member.getRole() != MemberRole.USER) {
+        if (!member.getRole().equals(MemberRole.USER)) {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
         }
 
@@ -74,7 +74,7 @@ public class ServiceRequestService {
     @Transactional
     public ServiceRequestCreateResponse createRequest(Long memberId, ServiceRequestCreateRequest request) {
         Member member = memberService.getMemberEntity(memberId);
-        if (member.getRole() != MemberRole.USER) {
+        if (!member.getRole().equals(MemberRole.USER)) {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
         }
 
@@ -99,6 +99,26 @@ public class ServiceRequestService {
         serviceRequestRepository.save(serviceRequest);
         requestAnswerRepository.saveAll(answers);
         return serviceRequestMapper.toServiceRequestCreateResponse(serviceRequest);
+    }
+
+    @Transactional
+    public void cancelRequest(Long memberId, Long requestId) {
+        Member member = memberService.getMemberEntity(memberId);
+        ServiceRequest request = getRequestEntity(requestId);
+
+        if (!member.getRole().equals(MemberRole.USER)) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        if (!member.getId().equals(request.getMember().getId())) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        if (!request.getRequestStatus().equals(RequestStatus.OPEN)) {
+            throw new BusinessException(INVALID_REQUEST_STATUS_EXCEPTION);
+        }
+
+        request.setRequestStatus(RequestStatus.CLOSED);
     }
 
     private void validateDuplicateRequest(Long memberId, Long secondCategoryId) {

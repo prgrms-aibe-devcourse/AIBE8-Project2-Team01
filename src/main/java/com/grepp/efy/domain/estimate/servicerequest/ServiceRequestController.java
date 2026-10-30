@@ -49,4 +49,14 @@ public class ServiceRequestController implements ServiceRequestControllerDocs {
         ServiceRequestCreateResponse response = serviceRequestService.createRequest(userDetails.getMemberId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @Override
+    @PatchMapping("/requests/{requestId}/cancel")
+    public ResponseEntity<Void> cancelRequest(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long requestId
+    ) {
+        serviceRequestService.cancelRequest(userDetails.getMemberId(), requestId);
+        return ResponseEntity.noContent().build();
+    }
 }

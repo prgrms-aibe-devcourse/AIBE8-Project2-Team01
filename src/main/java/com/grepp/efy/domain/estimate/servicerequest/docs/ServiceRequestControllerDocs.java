@@ -68,4 +68,24 @@ public interface ServiceRequestControllerDocs {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ServiceRequestCreateRequest request
     );
+
+    @Operation(
+            summary = "서비스 요청서 취소",
+            description = "로그인한 일반 회원이 본인의 요청서를 취소합니다. "
+                    + "OPEN 또는 MATCHED 상태에서 취소할 수 있으며, "
+                    + "취소 시 요청서 상태가 CLOSED로 변경됩니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "요청서 취소 성공"),
+            @ApiResponse(responseCode = "400", description = "취소할 수 없는 요청서 상태 (이미 CLOSED)"),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+            @ApiResponse(responseCode = "403", description = "USER 권한이 아니거나 요청서 작성자 본인이 아닌 경우"),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 요청서")
+    })
+    ResponseEntity<Void> cancelRequest(
+            @Parameter(hidden = true)
+            CustomUserDetails userDetails,
+            @Parameter(description = "취소할 서비스 요청서 ID", required = true, example = "1")
+            Long requestId
+    );
 }
