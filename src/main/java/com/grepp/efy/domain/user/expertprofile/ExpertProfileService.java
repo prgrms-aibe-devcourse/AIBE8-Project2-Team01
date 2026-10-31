@@ -79,6 +79,18 @@ public class ExpertProfileService {
     }
 
     @Transactional
+    public MemberResponse setRole(Long adminId, Long memberId, MemberRoleUpdateRequest request) {
+        memberService.getMemberEntity(memberId);
+        if (adminId.equals(memberId)) {
+            throw new BusinessException(ErrorCode.SELF_ROLE_CHANGE_NOT_ALLOWED_EXCEPTION);
+        }
+        if (request.getRole() == MemberRole.EXPERT) {
+            getExpertProfileByMemberId(memberId);
+        }
+        return memberService.setRole(adminId, memberId, request);
+    }
+
+    @Transactional
     public MemberResponse changeMyRole(Long memberId, MemberRoleUpdateRequest request) {
         Member member = memberService.getMemberEntity(memberId);
         if (member.getRole() == MemberRole.ADMIN || request.getRole() == MemberRole.ADMIN) {
