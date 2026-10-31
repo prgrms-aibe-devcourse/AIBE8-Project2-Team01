@@ -89,7 +89,6 @@ public class MemberService {
         return memberMapper.toResponse(member);
     }
 
-    // TODO: 고수 프로필 등록 여부를 확인한 뒤 본인의 USER ↔ EXPERT 전환을 연결
     @Transactional
     public MemberResponse setRole(Long adminId, Long memberId, MemberRoleUpdateRequest request) {
         Member member = getMemberEntity(memberId);
@@ -97,6 +96,19 @@ public class MemberService {
             throw new BusinessException(ErrorCode.SELF_ROLE_CHANGE_NOT_ALLOWED_EXCEPTION);
         }
 
+        if (member.getRole() != request.getRole()) {
+            member.setRole(request.getRole());
+        }
+        return memberMapper.toResponse(member);
+    }
+
+    // 프로필 조건은 ExpertProfileService에서 확인하고 회원 역할만 변경한다.
+    @Transactional
+    public MemberResponse changeMyRole(Long memberId, MemberRoleUpdateRequest request) {
+        Member member = getMemberEntity(memberId);
+        if (member.getRole() == MemberRole.ADMIN || request.getRole() == MemberRole.ADMIN) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
+        }
         if (member.getRole() != request.getRole()) {
             member.setRole(request.getRole());
         }

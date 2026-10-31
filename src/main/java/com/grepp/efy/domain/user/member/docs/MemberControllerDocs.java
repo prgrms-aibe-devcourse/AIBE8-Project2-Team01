@@ -7,6 +7,7 @@ import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.exception.ErrorResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -116,6 +117,23 @@ public interface MemberControllerDocs {
                             """)
             }))
     ResponseEntity<MemberResponse> updateMember(CustomUserDetails userDetails, MemberUpdateRequest request);
+
+    @Operation(summary = "본인 역할 전환",
+            description = "로그인한 회원의 역할을 USER 또는 EXPERT로 전환합니다. EXPERT 전환에는 기존 고수 프로필이 필요합니다. "
+                    + "ADMIN은 본인 역할을 전환할 수 없고 ADMIN으로의 전환도 허용하지 않습니다. "
+                    + "동일 역할 재요청은 기존 상태를 유지합니다. 프로필과 연관 데이터 및 기존 로그인은 유지하고 다음 요청부터 현재 권한을 적용합니다.")
+    @ApiResponse(responseCode = "200", description = "역할 전환 성공 또는 기존 역할 유지",
+            content = @Content(schema = @Schema(implementation = MemberResponse.class)))
+    @ApiResponse(responseCode = "400", description = "역할 누락 또는 잘못된 역할 값",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "401", description = "인증 정보가 없거나 유효하지 않음",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "403", description = "ADMIN의 본인 전환 또는 ADMIN으로의 전환 요청",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "회원이 없거나 EXPERT 전환에 필요한 고수 프로필이 없음",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    ResponseEntity<MemberResponse> changeMyRole(
+            @Parameter(hidden = true) CustomUserDetails userDetails, MemberRoleUpdateRequest request);
 
     @Operation(summary = "회원 권한 변경",
             description = "관리자만 호출할 수 있습니다. 다른 회원의 권한을 USER·EXPERT·ADMIN으로 변경합니다. 본인의 관리자 권한은 변경할 수 없으며 대상 회원의 로그인은 유지됩니다.")

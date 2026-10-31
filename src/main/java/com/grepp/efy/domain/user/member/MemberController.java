@@ -1,5 +1,6 @@
 package com.grepp.efy.domain.user.member;
 
+import com.grepp.efy.domain.user.expertprofile.ExpertProfileService;
 import com.grepp.efy.domain.user.member.docs.MemberControllerDocs;
 import com.grepp.efy.domain.user.member.dto.MemberResponse;
 import com.grepp.efy.domain.user.member.dto.MemberRoleUpdateRequest;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController implements MemberControllerDocs {
 
     private final MemberService memberService;
+    private final ExpertProfileService expertProfileService;
     private final RefreshTokenCookie refreshTokenCookie;
 
     @GetMapping("/admin/members")
@@ -48,6 +50,16 @@ public class MemberController implements MemberControllerDocs {
             @Valid @RequestBody MemberUpdateRequest request
     ) {
         MemberResponse response = memberService.updateMember(userDetails.getMemberId(), request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/members/me/role")
+    @Override
+    public ResponseEntity<MemberResponse> changeMyRole(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody MemberRoleUpdateRequest request
+    ) {
+        MemberResponse response = expertProfileService.changeMyRole(userDetails.getMemberId(), request);
         return ResponseEntity.ok(response);
     }
 
