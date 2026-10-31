@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface ExpertProfileRepository extends JpaRepository<ExpertProfile, Long> {
     Optional<ExpertProfile> findByMemberId(Long memberId);
 
+    boolean existsByMemberId(Long memberId);
+
 }

@@ -103,6 +103,16 @@ public class MemberService {
         return memberMapper.toResponse(member);
     }
 
+    // 첫 프로필 등록 시 일반 회원을 고수로 전환한다.
+    @Transactional
+    public void changeToExpert(Long memberId) {
+        Member member = getMemberEntity(memberId);
+        if (member.getRole() != MemberRole.USER) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
+        }
+        member.setRole(MemberRole.EXPERT);
+    }
+
     @Transactional
     public void deleteMember(Long memberId) {
         Member member = getMemberEntity(memberId);

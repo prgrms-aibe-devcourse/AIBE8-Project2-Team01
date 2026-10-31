@@ -50,6 +50,9 @@ public enum ErrorCode {
 
     // ③ 고수
     EXPERT_PROFILE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "고수 프로필을 찾을 수 없습니다."),
+    DUPLICATE_EXPERT_PROFILE_EXCEPTION(HttpStatus.CONFLICT, "이미 등록된 고수 프로필이 있습니다."),
+    INVALID_EXPERT_SERVICE_EXCEPTION(HttpStatus.BAD_REQUEST, "제공 서비스는 중복 없이 선택하고 대표 서비스는 제공 서비스에 포함해 주세요."),
+    INVALID_EXPERT_REGION_EXCEPTION(HttpStatus.BAD_REQUEST, "활동 지역을 중복 없이 선택하고 전국과 개별 지역을 함께 선택하지 마세요."),
 
     // ④ 커뮤니티
 
