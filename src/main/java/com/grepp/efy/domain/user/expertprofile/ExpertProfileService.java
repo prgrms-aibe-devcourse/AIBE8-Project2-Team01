@@ -11,6 +11,8 @@ import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileResponse;
 import com.grepp.efy.domain.user.member.Member;
 import com.grepp.efy.domain.user.member.MemberRole;
 import com.grepp.efy.domain.user.member.MemberService;
+import com.grepp.efy.domain.user.member.dto.MemberResponse;
+import com.grepp.efy.domain.user.member.dto.MemberRoleUpdateRequest;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -74,6 +76,18 @@ public class ExpertProfileService {
         ExpertProfile savedExpertProfile = expertProfileRepository.save(expertProfile);
         memberService.changeToExpert(memberId);
         return expertProfileMapper.toResponse(savedExpertProfile);
+    }
+
+    @Transactional
+    public MemberResponse changeMyRole(Long memberId, MemberRoleUpdateRequest request) {
+        Member member = memberService.getMemberEntity(memberId);
+        if (member.getRole() == MemberRole.ADMIN || request.getRole() == MemberRole.ADMIN) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
+        }
+        if (request.getRole() == MemberRole.EXPERT) {
+            getExpertProfileByMemberId(memberId);
+        }
+        return memberService.changeMyRole(memberId, request);
     }
 
     public ExpertProfile getExpertProfileEntity(Long expertProfileId) {
