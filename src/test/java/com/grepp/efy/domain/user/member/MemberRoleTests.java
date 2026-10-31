@@ -147,16 +147,95 @@ class MemberRoleTests {
         Long adminId = createMember("ADMIN");
         Long memberId = createMember("USER");
         String token = token(adminId);
-        for (String role : List.of("EXPERT", "ADMIN", "USER")) {
+        String memberToken = token(memberId);
+        Long profileId = createProfile(memberToken);
+        String profileBefore = mockMvc.perform(get("/api/public/expert-profiles/" + profileId))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String refreshToken = refreshTokenService.issued(memberService.getMemberEntity(memberId));
+        for (String role : List.of("EXPERT", "EXPERT", "ADMIN", "USER")) {
             mockMvc.perform(patch("/api/admin/members/" + memberId + "/role")
                             .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
                             .content("{\"role\":\"" + role + "\"}"))
                     .andExpect(status().isOk()).andExpect(jsonPath("$.role").value(role));
+            mockMvc.perform(get("/api/members/me").header("Authorization", "Bearer " + memberToken))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.role").value(role));
+            mockMvc.perform(get("/api/admin/members").header("Authorization", "Bearer " + memberToken))
+                    .andExpect(status().is(role.equals("ADMIN") ? 200 : 403));
+            mockMvc.perform(get("/api/public/expert-profiles/" + profileId))
+                    .andExpect(status().isOk()).andExpect(content().json(profileBefore));
+            assertEquals(0L, memberService.getMemberEntity(memberId).getTokenVersion());
+            assertEquals(1, count("select count(*) from expert_profile where member_id = ?", memberId));
+            assertEquals(1, count("select count(*) from refresh_token where member_id = ?", memberId));
         }
+        assertEquals(MemberRole.USER, refreshTokenService.refresh(refreshToken).userDetails().getRole());
         mockMvc.perform(patch("/api/admin/members/" + memberId + "/role")
                         .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"role\":1}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void 관리자의_프로필없는_회원_EXPERT지정은_거절() throws Exception {
+        Long adminId = createMember("ADMIN");
+        String token = token(adminId);
+        for (String role : List.of("USER", "EXPERT", "ADMIN")) {
+            Long memberId = createMember(role);
+            mockMvc.perform(patch("/api/admin/members/" + memberId + "/role")
+                            .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"role\":\"EXPERT\"}"))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message").value("고수 프로필을 찾을 수 없습니다."));
+            assertEquals(role, memberService.getMemberEntity(memberId).getRole().name());
+            assertEquals(0L, memberService.getMemberEntity(memberId).getTokenVersion());
+            assertEquals(0, count("select count(*) from expert_profile where member_id = ?", memberId));
+        }
+    }
+
+    @Test
+    void 프로필이_없어도_관리자는_USER와_ADMIN지정가능() throws Exception {
+        Long adminId = createMember("ADMIN");
+        Long memberId = createMember("USER");
+        for (String role : List.of("ADMIN", "USER")) {
+            mockMvc.perform(patch("/api/admin/members/" + memberId + "/role")
+                            .header("Authorization", "Bearer " + token(adminId)).contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"role\":\"" + role + "\"}"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.role").value(role));
+        }
+    }
+
+    @Test
+    void 관리자_본인변경과_미인증_일반회원_접근차단() throws Exception {
+        Long adminId = createMember("ADMIN");
+        Long memberId = createMember("USER");
+        for (String role : List.of("USER", "EXPERT", "ADMIN")) {
+            mockMvc.perform(patch("/api/admin/members/" + adminId + "/role")
+                            .header("Authorization", "Bearer " + token(adminId)).contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"role\":\"" + role + "\"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("본인의 관리자 권한은 변경할 수 없습니다."));
+        }
+        mockMvc.perform(patch("/api/admin/members/" + memberId + "/role")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"role\":\"USER\"}"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(patch("/api/admin/members/" + adminId + "/role")
+                        .header("Authorization", "Bearer " + token(memberId)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"role\":\"USER\"}"))
+                .andExpect(status().isForbidden());
+        assertEquals(MemberRole.ADMIN, memberService.getMemberEntity(adminId).getRole());
+    }
+
+    @Test
+    void 관리자가_없는회원과_탈퇴회원을_변경할수없음() throws Exception {
+        Long adminId = createMember("ADMIN");
+        Long memberId = createMember("USER");
+        jdbcTemplate.update("update member set deleted_at = CURRENT_TIMESTAMP where id = ?", memberId);
+        for (Long id : List.of(memberId, Long.MAX_VALUE)) {
+            mockMvc.perform(patch("/api/admin/members/" + id + "/role")
+                            .header("Authorization", "Bearer " + token(adminId)).contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"role\":\"EXPERT\"}"))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message").value("회원을 찾을 수 없습니다."));
+        }
     }
 
     @Test

@@ -136,7 +136,7 @@ public interface MemberControllerDocs {
             @Parameter(hidden = true) CustomUserDetails userDetails, MemberRoleUpdateRequest request);
 
     @Operation(summary = "회원 권한 변경",
-            description = "관리자만 호출할 수 있습니다. 다른 회원의 권한을 USER·EXPERT·ADMIN으로 변경합니다. 본인의 관리자 권한은 변경할 수 없으며 대상 회원의 로그인은 유지됩니다.")
+            description = "관리자만 호출할 수 있습니다. 다른 회원의 권한을 USER·EXPERT·ADMIN으로 변경합니다. EXPERT 지정에는 기존 고수 프로필이 필요합니다. 본인의 관리자 권한은 변경할 수 없으며 대상 회원의 로그인은 유지되고 다음 요청부터 현재 권한이 적용됩니다.")
     @ApiResponse(responseCode = "200", description = "변경 성공. 변경된 회원 정보 반환")
     @ApiResponse(responseCode = "400", description = "요청 데이터가 유효하지 않거나 본인의 관리자 권한을 변경하려는 요청",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
@@ -170,11 +170,16 @@ public interface MemberControllerDocs {
                             }
                             """)
             }))
-    @ApiResponse(responseCode = "404", description = "대상 회원이 없거나 탈퇴한 상태",
+    @ApiResponse(responseCode = "404", description = "대상 회원이 없거나 탈퇴한 상태 또는 EXPERT 지정에 필요한 고수 프로필이 없음",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
                     @ExampleObject(name = "회원 없음", value = """
                             {
                               "message": "회원을 찾을 수 없습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "고수 프로필 없음", value = """
+                            {
+                              "message": "고수 프로필을 찾을 수 없습니다."
                             }
                             """)
             }))

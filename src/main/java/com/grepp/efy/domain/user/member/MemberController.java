@@ -70,7 +70,7 @@ public class MemberController implements MemberControllerDocs {
             @PathVariable Long memberId,
             @Valid @RequestBody MemberRoleUpdateRequest request
     ) {
-        MemberResponse response = memberService.setRole(userDetails.getMemberId(), memberId, request);
+        MemberResponse response = expertProfileService.setRole(userDetails.getMemberId(), memberId, request);
         return ResponseEntity.ok(response);
     }
 
