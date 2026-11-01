@@ -3,7 +3,7 @@ package com.grepp.efy.domain.user.expertprofile;
 import com.grepp.efy.domain.basedata.firstregion.FirstRegionMapper;
 import com.grepp.efy.domain.basedata.secondcategory.SecondCategoryMapper;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegionMapper;
-import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileRequest;
+import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileCreateRequest;
 import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -24,7 +24,7 @@ public interface ExpertProfileMapper {
     @Mapping(target = "nationwide", ignore = true)
     @Mapping(target = "wholeRegions", ignore = true)
     @Mapping(target = "regions", ignore = true)
-    ExpertProfile toEntity(ExpertProfileRequest expertProfileRequest);
+    ExpertProfile toEntity(ExpertProfileCreateRequest expertProfileRequest);
 
     ExpertProfileResponse toResponse(ExpertProfile expertProfile);
 

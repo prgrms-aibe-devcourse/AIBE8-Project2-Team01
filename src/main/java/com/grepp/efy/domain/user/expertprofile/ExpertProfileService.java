@@ -6,8 +6,9 @@ import com.grepp.efy.domain.basedata.secondcategory.SecondCategory;
 import com.grepp.efy.domain.basedata.secondcategory.SecondCategoryService;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegion;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegionService;
-import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileRequest;
+import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileCreateRequest;
 import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileResponse;
+import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileUpdateRequest;
 import com.grepp.efy.domain.user.member.Member;
 import com.grepp.efy.domain.user.member.MemberRole;
 import com.grepp.efy.domain.user.member.MemberService;
@@ -40,7 +41,7 @@ public class ExpertProfileService {
     }
 
     @Transactional
-    public ExpertProfileResponse createExpertProfile(Long memberId, ExpertProfileRequest request) {
+    public ExpertProfileResponse createExpertProfile(Long memberId, ExpertProfileCreateRequest createRequest) {
         Member member = memberService.getMemberEntity(memberId);
         if (expertProfileRepository.existsByMemberId(memberId)) {
             throw new BusinessException(ErrorCode.DUPLICATE_EXPERT_PROFILE_EXCEPTION);
@@ -48,34 +49,46 @@ public class ExpertProfileService {
         if (member.getRole() != MemberRole.USER) {
             throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
         }
-        checkServices(request);
-        checkRegions(request);
+        checkIds(createRequest);
 
-        ExpertProfile expertProfile = expertProfileMapper.toEntity(request);
+        ExpertProfile expertProfile = expertProfileMapper.toEntity(createRequest);
         expertProfile.setMember(member);
-        expertProfile.setNationwide(request.isNationwide());
-        for (Long serviceId : request.getServiceIds()) {
-            SecondCategory service = secondCategoryService.getSecondCategoryEntity(serviceId);
-            expertProfile.getServices().add(service);
-            if (serviceId.equals(request.getPrimaryCategoryId())) {
-                expertProfile.setPrimaryCategory(service);
-            }
-        }
-        for (Long regionId : request.getWholeRegionIds()) {
-            FirstRegion region = firstRegionService.getFirstRegionEntity(regionId);
-            expertProfile.getWholeRegions().add(region);
-        }
-        for (Long regionId : request.getRegionIds()) {
-            SecondRegion region = secondRegionService.getSecondRegionEntity(regionId);
-            if (request.getWholeRegionIds().contains(region.getFirstRegion().getId())) {
-                throw new BusinessException(ErrorCode.INVALID_EXPERT_REGION_EXCEPTION);
-            }
-            expertProfile.getRegions().add(region);
-        }
+        setServicesAndRegions(
+                expertProfile,
+                createRequest.getServiceIds(),
+                createRequest.getPrimaryCategoryId(),
+                createRequest.isNationwide(),
+                createRequest.getWholeRegionIds(),
+                createRequest.getRegionIds()
+        );
+        checkProfile(expertProfile);
 
         ExpertProfile savedExpertProfile = expertProfileRepository.save(expertProfile);
         memberService.changeToExpert(memberId);
         return expertProfileMapper.toResponse(savedExpertProfile);
+    }
+
+    @Transactional
+    public ExpertProfileResponse updateExpertProfile(Long memberId, ExpertProfileUpdateRequest UpdateRequest) {
+        Member member = memberService.getMemberEntity(memberId);
+        if (member.getRole() != MemberRole.USER && member.getRole() != MemberRole.EXPERT) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
+        }
+
+        ExpertProfile expertProfile = getExpertProfileByMemberId(memberId);
+        checkIds(UpdateRequest);
+
+        updateInfo(expertProfile, UpdateRequest);
+        setServicesAndRegions(
+                expertProfile,
+                UpdateRequest.getServiceIds(),
+                UpdateRequest.getPrimaryCategoryId(),
+                UpdateRequest.getNationwide(),
+                UpdateRequest.getWholeRegionIds(),
+                UpdateRequest.getRegionIds()
+        );
+        checkProfile(expertProfile);
+        return expertProfileMapper.toResponse(expertProfile);
     }
 
     @Transactional
@@ -102,35 +115,108 @@ public class ExpertProfileService {
         return memberService.changeMyRole(memberId, request);
     }
 
+    // 프로필 ID로 프로필을 조회하고 없으면 EXPERT_PROFILE_NOT_FOUND_EXCEPTION 발생
     public ExpertProfile getExpertProfileEntity(Long expertProfileId) {
         return expertProfileRepository.findById(expertProfileId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EXPERT_PROFILE_NOT_FOUND_EXCEPTION));
     }
 
+    // 회원 ID로 프로필을 조회하고 없으면 EXPERT_PROFILE_NOT_FOUND_EXCEPTION 발생
     public ExpertProfile getExpertProfileByMemberId(Long memberId) {
         return expertProfileRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EXPERT_PROFILE_NOT_FOUND_EXCEPTION));
     }
 
-    private void checkServices(ExpertProfileRequest request) {
-        List<Long> serviceIds = request.getServiceIds();
-        if (serviceIds.contains(null)
-                || new HashSet<>(serviceIds).size() != serviceIds.size()
-                || !serviceIds.contains(request.getPrimaryCategoryId())) {
-            throw new BusinessException(ErrorCode.INVALID_EXPERT_SERVICE_EXCEPTION);
+    // 전달된 소개·경력만 수정하고 경력에 명시적으로 null을 보내면 삭제
+    private void updateInfo(ExpertProfile expertProfile, ExpertProfileUpdateRequest request) {
+        if (request.getShortIntro() != null) {
+            if (request.getShortIntro().isBlank()) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION);
+            }
+            expertProfile.setShortIntro(request.getShortIntro());
+        }
+        if (request.getDescription() != null) {
+            if (request.getDescription().isBlank()) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION);
+            }
+            expertProfile.setDescription(request.getDescription());
+        }
+        if (request.isCareerYearsSet()) {
+            expertProfile.setCareerYears(request.getCareerYears());
+        }
+        if (request.isCareerDescriptionSet()) {
+            expertProfile.setCareerDescription(request.getCareerDescription());
         }
     }
 
-    private void checkRegions(ExpertProfileRequest request) {
-        List<Long> wholeRegionIds = request.getWholeRegionIds();
-        List<Long> regionIds = request.getRegionIds();
-        boolean hasRegions = !wholeRegionIds.isEmpty() || !regionIds.isEmpty();
-        if (wholeRegionIds.contains(null) || regionIds.contains(null)
-                || new HashSet<>(wholeRegionIds).size() != wholeRegionIds.size()
-                || new HashSet<>(regionIds).size() != regionIds.size()
-                || (request.isNationwide() && hasRegions)
-                || (!request.isNationwide() && !hasRegions)) {
+    // 서비스·대표 서비스·전국 여부·지역을 함께 연결. null은 유지하고 빈 목록은 해당 연결 삭제
+    private void setServicesAndRegions(ExpertProfile expertProfile, List<Long> serviceIds,
+                                       Long primaryCategoryId, Boolean nationwide,
+                                       List<Long> wholeRegionIds, List<Long> regionIds) {
+        if (serviceIds != null) {
+            expertProfile.getServices().clear();
+            for (Long serviceId : serviceIds) {
+                SecondCategory service = secondCategoryService.getSecondCategoryEntity(serviceId);
+                expertProfile.getServices().add(service);
+            }
+        }
+        if (primaryCategoryId != null) {
+            expertProfile.setPrimaryCategory(secondCategoryService.getSecondCategoryEntity(primaryCategoryId));
+        }
+        if (nationwide != null) {
+            expertProfile.setNationwide(nationwide);
+        }
+        if (wholeRegionIds != null) {
+            expertProfile.getWholeRegions().clear();
+            for (Long regionId : wholeRegionIds) {
+                FirstRegion region = firstRegionService.getFirstRegionEntity(regionId);
+                expertProfile.getWholeRegions().add(region);
+            }
+        }
+        if (regionIds != null) {
+            expertProfile.getRegions().clear();
+            for (Long regionId : regionIds) {
+                SecondRegion region = secondRegionService.getSecondRegionEntity(regionId);
+                expertProfile.getRegions().add(region);
+            }
+        }
+    }
+
+    // Set에 넣기 전에 목록의 null 원소와 중복 ID 검사
+    private void checkDuplicateIds(List<Long> ids, ErrorCode errorCode) {
+        if (ids != null && (ids.contains(null) || new HashSet<>(ids).size() != ids.size())) {
+            throw new BusinessException(errorCode);
+        }
+    }
+
+    // 등록 요청의 서비스·지역 목록 검사
+    private void checkIds(ExpertProfileCreateRequest request) {
+        checkDuplicateIds(request.getServiceIds(), ErrorCode.INVALID_EXPERT_SERVICE_EXCEPTION);
+        checkDuplicateIds(request.getWholeRegionIds(), ErrorCode.INVALID_EXPERT_REGION_EXCEPTION);
+        checkDuplicateIds(request.getRegionIds(), ErrorCode.INVALID_EXPERT_REGION_EXCEPTION);
+    }
+
+    // 수정 요청의 서비스·지역 목록 검사. 생략한 목록은 유지
+    private void checkIds(ExpertProfileUpdateRequest request) {
+        checkDuplicateIds(request.getServiceIds(), ErrorCode.INVALID_EXPERT_SERVICE_EXCEPTION);
+        checkDuplicateIds(request.getWholeRegionIds(), ErrorCode.INVALID_EXPERT_REGION_EXCEPTION);
+        checkDuplicateIds(request.getRegionIds(), ErrorCode.INVALID_EXPERT_REGION_EXCEPTION);
+    }
+
+    // 반영된 프로필의 대표 서비스와 활동 지역 조건 검사
+    private void checkProfile(ExpertProfile expertProfile) {
+        if (expertProfile.getServices().isEmpty()
+                || !expertProfile.getServices().contains(expertProfile.getPrimaryCategory())) {
+            throw new BusinessException(ErrorCode.INVALID_EXPERT_SERVICE_EXCEPTION);
+        }
+        boolean hasRegions = !expertProfile.getWholeRegions().isEmpty() || !expertProfile.getRegions().isEmpty();
+        if ((expertProfile.isNationwide() && hasRegions) || (!expertProfile.isNationwide() && !hasRegions)) {
             throw new BusinessException(ErrorCode.INVALID_EXPERT_REGION_EXCEPTION);
+        }
+        for (SecondRegion region : expertProfile.getRegions()) {
+            if (expertProfile.getWholeRegions().contains(region.getFirstRegion())) {
+                throw new BusinessException(ErrorCode.INVALID_EXPERT_REGION_EXCEPTION);
+            }
         }
     }
 
