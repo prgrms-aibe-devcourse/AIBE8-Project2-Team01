@@ -2,13 +2,15 @@ package com.grepp.efy.domain.user.expertprofile;
 
 import com.grepp.efy.domain.user.expertprofile.docs.ExpertProfileControllerDocs;
 import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileResponse;
-import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileRequest;
+import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileCreateRequest;
+import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileUpdateRequest;
 import com.grepp.efy.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,8 +35,18 @@ public class ExpertProfileController implements ExpertProfileControllerDocs {
     @Override
     public ResponseEntity<ExpertProfileResponse> createExpertProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody ExpertProfileRequest request) {
+            @Valid @RequestBody ExpertProfileCreateRequest request) {
         ExpertProfileResponse response = expertProfileService.createExpertProfile(userDetails.getMemberId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @PatchMapping("/members/me/expert-profile")
+    @Override
+    public ResponseEntity<ExpertProfileResponse> updateExpertProfile(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody ExpertProfileUpdateRequest request) {
+        ExpertProfileResponse response = expertProfileService.updateExpertProfile(userDetails.getMemberId(), request);
+        return ResponseEntity.ok(response);
+    }
+
 }
