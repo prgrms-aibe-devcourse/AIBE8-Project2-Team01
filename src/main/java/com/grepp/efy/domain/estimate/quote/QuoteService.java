@@ -47,7 +47,7 @@ public class QuoteService {
         }
 
         if (serviceRequest.getRequestStatus().equals(RequestStatus.CLOSED)) {
-            throw new BusinessException(CLOSED_REQUEST_QUOTE_NOT_ALLOWED);
+            throw new BusinessException(CLOSED_REQUEST_QUOTE_NOT_ALLOWED_EXCEPTION);
         }
 
         if (!canSendQuote(expertProfile, serviceRequest)) {
@@ -55,7 +55,7 @@ public class QuoteService {
         }
 
         if (quoteRepository.existsByExpertProfileAndServiceRequest(expertProfile, serviceRequest)) {
-            throw new BusinessException(DUPLICATE_QUOTE_NOT_ALLOWED);
+            throw new BusinessException(DUPLICATE_QUOTE_NOT_ALLOWED_EXCEPTION);
         }
 
         Quote quote = quoteMapper.toEntity(createRequest, expertProfile, serviceRequest);
@@ -63,7 +63,7 @@ public class QuoteService {
             quoteRepository.saveAndFlush(quote);
         } catch (DataIntegrityViolationException e) {
             // uk_quote_expert_request 제약 위반은 중복 견적으로 처리
-            throw new BusinessException(DUPLICATE_QUOTE_NOT_ALLOWED);
+            throw new BusinessException(DUPLICATE_QUOTE_NOT_ALLOWED_EXCEPTION);
         }
 
         if (serviceRequest.getRequestStatus().equals(RequestStatus.OPEN)) {

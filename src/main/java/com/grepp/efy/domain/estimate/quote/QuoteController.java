@@ -1,5 +1,6 @@
 package com.grepp.efy.domain.estimate.quote;
 
+import com.grepp.efy.domain.estimate.quote.docs.QuoteControllerDocs;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
@@ -13,10 +14,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
-public class QuoteController {
+public class QuoteController implements QuoteControllerDocs {
 
     private final QuoteService quoteService;
 
+    @Override
     @PostMapping("/requests/{requestId}/quotes")
     public ResponseEntity<QuoteCreateResponse> createQuote(
             @AuthenticationPrincipal CustomUserDetails userDetails,
