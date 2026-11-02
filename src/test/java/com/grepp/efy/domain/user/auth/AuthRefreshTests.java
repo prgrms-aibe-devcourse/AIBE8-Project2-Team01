@@ -192,7 +192,9 @@ class AuthRefreshTests {
     private Long createMember() {
         String suffix = UUID.randomUUID().toString();
         String email = suffix + "@test.local";
-        jdbcTemplate.update("insert into member(email, nickname, role, created_at, token_version) values (?, ?, 'USER', CURRENT_TIMESTAMP, 0)", email, suffix.substring(0, 20));
+        Long nextId = jdbcTemplate.queryForObject("select coalesce(max(id), 0) + 1 from member", Long.class);
+        String phone = String.format("%011d", nextId);
+        jdbcTemplate.update("insert into member(email, nickname, phone, role, created_at, token_version) values (?, ?, ?, 'USER', CURRENT_TIMESTAMP, 0)", email, suffix.substring(0, 20), phone);
         Long id = jdbcTemplate.queryForObject("select id from member where email = ?", Long.class, email);
         memberIds.add(id);
         return id;
