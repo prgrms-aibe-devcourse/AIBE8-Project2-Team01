@@ -177,7 +177,11 @@ VALUES ('customer1@example.com',
 
        ('admin1@example.com',
         '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C',
-        '관리자', '01034567890', 'ADMIN', CURRENT_TIMESTAMP, 0);
+        '관리자', '01034567890', 'ADMIN', CURRENT_TIMESTAMP, 0),
+
+       ('expert3@example.com',
+        '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C',
+        '프로필없는고수', '01067890123', 'EXPERT', CURRENT_TIMESTAMP, 0);
 
 
 -- 고수 1: 이사(101), 강남구(39)
@@ -214,8 +218,18 @@ VALUES ((SELECT id FROM member WHERE email = 'expert2@example.com'),
 
 -- 고수 제공 서비스: 고수 1 이사(101), 고수 2 개발 외주(139)
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
-VALUES ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert1@example.com'), 101),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert2@example.com'), 139);
+VALUES ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert1@example.com'), 101),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert1@example.com'), 102),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert2@example.com'), 139);
 
 
 -- 지역 초기 데이터
@@ -514,8 +528,18 @@ VALUES (17, '1111000000', '종로구', 1),
 
 -- 고수 활동 지역: 고수 1 강남구(39), 고수 2 서초구(38)
 INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
-VALUES ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert1@example.com'), 39),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert2@example.com'), 38);
+VALUES ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert1@example.com'), 39),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert1@example.com'), 38),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert2@example.com'), 38);
 
 -- 요청서 고정 질문 모든 서비스 카테고리에서 동일하게 사용
 INSERT INTO question (content, is_required, display_order)
@@ -590,6 +614,41 @@ FROM service_request sr
 WHERE m.email = 'customer1@example.com'
   AND sr.second_category_id = 139
   AND sr.second_region_id = 30;
+
+-- 1. 이사 / 서초구: 전국 활동 매칭 테스트
+INSERT INTO service_request
+(member_id, second_category_id, second_region_id, request_status, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'customer1@example.com'),
+        101, 38, 'OPEN',
+        DATEADD('MINUTE', -10, CURRENT_TIMESTAMP));
+
+-- 2. 이사 / 강남구: MATCHED 상태 포함 테스트
+INSERT INTO service_request
+(member_id, second_category_id, second_region_id, request_status, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'customer1@example.com'),
+        101, 39, 'MATCHED',
+        DATEADD('MINUTE', -20, CURRENT_TIMESTAMP));
+
+-- 3. 이사 / 마포구: CLOSED 상태 제외 테스트
+INSERT INTO service_request
+(member_id, second_category_id, second_region_id, request_status, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'customer1@example.com'),
+        101, 30, 'CLOSED',
+        DATEADD('MINUTE', -30, CURRENT_TIMESTAMP));
+
+-- 4. 입주 청소 / 강남구: 다중 서비스 매칭 테스트
+INSERT INTO service_request
+(member_id, second_category_id, second_region_id, request_status, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'customer1@example.com'),
+        102, 39, 'OPEN',
+        DATEADD('MINUTE', -40, CURRENT_TIMESTAMP));
+
+-- 5. 고수1이 USER였을 때 작성한 요청서: 본인 요청서 제외 테스트
+INSERT INTO service_request
+(member_id, second_category_id, second_region_id, request_status, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert1@example.com'),
+        101, 39, 'OPEN',
+        DATEADD('MINUTE', -50, CURRENT_TIMESTAMP));
 
 
 -- H2 로컬: 고정 ID 시드 다음 번호부터 새 항목을 등록합니다.

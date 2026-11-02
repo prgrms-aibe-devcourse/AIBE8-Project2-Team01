@@ -46,6 +46,23 @@ public class ServiceRequestService {
     private final RequestAnswerMapper requestAnswerMapper;
     private final ExpertProfileService expertProfileService;
 
+    public List<ServiceRequestListResponse> getMatchedRequests(Long memberId) {
+        Member member = memberService.getMemberEntity(memberId);
+
+        if (!member.getRole().equals(MemberRole.EXPERT)) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        ExpertProfile expertProfile = expertProfileService.getExpertProfileByMemberId(member.getId());
+        List<Long> categoryIds = expertProfile.getServices().stream().map(SecondCategory::getId).toList();
+        List<Long> regionIds = expertProfile.getRegions().stream().map(SecondRegion::getId).toList();
+
+        List<ServiceRequest> requests = serviceRequestRepository
+                .findMatchedRequests(categoryIds, regionIds, expertProfile.isNationwide(), RequestStatus.CLOSED, member.getId());
+
+        return serviceRequestMapper.toRequestListResponse(requests);
+    }
+
     public List<ServiceRequestListResponse> getMyRequests(Long memberId) {
         Member member = memberService.getMemberEntity(memberId);
 

@@ -23,6 +23,14 @@ public class ServiceRequestController implements ServiceRequestControllerDocs {
     private final ServiceRequestService serviceRequestService;
 
     @Override
+    @GetMapping("/members/me/expert-profile/requests")
+    public ResponseEntity<List<ServiceRequestListResponse>> getMatchedRequests(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<ServiceRequestListResponse> requests = serviceRequestService.getMatchedRequests(userDetails.getMemberId());
+        return ResponseEntity.ok(requests);
+    }
+
+    @Override
     @GetMapping("/members/me/requests")
     public ResponseEntity<List<ServiceRequestListResponse>> getMyRequests(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
