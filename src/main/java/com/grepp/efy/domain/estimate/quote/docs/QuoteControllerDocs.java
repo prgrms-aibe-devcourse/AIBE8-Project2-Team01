@@ -40,6 +40,7 @@ public interface QuoteControllerDocs {
             @ApiResponse(responseCode = "404", description = "요청서 또는 고수 프로필을 찾을 수 없음"),
             @ApiResponse(responseCode = "409", description = "동일 요청서에 이미 견적을 발송함")})
     ResponseEntity<QuoteCreateResponse> createQuote(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(name = "requestId", description = "견적을 발송할 요청서 ID",
                     required = true, in = ParameterIn.PATH, example = "1")
             @PathVariable Long requestId,
@@ -47,7 +48,6 @@ public interface QuoteControllerDocs {
                     description = "견적서 작성 정보", required = true,
                     content = @Content(schema = @Schema(implementation = QuoteCreateRequest.class))
             )
-            @Valid @RequestBody QuoteCreateRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @Valid @RequestBody QuoteCreateRequest request
     );
 }

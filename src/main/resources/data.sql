@@ -661,6 +661,50 @@ VALUES ((SELECT id FROM member WHERE email = 'expert1@example.com'),
         101, 39, 'OPEN',
         DATEADD('MINUTE', -50, CURRENT_TIMESTAMP));
 
+-- 견적서 시드 데이터
+-- expert1 → requestId 1
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id,
+       sr.id,
+       '이사 작업 전체 진행 가능합니다.',
+       300000,
+       'SENT',
+       DATEADD('HOUR', -1, CURRENT_TIMESTAMP)
+FROM expert_profile ep
+         JOIN member m
+              ON ep.member_id = m.id
+         JOIN service_request sr
+              ON sr.id = 1
+WHERE m.email = 'expert1@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM quote q
+                  WHERE q.expert_id = ep.id
+                    AND q.service_request_id = sr.id);
+
+-- expert2 → requestId 4
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id,
+       sr.id,
+       '서초구 이사 작업 가능합니다.',
+       280000,
+       'SENT',
+       DATEADD('HOUR', -2, CURRENT_TIMESTAMP)
+FROM expert_profile ep
+         JOIN member m
+              ON ep.member_id = m.id
+         JOIN service_request sr
+              ON sr.id = 4
+WHERE m.email = 'expert2@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM quote q
+                  WHERE q.expert_id = ep.id
+                    AND q.service_request_id = sr.id);
+
+-- 견적이 존재하는 요청서는 MATCHED 상태로 설정
+UPDATE service_request
+SET request_status = 'MATCHED'
+WHERE id IN (1, 4);
+
 
 -- H2 로컬: 고정 ID 시드 다음 번호부터 새 항목을 등록합니다.
 ALTER TABLE first_category

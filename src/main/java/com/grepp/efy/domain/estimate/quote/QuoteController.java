@@ -1,7 +1,9 @@
 package com.grepp.efy.domain.estimate.quote;
 
+import com.grepp.efy.domain.estimate.quote.docs.QuoteControllerDocs;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateResponse;
+import com.grepp.efy.domain.estimate.quote.dto.QuoteResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,13 +12,24 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
-public class QuoteController {
+public class QuoteController implements QuoteControllerDocs {
 
     private final QuoteService quoteService;
 
+    @GetMapping("/quotes")
+    public ResponseEntity<List<QuoteResponse>> getQuotes(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        List<QuoteResponse> response = quoteService.getQuotes(userDetails.getMemberId());
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
     @PostMapping("/requests/{requestId}/quotes")
     public ResponseEntity<QuoteCreateResponse> createQuote(
             @AuthenticationPrincipal CustomUserDetails userDetails,
