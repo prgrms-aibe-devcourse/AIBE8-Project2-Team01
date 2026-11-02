@@ -75,6 +75,12 @@ public enum ErrorCode {
     // ⑧ 채팅
 
 
+    // ⑨ 파일 (공통)
+    FILE_EMPTY_EXCEPTION(HttpStatus.BAD_REQUEST, "빈 파일은 업로드할 수 없습니다."),
+    FILE_COUNT_EXCEEDED_EXCEPTION(HttpStatus.BAD_REQUEST, "파일은 한 번에 10개까지 업로드할 수 있습니다."),
+    FILE_TOO_LARGE_EXCEPTION(HttpStatus.CONTENT_TOO_LARGE, "파일 크기가 너무 큽니다."),
+    FILE_UPLOAD_FAILED_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),
+
     ;
 
     private final HttpStatus status;

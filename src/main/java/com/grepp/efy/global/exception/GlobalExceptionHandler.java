@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -119,6 +120,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException() {
         return toResponse(ErrorCode.DATA_CONFLICT_EXCEPTION);
+    }
+
+    // [스프링] 413 multipart 크기 제한 초과
+    // 파일 1개 5MB, 요청 전체 51MB를 넘으면 컨트롤러에 들어오기 전에 발생한다
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException() {
+        return toResponse(ErrorCode.FILE_TOO_LARGE_EXCEPTION);
     }
 
     // [기타] 500 위에서 잡지 못한 예외
