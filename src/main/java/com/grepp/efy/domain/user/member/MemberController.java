@@ -3,6 +3,7 @@ package com.grepp.efy.domain.user.member;
 import com.grepp.efy.domain.user.expertprofile.ExpertProfileService;
 import com.grepp.efy.domain.user.member.docs.MemberControllerDocs;
 import com.grepp.efy.domain.user.member.dto.MemberResponse;
+import com.grepp.efy.domain.user.member.dto.MemberImageUpdateRequest;
 import com.grepp.efy.domain.user.member.dto.MemberRoleUpdateRequest;
 import com.grepp.efy.domain.user.member.dto.MemberUpdateRequest;
 import com.grepp.efy.global.common.PageResponse;
@@ -53,6 +54,16 @@ public class MemberController implements MemberControllerDocs {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/members/me/image")
+    @Override
+    public ResponseEntity<MemberResponse> updateImage(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody MemberImageUpdateRequest request
+    ) {
+        MemberResponse response = memberService.updateImage(userDetails.getMemberId(), request.getImageId());
+        return ResponseEntity.ok(response);
+    }
+
     @PatchMapping("/members/me/role")
     @Override
     public ResponseEntity<MemberResponse> changeMyRole(
@@ -72,6 +83,13 @@ public class MemberController implements MemberControllerDocs {
     ) {
         MemberResponse response = expertProfileService.setRole(userDetails.getMemberId(), memberId, request);
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/members/me/image")
+    @Override
+    public ResponseEntity<Void> deleteImage(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        memberService.deleteImage(userDetails.getMemberId());
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/members/me")

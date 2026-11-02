@@ -1,5 +1,8 @@
 package com.grepp.efy.domain.user.member;
 
+import com.grepp.efy.domain.file.UploadFile;
+import com.grepp.efy.domain.file.UploadFileService;
+import com.grepp.efy.domain.file.UploadFileVisibility;
 import com.grepp.efy.domain.user.auth.RefreshTokenService;
 import com.grepp.efy.domain.user.member.dto.MemberCreateRequest;
 import com.grepp.efy.domain.user.member.dto.MemberResponse;
@@ -8,6 +11,7 @@ import com.grepp.efy.domain.user.member.dto.MemberUpdateRequest;
 import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
+import com.grepp.efy.global.storage.SupabaseStorageClient;
 import com.grepp.efy.global.util.PageableFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +34,8 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final MemberMapper memberMapper;
     private final RefreshTokenService refreshTokenService;
+    private final UploadFileService uploadFileService;
+    private final SupabaseStorageClient storageClient;
 
     @Value("${app.password-min-length:4}")
     private int passwordMinLength;
@@ -37,12 +43,12 @@ public class MemberService {
     public PageResponse<MemberResponse> getMembers(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
         Pageable pageable = PageableFactory.create(pageNumber, pageSize, sortBy, sortOrder, SORTABLE_FIELDS);
         Page<Member> page = memberRepository.findByDeletedAtIsNull(pageable);
-        return PageResponse.of(page, page.getContent().stream().map(memberMapper::toResponse).toList());
+        return PageResponse.of(page, page.getContent().stream().map(member -> memberMapper.toResponse(member, getImageUrl(member))).toList());
     }
 
     public MemberResponse getCurrentMember(Long memberId) {
         Member member = getMemberEntity(memberId);
-        return memberMapper.toResponse(member);
+        return memberMapper.toResponse(member, getImageUrl(member));
     }
 
     @Transactional
@@ -94,7 +100,18 @@ public class MemberService {
         if (request.getPassword() != null) {
             member.setPassword(passwordEncoder.encode(request.getPassword()));
         }
-        return memberMapper.toResponse(member);
+        return memberMapper.toResponse(member, getImageUrl(member));
+    }
+
+    @Transactional
+    public MemberResponse updateImage(Long memberId, Long imageId) {
+        Member member = getMemberEntity(memberId);
+        UploadFile image = uploadFileService.getMyUploadFileEntity(imageId, memberId);
+        if (image.getVisibility() != UploadFileVisibility.PUBLIC) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION);
+        }
+        member.setImage(image);
+        return memberMapper.toResponse(member, getImageUrl(member));
     }
 
     @Transactional
@@ -107,10 +124,9 @@ public class MemberService {
         if (member.getRole() != request.getRole()) {
             member.setRole(request.getRole());
         }
-        return memberMapper.toResponse(member);
+        return memberMapper.toResponse(member, getImageUrl(member));
     }
 
-    // 프로필 조건은 ExpertProfileService에서 확인하고 회원 역할만 변경한다.
     @Transactional
     public MemberResponse changeMyRole(Long memberId, MemberRoleUpdateRequest request) {
         Member member = getMemberEntity(memberId);
@@ -120,7 +136,7 @@ public class MemberService {
         if (member.getRole() != request.getRole()) {
             member.setRole(request.getRole());
         }
-        return memberMapper.toResponse(member);
+        return memberMapper.toResponse(member, getImageUrl(member));
     }
 
     // 첫 프로필 등록 시 일반 회원을 고수로 전환한다.
@@ -131,6 +147,12 @@ public class MemberService {
             throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
         }
         member.setRole(MemberRole.EXPERT);
+    }
+
+    @Transactional
+    public void deleteImage(Long memberId) {
+        Member member = getMemberEntity(memberId);
+        member.setImage(null);
     }
 
     @Transactional
@@ -156,12 +178,20 @@ public class MemberService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND_EXCEPTION));
     }
 
+    private String getImageUrl(Member member) {
+        UploadFile image = member.getImage();
+        if (image == null || image.getDeletedAt() != null
+                || image.getVisibility() != UploadFileVisibility.PUBLIC) {
+            return null;
+        }
+        return storageClient.createUrl(image.getVisibility(), image.getStoragePath());
+    }
+
     private void invalidateTokens(Member member) {
         refreshTokenService.deleteByMemberId(member.getId());
         member.setTokenVersion(member.getTokenVersion() + 1);
     }
 
-    // 비밀번호는 원문을 유지하고 환경별 최소 길이와 최대 20자를 검사
     private void checkPassword(String password) {
         if (password == null || password.isBlank()
                 || password.length() < passwordMinLength || password.length() > 20) {

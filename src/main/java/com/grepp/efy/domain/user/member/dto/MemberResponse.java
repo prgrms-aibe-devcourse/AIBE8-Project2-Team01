@@ -7,5 +7,7 @@ public record MemberResponse(
         String email,
         String nickname,
         String phone,
-        MemberRole role
+        MemberRole role,
+        Long imageId,
+        String imageUrl
 ) {}
