@@ -158,13 +158,65 @@ VALUES (189, '렌탈', 11),
 
 -- 로컬 테스트 회원: 공통 비밀번호 1234 (BCrypt 암호화)
 -- EXPERT 계정은 권한 테스트용이며 고수 프로필은 포함하지 않습니다.
+
 INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
-VALUES ('customer1@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '고객하나', '01012345678',
-        'USER', CURRENT_TIMESTAMP, 0),
-       ('expert1@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '고수하나', '01023456789',
-        'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('admin1@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '관리자', '01034567890',
-        'ADMIN', CURRENT_TIMESTAMP, 0);
+VALUES ('customer1@example.com',
+        '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C',
+        '고객하나', '01012345678', 'USER', CURRENT_TIMESTAMP, 0),
+
+       ('customer2@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C',
+        '고객둘', '01056789012', 'USER', CURRENT_TIMESTAMP, 0),
+
+       ('expert1@example.com',
+        '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C',
+        '매칭고수', '01023456789', 'EXPERT', CURRENT_TIMESTAMP, 0),
+
+       ('expert2@example.com',
+        '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C',
+        '미매칭고수', '01045678901', 'EXPERT', CURRENT_TIMESTAMP, 0),
+
+       ('admin1@example.com',
+        '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C',
+        '관리자', '01034567890', 'ADMIN', CURRENT_TIMESTAMP, 0);
+
+
+-- 고수 1: 이사(101), 강남구(39)
+INSERT INTO expert_profile (member_id,
+                            short_intro,
+                            description,
+                            career_years,
+                            career_description,
+                            primary_category_id,
+                            is_nationwide)
+VALUES ((SELECT id FROM member WHERE email = 'expert1@example.com'),
+        '원룸 이사 전문 고수입니다.',
+        '강남구에서 원룸 이사와 소형 이사 서비스를 제공합니다.',
+        5,
+        '이사 서비스 경력 5년',
+        101,
+        FALSE);
+
+-- 고수 2: 개발 외주(139), 서초구(38)
+INSERT INTO expert_profile (member_id,
+                            short_intro,
+                            description,
+                            career_years,
+                            career_description,
+                            primary_category_id,
+                            is_nationwide)
+VALUES ((SELECT id FROM member WHERE email = 'expert2@example.com'),
+        '백엔드 개발 전문 고수입니다.',
+        '서초구에서 Spring Boot 기반 개발 외주 서비스를 제공합니다.',
+        3,
+        'Java/Spring 백엔드 개발 경력 3년',
+        139,
+        FALSE);
+
+-- 고수 제공 서비스: 고수 1 이사(101), 고수 2 개발 외주(139)
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert1@example.com'), 101),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert2@example.com'), 139);
+
 
 -- 지역 초기 데이터
 -- 출처: https://www.code.go.kr/stdcode/regCodeL.do
@@ -459,6 +511,11 @@ VALUES (17, '1111000000', '종로구', 1),
        (282, '5277000000', '순창군', 16),
        (283, '5279000000', '고창군', 16),
        (284, '5280000000', '부안군', 16);
+
+-- 고수 활동 지역: 고수 1 강남구(39), 고수 2 서초구(38)
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert1@example.com'), 39),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert2@example.com'), 38);
 
 -- 요청서 고정 질문 모든 서비스 카테고리에서 동일하게 사용
 INSERT INTO question (content, is_required, display_order)

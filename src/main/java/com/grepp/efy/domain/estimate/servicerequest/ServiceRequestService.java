@@ -13,6 +13,8 @@ import com.grepp.efy.domain.estimate.requestanswer.RequestAnswerRepository;
 import com.grepp.efy.domain.estimate.requestanswer.RequestAnswerService;
 import com.grepp.efy.domain.estimate.requestanswer.dto.AnswerResponse;
 import com.grepp.efy.domain.estimate.servicerequest.dto.*;
+import com.grepp.efy.domain.user.expertprofile.ExpertProfile;
+import com.grepp.efy.domain.user.expertprofile.ExpertProfileService;
 import com.grepp.efy.domain.user.member.Member;
 import com.grepp.efy.domain.user.member.MemberRole;
 import com.grepp.efy.domain.user.member.MemberService;
@@ -42,6 +44,7 @@ public class ServiceRequestService {
     private final QuestionService questionService;
     private final ServiceRequestMapper serviceRequestMapper;
     private final RequestAnswerMapper requestAnswerMapper;
+    private final ExpertProfileService expertProfileService;
 
     public List<ServiceRequestListResponse> getMyRequests(Long memberId) {
         Member member = memberService.getMemberEntity(memberId);
@@ -60,12 +63,34 @@ public class ServiceRequestService {
         ServiceRequest request = getRequestEntity(requestId);
         List<AnswerResponse> requestAnswerResponse = requestAnswerService.getRequestAnswerEntity(requestId);
 
-        if (!request.getMember().getId().equals(member.getId())) {
+        if (member.getRole().equals(MemberRole.USER)) {
+            if (!request.getMember().getId().equals(member.getId())) {
+                throw new BusinessException(FORBIDDEN_EXCEPTION);
+            }
+        } else if (member.getRole().equals(MemberRole.EXPERT)) {
+            ExpertProfile expertProfile = expertProfileService.getExpertProfileByMemberId(memberId);
+            Long categoryId = request.getSecondCategory().getId();
+            Long regionId = request.getSecondRegion().getId();
+
+            boolean categoryMatched = expertProfile.getServices().stream()
+                    .anyMatch(category -> category.getId().equals(categoryId));
+
+            boolean regionMatched = expertProfile.getRegions().stream()
+                    .anyMatch(region -> region.getId().equals(regionId));
+
+            boolean nationwide = expertProfile.isNationwide();
+
+            if (!categoryMatched || (!regionMatched && !nationwide)) {
+                throw new BusinessException(FORBIDDEN_EXCEPTION);
+            }
+        } else if (!member.getRole().equals(MemberRole.ADMIN)) {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
         }
 
-        if (!member.getRole().equals(MemberRole.USER)) {
-            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        if (request.getRequestStatus().equals(RequestStatus.CLOSED)) {
+            if (!member.getRole().equals(MemberRole.ADMIN)) {
+                throw new BusinessException(REQUEST_NOT_FOUND_EXCEPTION);
+            }
         }
 
         return serviceRequestMapper.toRequestResponse(member, request, requestAnswerResponse);
@@ -167,6 +192,7 @@ public class ServiceRequestService {
     }
 
     private List<ServiceRequest> getRequestsList(Member member) {
-        return serviceRequestRepository.findByMemberIdOrderByCreatedAtDesc(member.getId());
+        return serviceRequestRepository
+                .findByMemberIdAndRequestStatusNotOrderByCreatedAtDesc(member.getId(), RequestStatus.CLOSED);
     }
 }
