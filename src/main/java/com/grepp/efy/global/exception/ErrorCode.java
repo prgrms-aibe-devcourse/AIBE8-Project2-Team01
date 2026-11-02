@@ -30,6 +30,7 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "회원을 찾을 수 없습니다."),
     DUPLICATE_EMAIL_EXCEPTION(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
     DUPLICATE_NICKNAME_EXCEPTION(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다."),
+    ACCESS_TOKEN_NOT_EXPIRED_EXCEPTION(HttpStatus.BAD_REQUEST, "Access 토큰이 아직 만료되지 않았습니다."),
     INVALID_REFRESH_TOKEN_EXCEPTION(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),
     LOGIN_FAILED_EXCEPTION(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."),
     PASSWORD_MISMATCH_EXCEPTION(HttpStatus.BAD_REQUEST, "현재 비밀번호가 올바르지 않습니다."),
@@ -55,7 +56,8 @@ public enum ErrorCode {
     INVALID_EXPERT_REGION_EXCEPTION(HttpStatus.BAD_REQUEST, "활동 지역을 중복 없이 선택하고 전국과 개별 지역을 함께 선택하지 마세요."),
 
     // ④ 커뮤니티
-
+    INVALID_POST_IMAGE_EXCEPTION(HttpStatus.BAD_REQUEST, "사용할 수 없는 이미지가 포함되어 있습니다."),
+    POST_IMAGE_REQUIRED_EXCEPTION(HttpStatus.BAD_REQUEST, "팁 게시글에는 이미지를 1장 이상 첨부해 주세요."),
 
     // ⑤ 견적 요청·매칭
     QUESTION_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "질문을 찾을 수 없습니다."),
@@ -74,6 +76,12 @@ public enum ErrorCode {
 
     // ⑧ 채팅
 
+
+    // ⑨ 파일 (공통)
+    FILE_EMPTY_EXCEPTION(HttpStatus.BAD_REQUEST, "빈 파일은 업로드할 수 없습니다."),
+    FILE_COUNT_EXCEEDED_EXCEPTION(HttpStatus.BAD_REQUEST, "파일은 한 번에 10개까지 업로드할 수 있습니다."),
+    FILE_TOO_LARGE_EXCEPTION(HttpStatus.CONTENT_TOO_LARGE, "파일 크기가 너무 큽니다."),
+    FILE_UPLOAD_FAILED_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),
 
     ;
 

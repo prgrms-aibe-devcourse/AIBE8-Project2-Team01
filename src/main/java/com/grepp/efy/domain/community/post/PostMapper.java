@@ -1,0 +1,38 @@
+package com.grepp.efy.domain.community.post;
+
+import com.grepp.efy.domain.basedata.secondcategory.SecondCategory;
+import com.grepp.efy.domain.basedata.secondregion.SecondRegion;
+import com.grepp.efy.domain.community.post.dto.PostResponse;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+
+import java.util.List;
+
+@Mapper(componentModel = "spring")
+public interface PostMapper {
+
+    @Mapping(target = "postId", source = "post.id")
+    @Mapping(target = "memberId", source = "post.member.id")
+    @Mapping(target = "memberNickname", source = "post.member.nickname")
+    @Mapping(target = "memberProfileImageUrl", ignore = true) // TODO: 프로필 사진 구현 후 반영
+    @Mapping(target = "images", source = "images")
+    @Mapping(target = "category", source = "post.secondCategory")
+    @Mapping(target = "region", source = "post.secondRegion")
+    @Mapping(target = "commentCount", ignore = true)
+    @Mapping(target = "likeCount", ignore = true)
+    @Mapping(target = "liked", ignore = true)
+    @Mapping(target = "isVisible", source = "post.visible")
+    PostResponse toResponse(Post post, List<PostResponse.PostImage> images);
+
+    @Mapping(target = "firstCategoryId", source = "firstCategory.id")
+    @Mapping(target = "firstCategoryName", source = "firstCategory.name")
+    @Mapping(target = "secondCategoryId", source = "id")
+    @Mapping(target = "secondCategoryName", source = "name")
+    PostResponse.PostCategory toCategory(SecondCategory secondCategory);
+
+    @Mapping(target = "firstRegionId", source = "firstRegion.id")
+    @Mapping(target = "firstRegionName", source = "firstRegion.name")
+    @Mapping(target = "secondRegionId", source = "id")
+    @Mapping(target = "secondRegionName", source = "name")
+    PostResponse.PostRegion toRegion(SecondRegion secondRegion);
+}
