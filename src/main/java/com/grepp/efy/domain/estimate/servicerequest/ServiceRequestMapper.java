@@ -23,7 +23,7 @@ public interface ServiceRequestMapper {
     ServiceRequest createEntity(Member member, SecondCategory secondCategory, SecondRegion secondRegion);
 
     @Mapping(target = "requestId", source = "serviceRequest.id")
-    @Mapping(target = "customerNickname", source = "member.nickname")
+    @Mapping(target = "customerNickname", source = "serviceRequest.member.nickname")
     @Mapping(target = "secondCategoryName", source = "serviceRequest.secondCategory.name")
     @Mapping(target = "secondRegionName", source = "serviceRequest.secondRegion.name")
     @Mapping(target = "createdAt", source = "serviceRequest.createdAt")
@@ -34,6 +34,6 @@ public interface ServiceRequestMapper {
     @Mapping(target = "secondCategoryName", source = "secondCategory.name")
     @Mapping(target = "secondRegionName", source = "secondRegion.name")
     ServiceRequestListResponse toRequestListResponse(ServiceRequest serviceRequest);
-    
+
     List<ServiceRequestListResponse> toRequestListResponse(List<ServiceRequest> serviceRequest);
 }

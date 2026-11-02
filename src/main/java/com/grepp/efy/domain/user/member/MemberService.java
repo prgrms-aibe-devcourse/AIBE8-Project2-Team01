@@ -131,7 +131,7 @@ public class MemberService {
         member.setDeletedAt(LocalDateTime.now());
         member.setNickname("탈퇴한회원_" + memberId);
         member.setEmail("deleted_" + memberId + "@deleted.local");
-        member.setPhone(null);
+        member.setPhone("deleted_" + memberId);
         member.setPassword(null);
         invalidateTokens(member);
     }

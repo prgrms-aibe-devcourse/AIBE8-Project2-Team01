@@ -12,6 +12,8 @@ import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
 import com.grepp.efy.global.security.CustomUserDetails;
 import com.grepp.efy.global.security.JwtProvider;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,6 +21,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -63,14 +68,29 @@ public class AuthService {
     }
 
     @Transactional
-    public LoginResult refresh(String refreshToken) {
+    public LoginResult refresh(String authorization, String refreshToken) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+        }
+        Claims claims = jwtProvider.parseExpiredToken(authorization.substring("Bearer ".length()));
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN_EXCEPTION);
         }
 
         RefreshResult refreshResult = refreshTokenService.refresh(refreshToken);
+        CustomUserDetails userDetails = refreshResult.userDetails();
+        try {
+            Long tokenVersion = claims.get("tokenVersion", Long.class);
+            if (!String.valueOf(userDetails.getMemberId()).equals(claims.getSubject())
+                    || !Objects.equals(tokenVersion, userDetails.getTokenVersion())
+                    || (claims.getNotBefore() != null && claims.getNotBefore().after(new Date()))) {
+                throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+            }
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+        }
 
-        String accessToken = jwtProvider.createToken(refreshResult.userDetails());
+        String accessToken = jwtProvider.createToken(userDetails);
         return new LoginResult(accessToken, refreshResult.refreshToken());
     }
 
