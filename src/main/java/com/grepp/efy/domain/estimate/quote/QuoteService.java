@@ -66,10 +66,6 @@ public class QuoteService {
             throw new BusinessException(DUPLICATE_QUOTE_NOT_ALLOWED);
         }
 
-        if (serviceRequest.getRequestStatus().equals(RequestStatus.OPEN)) {
-            serviceRequest.setRequestStatus(RequestStatus.MATCHED);
-        }
-
         return quoteMapper.toCreateResponse(quote);
     }
 

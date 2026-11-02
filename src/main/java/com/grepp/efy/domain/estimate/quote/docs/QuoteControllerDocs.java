@@ -29,7 +29,6 @@ public interface QuoteControllerDocs {
                     - 요청서와 고수의 서비스·지역이 매칭되어야 한다.
                     - 본인이 작성한 요청서에는 견적을 발송할 수 없다.
                     - 동일 고수는 동일 요청서에 중복 견적을 발송할 수 없다.
-                    - 견적 발송 후 요청서 상태가 MATCHED로 변경될 수 있다.
                     """
     )
     @ApiResponses({@ApiResponse(responseCode = "201", description = "견적서 작성 및 발송 성공",
