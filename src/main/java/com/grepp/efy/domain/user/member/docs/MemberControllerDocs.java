@@ -69,7 +69,7 @@ public interface MemberControllerDocs {
     ResponseEntity<MemberResponse> getMyData(CustomUserDetails userDetails);
 
     @Operation(summary = "내 정보 수정",
-            description = "로그인한 회원이 자신의 닉네임·전화번호·비밀번호를 수정합니다. 생략하거나 null인 필드는 유지하며 비밀번호 변경 후에도 로그인은 유지됩니다.")
+            description = "로그인한 회원이 자신의 닉네임·전화번호·비밀번호를 수정합니다. 생략하거나 null인 필드는 유지합니다. 닉네임·전화번호는 앞뒤 공백을 제거하고 닉네임은 1~20자·전화번호는 숫자 11자리로 검사합니다. 본인의 기존 닉네임·전화번호는 사용할 수 있습니다. 비밀번호는 개발 4~20자·배포 8~20자이며 공백·대소문자를 변경하지 않습니다. 비밀번호 변경 후에도 로그인은 유지됩니다.")
     @ApiResponse(responseCode = "200", description = "수정 성공. 수정된 회원 정보 반환")
     @ApiResponse(responseCode = "400", description = "요청 데이터가 유효하지 않거나 탈퇴 회원용 예약 닉네임을 사용함",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
@@ -79,6 +79,11 @@ public interface MemberControllerDocs {
                               "errors": {
                                 "password": "비밀번호는 4자 이상 20자 이하로 입력해 주세요."
                               }
+                            }
+                            """),
+                    @ExampleObject(name = "환경별 비밀번호 최소 길이 또는 공백 검증", value = """
+                            {
+                              "message": "입력값이 올바르지 않습니다."
                             }
                             """),
                     @ExampleObject(name = "예약 닉네임", value = """

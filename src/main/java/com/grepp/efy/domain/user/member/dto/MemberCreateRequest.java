@@ -33,4 +33,8 @@ public class MemberCreateRequest {
     public void setNickname(String nickname) {
         this.nickname = nickname == null ? null : nickname.trim();
     }
+
+    public void setPhone(String phone) {
+        this.phone = phone == null ? null : phone.trim();
+    }
 }
