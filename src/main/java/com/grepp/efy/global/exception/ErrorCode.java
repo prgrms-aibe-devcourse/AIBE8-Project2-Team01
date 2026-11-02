@@ -83,6 +83,8 @@ public enum ErrorCode {
     FILE_COUNT_EXCEEDED_EXCEPTION(HttpStatus.BAD_REQUEST, "파일은 한 번에 10개까지 업로드할 수 있습니다."),
     FILE_TOO_LARGE_EXCEPTION(HttpStatus.CONTENT_TOO_LARGE, "파일 크기가 너무 큽니다."),
     FILE_UPLOAD_FAILED_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),
+    FILE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "파일을 찾을 수 없습니다."),
+    FILE_FORBIDDEN_EXCEPTION(HttpStatus.FORBIDDEN, "본인이 업로드한 파일만 사용할 수 있습니다."),
 
     ;
 

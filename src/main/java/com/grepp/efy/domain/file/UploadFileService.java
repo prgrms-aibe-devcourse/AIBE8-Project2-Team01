@@ -70,6 +70,23 @@ public class UploadFileService {
         }
     }
 
+    // 다른 도메인에서 fileId로 파일을 연결할 때 사용
+    // 삭제된 파일은 제외하고 없으면 FILE_NOT_FOUND_EXCEPTION 발생
+    public UploadFile getUploadFileEntity(Long fileId) {
+        return uploadFileRepository.findByIdAndDeletedAtIsNull(fileId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.FILE_NOT_FOUND_EXCEPTION));
+    }
+
+    // 본인이 업로드한 파일만 반환하고 다른 사용자의 파일이면 FILE_FORBIDDEN_EXCEPTION 발생
+    // uploader는 LAZY지만 id만 꺼내서 추가 SELECT가 나가지 않는다
+    public UploadFile getMyUploadFileEntity(Long fileId, Long memberId) {
+        UploadFile file = getUploadFileEntity(fileId);
+        if (!file.getUploader().getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.FILE_FORBIDDEN_EXCEPTION);
+        }
+        return file;
+    }
+
     private void validate(List<MultipartFile> files) {
         if (files == null || files.isEmpty()) {
             throw new BusinessException(ErrorCode.FILE_EMPTY_EXCEPTION);
