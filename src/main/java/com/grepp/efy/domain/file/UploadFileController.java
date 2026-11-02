@@ -1,5 +1,6 @@
 package com.grepp.efy.domain.file;
 
+import com.grepp.efy.domain.file.docs.UploadFileControllerDocs;
 import com.grepp.efy.domain.file.dto.FileUploadResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -18,11 +19,12 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
-public class UploadFileController {
+public class UploadFileController implements UploadFileControllerDocs {
     private final UploadFileService uploadFileService;
 
     // files가 없으면 스프링 대신 서비스 validate()가 FILE_EMPTY(400)로 응답하도록 required = false
     @PostMapping(value = "/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Override
     public ResponseEntity<List<FileUploadResponse>> uploadFiles(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(value = "files", required = false) List<MultipartFile> files,
