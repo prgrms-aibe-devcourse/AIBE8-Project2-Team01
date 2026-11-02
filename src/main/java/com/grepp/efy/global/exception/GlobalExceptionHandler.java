@@ -12,10 +12,12 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
@@ -75,6 +77,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException() {
         return toResponse(ErrorCode.INVALID_TYPE_EXCEPTION);
+    }
+
+    // [스프링] 400 필수 쿼리 파라미터·폼 값·multipart 파일이 요청에 없음
+    // 예) POST /api/files 에서 visibility를 빼고 보냄
+    @ExceptionHandler({MissingServletRequestParameterException.class, MissingServletRequestPartException.class})
+    public ResponseEntity<ErrorResponse> handleMissingRequestValueException() {
+        return toResponse(ErrorCode.INVALID_INPUT_EXCEPTION);
     }
 
     // [스프링] 401 컨트롤러·서비스에서 인증에 실패함
