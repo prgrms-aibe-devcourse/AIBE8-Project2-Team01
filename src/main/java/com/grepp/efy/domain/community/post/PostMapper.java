@@ -14,7 +14,7 @@ public interface PostMapper {
     @Mapping(target = "postId", source = "post.id")
     @Mapping(target = "memberId", source = "post.member.id")
     @Mapping(target = "memberNickname", source = "post.member.nickname")
-    @Mapping(target = "memberProfileImageUrl", ignore = true) // TODO: 프로필 사진 구현 후 반영
+    @Mapping(target = "memberProfileImageUrl", source = "memberProfileImageUrl")
     @Mapping(target = "images", source = "images")
     @Mapping(target = "category", source = "post.secondCategory")
     @Mapping(target = "region", source = "post.secondRegion")
@@ -22,7 +22,7 @@ public interface PostMapper {
     @Mapping(target = "likeCount", ignore = true)
     @Mapping(target = "liked", ignore = true)
     @Mapping(target = "isVisible", source = "post.visible")
-    PostResponse toResponse(Post post, List<PostResponse.PostImage> images);
+    PostResponse toResponse(Post post, List<PostResponse.PostImage> images, String memberProfileImageUrl);
 
     @Mapping(target = "firstCategoryId", source = "firstCategory.id")
     @Mapping(target = "firstCategoryName", source = "firstCategory.name")
