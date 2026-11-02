@@ -66,6 +66,8 @@ public enum ErrorCode {
     DUPLICATE_ANSWER_EXCEPTION(HttpStatus.BAD_REQUEST, "동일한 질문에 중복 답변할 수 없습니다."),
     REQUEST_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "요청서를 찾을 수 없습니다."),
     INVALID_REQUEST_STATUS_EXCEPTION(HttpStatus.BAD_REQUEST, "취소할 수 없는 상태의 요청서입니다."),
+    CLOSED_REQUEST_QUOTE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "취소되었거나 종료된 요청서에는 견적을 발송할 수 없습니다."),
+    DUPLICATE_QUOTE_NOT_ALLOWED(HttpStatus.CONFLICT, "동일한 요청서에는 견적을 중복해서 발송할 수 없습니다."),
 
     // ⑥ 리뷰·찜·좋아요
 

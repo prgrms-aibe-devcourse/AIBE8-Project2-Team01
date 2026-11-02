@@ -541,6 +541,17 @@ VALUES ((SELECT ep.id
                   JOIN member m ON ep.member_id = m.id
          WHERE m.email = 'expert2@example.com'), 38);
 
+-- expert2를 이사 서비스 매칭 테스트 대상으로 추가
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+SELECT ep.id, 101
+FROM expert_profile ep
+         JOIN member m ON ep.member_id = m.id
+WHERE m.email = 'expert2@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM expert_profile_services eps
+                  WHERE eps.expert_profile_id = ep.id
+                    AND eps.services_id = 101);
+
 -- 요청서 고정 질문 모든 서비스 카테고리에서 동일하게 사용
 INSERT INTO question (content, is_required, display_order)
 VALUES ('어떤 서비스가 필요하신가요?', TRUE, 1),

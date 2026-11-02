@@ -1,0 +1,89 @@
+package com.grepp.efy.domain.estimate.quote;
+
+import com.grepp.efy.domain.estimate.enums.RequestStatus;
+import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
+import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateResponse;
+import com.grepp.efy.domain.estimate.servicerequest.ServiceRequest;
+import com.grepp.efy.domain.estimate.servicerequest.ServiceRequestService;
+import com.grepp.efy.domain.user.expertprofile.ExpertProfile;
+import com.grepp.efy.domain.user.expertprofile.ExpertProfileService;
+import com.grepp.efy.domain.user.member.Member;
+import com.grepp.efy.domain.user.member.MemberRole;
+import com.grepp.efy.domain.user.member.MemberService;
+import com.grepp.efy.global.exception.BusinessException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
+
+import static com.grepp.efy.global.exception.ErrorCode.*;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class QuoteService {
+
+    private final QuoteRepository quoteRepository;
+    private final MemberService memberService;
+    private final ServiceRequestService serviceRequestService;
+    private final ExpertProfileService expertProfileService;
+    private final QuoteMapper quoteMapper;
+
+    @Transactional
+    public QuoteCreateResponse createQuote(Long memberId, Long requestId, QuoteCreateRequest createRequest) {
+        Member member = memberService.getMemberEntity(memberId);
+
+        if (!member.getRole().equals(MemberRole.EXPERT)) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        ExpertProfile expertProfile = expertProfileService.getExpertProfileByMemberId(memberId);
+        ServiceRequest serviceRequest = serviceRequestService.getRequestEntity(requestId);
+
+        if (serviceRequest.getMember().getId().equals(memberId)) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        if (serviceRequest.getRequestStatus().equals(RequestStatus.CLOSED)) {
+            throw new BusinessException(CLOSED_REQUEST_QUOTE_NOT_ALLOWED);
+        }
+
+        if (!canSendQuote(expertProfile, serviceRequest)) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        if (quoteRepository.existsByExpertProfileAndServiceRequest(expertProfile, serviceRequest)) {
+            throw new BusinessException(DUPLICATE_QUOTE_NOT_ALLOWED);
+        }
+
+        Quote quote = quoteMapper.toEntity(createRequest, expertProfile, serviceRequest);
+        try {
+            quoteRepository.saveAndFlush(quote);
+        } catch (DataIntegrityViolationException e) {
+            // uk_quote_expert_request 제약 위반은 중복 견적으로 처리
+            throw new BusinessException(DUPLICATE_QUOTE_NOT_ALLOWED);
+        }
+
+        if (serviceRequest.getRequestStatus().equals(RequestStatus.OPEN)) {
+            serviceRequest.setRequestStatus(RequestStatus.MATCHED);
+        }
+
+        return quoteMapper.toCreateResponse(quote);
+    }
+
+    private boolean canSendQuote(ExpertProfile expertProfile, ServiceRequest serviceRequest) {
+        Long categoryId = serviceRequest.getSecondCategory().getId();
+        Long regionId = serviceRequest.getSecondRegion().getId();
+
+        boolean categoryMatched = expertProfile.getServices().stream()
+                .anyMatch(category -> Objects.equals(category.getId(), categoryId));
+
+        boolean regionMatched = expertProfile.isNationwide()
+                || expertProfile.getRegions().stream()
+                .anyMatch(region -> Objects.equals(region.getId(), regionId));
+
+        return categoryMatched && regionMatched;
+    }
+}
