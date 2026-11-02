@@ -30,6 +30,7 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "회원을 찾을 수 없습니다."),
     DUPLICATE_EMAIL_EXCEPTION(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
     DUPLICATE_NICKNAME_EXCEPTION(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다."),
+    ACCESS_TOKEN_NOT_EXPIRED_EXCEPTION(HttpStatus.BAD_REQUEST, "Access 토큰이 아직 만료되지 않았습니다."),
     INVALID_REFRESH_TOKEN_EXCEPTION(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),
     LOGIN_FAILED_EXCEPTION(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."),
     PASSWORD_MISMATCH_EXCEPTION(HttpStatus.BAD_REQUEST, "현재 비밀번호가 올바르지 않습니다."),
