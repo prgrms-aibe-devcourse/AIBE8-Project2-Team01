@@ -1,5 +1,6 @@
 package com.grepp.efy.domain.estimate.quote;
 
+import com.grepp.efy.domain.estimate.enums.QuoteStatus;
 import com.grepp.efy.domain.estimate.servicerequest.ServiceRequest;
 import com.grepp.efy.domain.user.expertprofile.ExpertProfile;
 import jakarta.persistence.*;
@@ -37,6 +38,10 @@ public class Quote {
 
     @Column(nullable = false)
     private Long price;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private QuoteStatus quoteStatus;
 
     @Column(name = "sent_at", nullable = false, updatable = false)
     private LocalDateTime sentAt;
