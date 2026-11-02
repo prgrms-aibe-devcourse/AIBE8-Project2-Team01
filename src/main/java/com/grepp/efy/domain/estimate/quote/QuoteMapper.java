@@ -8,6 +8,8 @@ import com.grepp.efy.domain.user.expertprofile.ExpertProfile;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface QuoteMapper {
 
@@ -19,7 +21,7 @@ public interface QuoteMapper {
     @Mapping(target = "description", source = "createRequest.description")
     Quote toEntity(QuoteCreateRequest createRequest, ExpertProfile expertProfile, ServiceRequest serviceRequest);
 
-    @Mapping(target = "quoteId", source = "quote.id")
+    @Mapping(target = "quoteId", source = "id")
     QuoteCreateResponse toCreateResponse(Quote quote);
 
     @Mapping(target = "quoteId", source = "id")
@@ -27,4 +29,6 @@ public interface QuoteMapper {
     @Mapping(target = "secondCategoryName", source = "serviceRequest.secondCategory.name")
     @Mapping(target = "secondRegionName", source = "serviceRequest.secondRegion.name")
     QuoteResponse toResponse(Quote quote);
+
+    List<QuoteResponse> toResponseList(List<Quote> quotes);
 }

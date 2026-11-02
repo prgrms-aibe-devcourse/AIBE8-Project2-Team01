@@ -38,11 +38,9 @@ public class QuoteService {
         validateExpertAccess(memberId);
         List<QuoteStatus> visibleStatuses = List.of(QuoteStatus.SENT, QuoteStatus.REQUESTED);
 
-        return quoteRepository
-                .findAllByExpertProfileMemberIdAndQuoteStatusInOrderBySentAtDesc(memberId, visibleStatuses)
-                .stream()
-                .map(quoteMapper::toResponse)
-                .toList();
+        List<Quote> quoteList = quoteRepository
+                .findAllByExpertProfileMemberIdAndQuoteStatusInOrderBySentAtDesc(memberId, visibleStatuses);
+        return quoteMapper.toResponseList(quoteList);
     }
 
     public QuoteResponse getQuote(Long memberId, Long quoteId) {
