@@ -21,16 +21,21 @@ import org.springframework.http.ResponseEntity;
 public interface AuthControllerDocs {
 
     @Operation(summary = "회원가입",
-            description = "이메일·비밀번호·닉네임·전화번호로 일반 사용자(USER) 계정을 생성합니다. 이메일은 앞뒤 공백 제거 및 소문자 변환 후 중복을 검사하며 비밀번호는 응답하지 않습니다.")
+            description = "이메일·비밀번호·닉네임·전화번호로 일반 사용자(USER) 계정을 생성합니다. 이메일은 앞뒤 공백 제거 및 소문자 변환 후 형식·최대 50자·중복을 검사합니다. 닉네임과 전화번호도 앞뒤 공백을 제거합니다. 닉네임은 1~20자이며 공백만 입력할 수 없고 전화번호는 숫자 11자리입니다. 비밀번호는 개발 4~20자·배포 8~20자이며 공백·대소문자를 변경하지 않고 응답에도 포함하지 않습니다.")
     @ApiResponse(responseCode = "201", description = "가입 성공. 생성된 회원 정보 반환")
     @ApiResponse(responseCode = "400", description = "입력값 검증 실패 또는 탈퇴 회원용 예약값 사용",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
-                    @ExampleObject(name = "비밀번호 길이", value = """
+                    @ExampleObject(name = "DTO 비밀번호 길이 검증", value = """
                             {
                               "message": "입력값이 올바르지 않습니다.",
                               "errors": {
                                 "password": "비밀번호는 4자 이상 20자 이하로 입력해 주세요."
                               }
+                            }
+                            """),
+                    @ExampleObject(name = "환경별 비밀번호 최소 길이 검증", value = """
+                            {
+                              "message": "입력값이 올바르지 않습니다."
                             }
                             """),
                     @ExampleObject(name = "전화번호 누락", value = """
