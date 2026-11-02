@@ -86,6 +86,7 @@ public enum ErrorCode {
     FILE_UPLOAD_FAILED_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),
     FILE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "파일을 찾을 수 없습니다."),
     FILE_FORBIDDEN_EXCEPTION(HttpStatus.FORBIDDEN, "본인이 업로드한 파일만 사용할 수 있습니다."),
+    FILE_INVALID_TYPE_EXCEPTION(HttpStatus.BAD_REQUEST, "허용하지 않는 파일 형식입니다."),
 
     ;
 
