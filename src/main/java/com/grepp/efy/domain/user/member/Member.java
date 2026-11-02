@@ -1,5 +1,6 @@
 package com.grepp.efy.domain.user.member;
 
+import com.grepp.efy.domain.file.UploadFile;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,6 +29,10 @@ public class Member {
 
     @Column(length = 30, nullable = false, unique = true)
     private String phone;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "image_id", unique = true)
+    private UploadFile image;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

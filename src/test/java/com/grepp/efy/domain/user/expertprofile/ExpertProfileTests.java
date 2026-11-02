@@ -1,6 +1,8 @@
 package com.grepp.efy.domain.user.expertprofile;
 
 import com.grepp.efy.domain.user.member.MemberService;
+import com.grepp.efy.domain.file.UploadFileVisibility;
+import com.grepp.efy.global.storage.SupabaseStorageClient;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
 import com.grepp.efy.global.security.CustomUserDetails;
@@ -24,6 +26,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -42,6 +45,7 @@ class ExpertProfileTests {
     @Autowired JdbcTemplate jdbcTemplate;
     @Autowired MemberService memberService;
     @Autowired JwtProvider jwtProvider;
+    @Autowired SupabaseStorageClient storageClient;
     @MockitoSpyBean ExpertProfileMapper expertProfileMapper;
     private final List<Long> memberIds = new ArrayList<>();
 
@@ -54,6 +58,8 @@ class ExpertProfileTests {
                         + " where expert_profile_id in (select id from expert_profile where member_id = ?)", memberId);
             }
             jdbcTemplate.update("delete from expert_profile where member_id = ?", memberId);
+            jdbcTemplate.update("update member set image_id = null where id = ?", memberId);
+            jdbcTemplate.update("delete from file where uploader_id = ?", memberId);
             jdbcTemplate.update("delete from member where id = ?", memberId);
         }
     }
@@ -84,6 +90,8 @@ class ExpertProfileTests {
                         .contentType(MediaType.APPLICATION_JSON).content(BODY))
                 .andExpect(status().isConflict());
         assertEquals(1, profileCount(memberId));
+        assertEquals(true, document.get("imageId").isNull());
+        assertEquals(true, document.get("imageUrl").isNull());
     }
 
     @Test
@@ -195,12 +203,88 @@ class ExpertProfileTests {
         Long memberId = createMember("USER");
         // 응답 변환 단계에서 실패시켜 앞서 실행된 INSERT와 역할 변경의 롤백을 확인한다.
         doThrow(new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION))
-                .when(expertProfileMapper).toResponse(any(ExpertProfile.class));
+                .when(expertProfileMapper).toResponse(any(ExpertProfile.class), nullable(String.class));
         mockMvc.perform(post(URL).header("Authorization", "Bearer " + token(memberId))
                         .contentType(MediaType.APPLICATION_JSON).content(BODY))
                 .andExpect(status().isBadRequest());
         assertEquals("USER", role(memberId));
         assertEquals(0, profileCount(memberId));
+    }
+
+    @Test
+    void 본인_공개이미지를_등록하고_공개조회한다() throws Exception {
+        Long memberId = createMember("USER");
+        Long fileId = createFile(memberId, "PUBLIC", false);
+        String path = jdbcTemplate.queryForObject("select storage_path from file where id = ?", String.class, fileId);
+        String imageUrl = storageClient.createUrl(UploadFileVisibility.PUBLIC, path);
+        String response = mockMvc.perform(post(URL)
+                        .header("Authorization", "Bearer " + token(memberId))
+                        .contentType(MediaType.APPLICATION_JSON).content(imageBody(fileId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.imageId").value(fileId.intValue()))
+                .andExpect(jsonPath("$.imageUrl").value(imageUrl))
+                .andReturn().getResponse().getContentAsString();
+        long profileId = new ObjectMapper().readTree(response).get("id").asLong();
+        assertEquals(fileId, jdbcTemplate.queryForObject(
+                "select image_id from member where id = ?", Long.class, memberId));
+        mockMvc.perform(get("/api/public/expert-profiles/" + profileId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imageId").value(fileId.intValue()))
+                .andExpect(jsonPath("$.imageUrl").value(imageUrl));
+    }
+
+    @Test
+    void 다른회원_비공개_삭제_없는파일은_연결없이_거절한다() throws Exception {
+        Long memberId = createMember("USER");
+        Long otherMemberId = createMember("USER");
+        Long original = createFile(memberId, "PUBLIC", false);
+        jdbcTemplate.update("update member set image_id = ? where id = ?", original, memberId);
+        List<Long> fileIds = List.of(createFile(otherMemberId, "PUBLIC", false),
+                createFile(memberId, "PRIVATE", false), createFile(memberId, "PUBLIC", true), Long.MAX_VALUE);
+        int[] statuses = {403, 400, 404, 404};
+        for (int i = 0; i < fileIds.size(); i++) {
+            mockMvc.perform(post(URL).header("Authorization", "Bearer " + token(memberId))
+                            .contentType(MediaType.APPLICATION_JSON).content(imageBody(fileIds.get(i))))
+                    .andExpect(status().is(statuses[i]));
+            assertEquals(original, jdbcTemplate.queryForObject(
+                    "select image_id from member where id = ?", Long.class, memberId));
+            assertEquals("USER", role(memberId));
+            assertEquals(0, profileCount(memberId));
+        }
+    }
+
+    @Test
+    void 이미지연결_후_실패하면_기존사진과_회원역할을_유지한다() throws Exception {
+        Long memberId = createMember("USER");
+        Long original = createFile(memberId, "PUBLIC", false);
+        Long replacement = createFile(memberId, "PUBLIC", false);
+        jdbcTemplate.update("update member set image_id = ? where id = ?", original, memberId);
+        doThrow(new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION))
+                .when(expertProfileMapper).toResponse(any(ExpertProfile.class), nullable(String.class));
+        mockMvc.perform(post(URL).header("Authorization", "Bearer " + token(memberId))
+                        .contentType(MediaType.APPLICATION_JSON).content(imageBody(replacement)))
+                .andExpect(status().isBadRequest());
+        assertEquals(original, jdbcTemplate.queryForObject(
+                "select image_id from member where id = ?", Long.class, memberId));
+        assertEquals("USER", role(memberId));
+        assertEquals(0, profileCount(memberId));
+    }
+
+    private String imageBody(Long fileId) {
+        return BODY.replace("\"nationwide\":true", "\"nationwide\":true,\"imageId\":" + fileId);
+    }
+
+    private Long createFile(Long memberId, String visibility, boolean deleted) {
+        String path = UUID.randomUUID() + ".png";
+        jdbcTemplate.update("""
+                insert into file(uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+                values (?, ?, 'profile.png', 'image/png', 100, ?, CURRENT_TIMESTAMP)
+                """, memberId, path, visibility);
+        Long id = jdbcTemplate.queryForObject("select id from file where storage_path = ?", Long.class, path);
+        if (deleted) {
+            jdbcTemplate.update("update file set deleted_at = CURRENT_TIMESTAMP where id = ?", id);
+        }
+        return id;
     }
 
     private Long createMember(String role) {

@@ -12,6 +12,8 @@ public record ExpertProfileResponse(
         String description,
         Integer careerYears,
         String careerDescription,
+        Long imageId,
+        String imageUrl,
         Set<SecondCategoryResponse> services,
         SecondCategoryResponse primaryCategory,
         boolean nationwide,

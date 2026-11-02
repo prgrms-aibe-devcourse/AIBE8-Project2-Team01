@@ -26,6 +26,8 @@ public class ExpertProfileCreateRequest {
     @Size(max = 1000, message = "경력 설명은 1000자 이내로 입력해 주세요.")
     private String careerDescription;
 
+    private Long imageId;
+
     // 요청에서는 중복을 검사할 수 있도록 List로 받는다.
     @NotEmpty(message = "제공 서비스를 하나 이상 선택해 주세요.")
     private List<Long> serviceIds;
