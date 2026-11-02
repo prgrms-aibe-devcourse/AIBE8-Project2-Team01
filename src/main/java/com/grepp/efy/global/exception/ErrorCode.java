@@ -56,7 +56,8 @@ public enum ErrorCode {
     INVALID_EXPERT_REGION_EXCEPTION(HttpStatus.BAD_REQUEST, "활동 지역을 중복 없이 선택하고 전국과 개별 지역을 함께 선택하지 마세요."),
 
     // ④ 커뮤니티
-
+    INVALID_POST_IMAGE_EXCEPTION(HttpStatus.BAD_REQUEST, "사용할 수 없는 이미지가 포함되어 있습니다."),
+    POST_IMAGE_REQUIRED_EXCEPTION(HttpStatus.BAD_REQUEST, "팁 게시글에는 이미지를 1장 이상 첨부해 주세요."),
 
     // ⑤ 견적 요청·매칭
     QUESTION_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "질문을 찾을 수 없습니다."),

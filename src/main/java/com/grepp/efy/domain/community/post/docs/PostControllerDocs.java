@@ -1,0 +1,84 @@
+package com.grepp.efy.domain.community.post.docs;
+
+import com.grepp.efy.domain.community.post.dto.PostRequest;
+import com.grepp.efy.domain.community.post.dto.PostResponse;
+import com.grepp.efy.global.exception.ErrorResponse;
+import com.grepp.efy.global.security.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
+
+@Tag(name = "커뮤니티 게시글", description = "커뮤니티 게시글 API")
+public interface PostControllerDocs {
+
+    @Operation(summary = "게시글 작성",
+            description = "이미지는 먼저 POST /api/files로 PUBLIC 업로드한 뒤 받은 fileId를 imageIds에 원하는 순서대로 넣습니다(최대 10개). "
+                    + "본인이 올린 PUBLIC 파일만 사용할 수 있습니다. "
+                    + "TIP·PROMOTION 게시판은 고수만 작성할 수 있고, TIP 게시판은 이미지가 1장 이상 필요합니다. "
+                    + "카테고리와 지역은 선택이며, 2차 카테고리·2차 지역 ID로 보냅니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "201", description = "작성 성공",
+            content = @Content(schema = @Schema(implementation = PostResponse.class)))
+    @ApiResponse(responseCode = "400", description = "입력값 오류, 잘못된 JSON·게시판 종류, 사용할 수 없는 이미지, TIP 이미지 누락",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "입력값 오류", value = """
+                            {
+                              "message": "입력값이 올바르지 않습니다.",
+                              "errors": {
+                                "title": "제목은 2자 이상 30자 이하로 입력해 주세요."
+                              }
+                            }
+                            """),
+                    @ExampleObject(name = "잘못된 JSON·게시판 종류", value = """
+                            {
+                              "message": "요청 본문을 읽을 수 없습니다. JSON 형식을 확인해주세요."
+                            }
+                            """),
+                    @ExampleObject(name = "사용할 수 없는 이미지", value = """
+                            {
+                              "message": "사용할 수 없는 이미지가 포함되어 있습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "TIP 이미지 누락", value = """
+                            {
+                              "message": "팁 게시글에는 이미지를 1장 이상 첨부해 주세요."
+                            }
+                            """)
+            }))
+    @ApiResponse(responseCode = "401", description = "인증 실패")
+    @ApiResponse(responseCode = "403", description = "고수가 아닌 회원이 TIP·PROMOTION 게시판에 작성",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "권한 없음", value = """
+                            {
+                              "message": "접근 권한이 없습니다."
+                            }
+                            """)
+            }))
+    @ApiResponse(responseCode = "404", description = "회원·카테고리·지역 없음",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "회원 없음", value = """
+                            {
+                              "message": "회원을 찾을 수 없습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "카테고리 없음", value = """
+                            {
+                              "message": "카테고리를 찾을 수 없습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "지역 없음", value = """
+                            {
+                              "message": "지역을 찾을 수 없습니다."
+                            }
+                            """)
+            }))
+    ResponseEntity<PostResponse> createPost(
+            @Parameter(hidden = true) CustomUserDetails userDetails,
+            PostRequest postRequest);
+}
