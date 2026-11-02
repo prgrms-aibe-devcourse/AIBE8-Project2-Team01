@@ -35,13 +35,7 @@ public class QuoteService {
     private final QuoteMapper quoteMapper;
 
     public List<QuoteResponse> getQuotes(Long memberId) {
-        Member member = memberService.getMemberEntity(memberId);
-
-        if (!member.getRole().equals(MemberRole.EXPERT)) {
-            throw new BusinessException(FORBIDDEN_EXCEPTION);
-        }
-
-        expertProfileService.getExpertProfileByMemberId(memberId);
+        validateExpertAccess(memberId);
         List<QuoteStatus> visibleStatuses = List.of(QuoteStatus.SENT, QuoteStatus.REQUESTED);
 
         return quoteRepository
@@ -49,6 +43,18 @@ public class QuoteService {
                 .stream()
                 .map(quoteMapper::toResponse)
                 .toList();
+    }
+
+    public QuoteResponse getQuote(Long memberId, Long quoteId) {
+        validateExpertAccess(memberId);
+        Quote quote = getQuoteEntity(quoteId);
+        Long quoteOwnerId = quote.getExpertProfile().getMember().getId();
+
+        if (!quoteOwnerId.equals(memberId)) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        return quoteMapper.toResponse(quote);
     }
 
     @Transactional
@@ -101,5 +107,20 @@ public class QuoteService {
                 .anyMatch(region -> Objects.equals(region.getId(), regionId));
 
         return categoryMatched && regionMatched;
+    }
+
+    private void validateExpertAccess(Long memberId) {
+        Member member = memberService.getMemberEntity(memberId);
+
+        if (!member.getRole().equals(MemberRole.EXPERT)) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        expertProfileService.getExpertProfileByMemberId(memberId);
+    }
+
+    public Quote getQuoteEntity(Long quoteId) {
+        return quoteRepository.findById(quoteId)
+                .orElseThrow(() -> new BusinessException(QUOTE_NOT_FOUND_EXCEPTION));
     }
 }

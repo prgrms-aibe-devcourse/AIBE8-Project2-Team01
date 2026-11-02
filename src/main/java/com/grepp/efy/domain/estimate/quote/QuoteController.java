@@ -30,6 +30,16 @@ public class QuoteController implements QuoteControllerDocs {
     }
 
     @Override
+    @GetMapping("/quotes/{quoteId}")
+    public ResponseEntity<QuoteResponse> getQuote(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long quoteId
+    ) {
+        QuoteResponse response = quoteService.getQuote(userDetails.getMemberId(), quoteId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
     @PostMapping("/requests/{requestId}/quotes")
     public ResponseEntity<QuoteCreateResponse> createQuote(
             @AuthenticationPrincipal CustomUserDetails userDetails,

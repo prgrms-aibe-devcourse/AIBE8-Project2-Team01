@@ -2,6 +2,7 @@ package com.grepp.efy.domain.estimate.quote.docs;
 
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateResponse;
+import com.grepp.efy.domain.estimate.quote.dto.QuoteResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,6 +20,30 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "견적서", description = "견적서 작성 및 발송 API")
 public interface QuoteControllerDocs {
+
+    @Operation(
+            summary = "견적서 상세 조회",
+            description = """
+                    로그인한 고수가 본인이 발송한 견적서의 상세 정보를 조회한다.
+                    
+                    - EXPERT 권한이 필요하다.
+                    - 본인이 발송한 견적서만 조회할 수 있다.
+                    - 견적서 상태와 요청서 기본 정보를 함께 반환한다.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "견적서 상세 조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = QuoteResponse.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "403", description = "고수 권한이 없거나 본인의 견적서가 아님"),
+            @ApiResponse(responseCode = "404", description = "견적서 또는 고수 프로필을 찾을 수 없음")
+    })
+    ResponseEntity<QuoteResponse> getQuote(
+            @Parameter(name = "quoteId", description = "조회할 견적서 ID", required = true, example = "1")
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long quoteId);
 
     @Operation(
             summary = "견적서 작성 및 발송",
