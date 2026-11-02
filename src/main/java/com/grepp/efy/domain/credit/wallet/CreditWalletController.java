@@ -19,7 +19,6 @@ public class CreditWalletController implements CreditWalletControllerDocs {
     @GetMapping("/members/me/credit")
     @Override
     public ResponseEntity<CreditBalanceResponse> getMyCredit(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        CreditBalanceResponse response = creditWalletService.getMyCredit(userDetails.getMemberId());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(creditWalletService.getMyCredit(userDetails.getMemberId()));
     }
 }
