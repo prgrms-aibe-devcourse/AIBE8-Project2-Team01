@@ -30,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@SuppressWarnings("NonAsciiCharacters")
 class MemberImageTests {
     private static final String URL = "/api/members/me/image";
     @Autowired MockMvc mockMvc;
