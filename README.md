@@ -1,3 +1,4 @@
+<!--suppress HtmlDeprecatedAttribute -->
 <div align="center">
 
 <img src="docs/images/efy-logo.png" width="420" alt="EFY 로고" />
@@ -14,7 +15,7 @@
 
 <br />
 
-<table align="center" style="display: table; margin: 0 auto;">
+<table align="center">
   <tr>
     <th align="center" width="20%">이현정 · 팀장</th>
     <th align="center" width="20%">김태민</th>
@@ -74,10 +75,10 @@ EFY는 이사·과외 등 일상에 필요한 서비스를 제공하는 전문�
 2. 팀 페이지에서 공유된 비밀값을 채운다.
 3. `./gradlew bootRun` 또는 IntelliJ에서 `EfyApplication`을 실행한다.
 
-| 주소                                        | 용도                                     |
-|---------------------------------------------|------------------------------------------|
-| http://localhost:8080/swagger-ui/index.html | API 문서                                 |
-| http://localhost:8080/h2-console            | H2 콘솔 (JDBC URL: `jdbc:h2:mem:gosuDB`) |
+| 주소                                          | 용도                                     |
+|-----------------------------------------------|------------------------------------------|
+| <http://localhost:8080/swagger-ui/index.html> | API 문서                                 |
+| <http://localhost:8080/h2-console>            | H2 콘솔 (JDBC URL: `jdbc:h2:mem:gosuDB`) |
 
 ## 초기 구현 범위
 
