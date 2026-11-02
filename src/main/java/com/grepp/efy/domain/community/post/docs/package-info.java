@@ -1,5 +1,5 @@
 /**
- * ④ 커뮤니티 - 게시글 (Post)
- * 담당: (미정)
+ * ④ 커뮤니티 - 게시글 (Post) <br>
+ * 담당: 박건웅
  */
 package com.grepp.efy.domain.community.post.docs;
