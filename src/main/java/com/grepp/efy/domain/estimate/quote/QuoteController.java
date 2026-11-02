@@ -21,6 +21,7 @@ public class QuoteController implements QuoteControllerDocs {
 
     private final QuoteService quoteService;
 
+    @Override
     @GetMapping("/quotes")
     public ResponseEntity<List<QuoteResponse>> getQuotes(
             @AuthenticationPrincipal CustomUserDetails userDetails
