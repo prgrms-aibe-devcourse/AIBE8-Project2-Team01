@@ -43,7 +43,7 @@ public class AuthService {
     public MemberResponse signup(MemberCreateRequest memberCreateRequest) {
 
         Member member = memberService.create(memberCreateRequest);
-        return memberMapper.toResponse(member);
+        return memberMapper.toResponse(member, null);
     }
 
     @Transactional

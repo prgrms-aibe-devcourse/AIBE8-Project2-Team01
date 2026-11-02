@@ -17,6 +17,7 @@ public interface MemberMapper {
     @Mapping(target = "image", ignore = true)
     Member toEntity(MemberCreateRequest memberCreateRequest);
 
-    MemberResponse toResponse(Member member);
+    @Mapping(target = "imageId", source = "member.image.id")
+    MemberResponse toResponse(Member member, String imageUrl);
 
 }

@@ -1,6 +1,7 @@
 package com.grepp.efy.domain.user.member.docs;
 
 import com.grepp.efy.domain.user.member.dto.MemberResponse;
+import com.grepp.efy.domain.user.member.dto.MemberImageUpdateRequest;
 import com.grepp.efy.domain.user.member.dto.MemberRoleUpdateRequest;
 import com.grepp.efy.domain.user.member.dto.MemberUpdateRequest;
 import com.grepp.efy.global.common.PageResponse;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 
 @Tag(name = "회원", description = "회원 정보 조회·수정·탈퇴 및 관리자 회원 관리 API")
@@ -48,7 +50,7 @@ public interface MemberControllerDocs {
     ResponseEntity<PageResponse<MemberResponse>> getMembers(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
     @Operation(summary = "내 정보 조회",
-            description = "로그인한 회원이 자신의 정보를 조회합니다. 비밀번호는 반환하지 않습니다.")
+            description = "로그인한 회원이 자신의 정보와 프로필 이미지 ID·공개 URL을 조회합니다. 사진이 없으면 이미지 정보는 null입니다. 삭제·비공개 파일의 URL과 비밀번호는 반환하지 않습니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공. 본인의 회원 정보 반환")
     @ApiResponse(responseCode = "401", description = "인증 정보가 없거나 유효하지 않음",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
@@ -122,6 +124,18 @@ public interface MemberControllerDocs {
                             """)
             }))
     ResponseEntity<MemberResponse> updateMember(CustomUserDetails userDetails, MemberUpdateRequest request);
+
+    @Operation(summary = "본인 프로필 사진 변경",
+            description = "공통 파일 업로드 후 받은 imageId를 전달합니다. 본인의 삭제되지 않은 PUBLIC 파일만 연결하며 기존 사진은 교체됩니다. 실패하면 기존 사진을 유지합니다. USER·EXPERT·ADMIN 모두 본인 사진을 변경할 수 있습니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "200", description = "변경된 회원 정보와 이미지 ID·URL 반환",
+            content = @Content(schema = @Schema(implementation = MemberResponse.class)))
+    @ApiResponse(responseCode = "400", description = "imageId 누락·null·형식 오류 또는 비공개 파일 선택")
+    @ApiResponse(responseCode = "401", description = "인증 실패 또는 탈퇴 회원")
+    @ApiResponse(responseCode = "403", description = "다른 회원의 파일 선택")
+    @ApiResponse(responseCode = "404", description = "파일이 없거나 삭제됨")
+    ResponseEntity<MemberResponse> updateImage(
+            @Parameter(hidden = true) CustomUserDetails userDetails, MemberImageUpdateRequest request);
 
     @Operation(summary = "본인 역할 전환",
             description = "로그인한 회원의 역할을 USER 또는 EXPERT로 전환합니다. EXPERT 전환에는 기존 고수 프로필이 필요합니다. "
@@ -247,4 +261,11 @@ public interface MemberControllerDocs {
                             """)
             }))
     ResponseEntity<Void> deleteMemberByAdmin(Long memberId);
+    @Operation(summary = "본인 프로필 사진 연결 해제",
+            description = "회원의 사진 연결만 해제하고 저장소 파일은 삭제하지 않습니다. 사진이 없어도 성공합니다. 이후 내 정보와 고수 공개 조회의 이미지 ID·URL은 null입니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "204", description = "사진 연결 해제 성공")
+    @ApiResponse(responseCode = "401", description = "인증 실패 또는 탈퇴 회원")
+    ResponseEntity<Void> deleteImage(@Parameter(hidden = true) CustomUserDetails userDetails);
+
 }
