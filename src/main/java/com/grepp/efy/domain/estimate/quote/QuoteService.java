@@ -1,8 +1,10 @@
 package com.grepp.efy.domain.estimate.quote;
 
+import com.grepp.efy.domain.estimate.enums.QuoteStatus;
 import com.grepp.efy.domain.estimate.enums.RequestStatus;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateResponse;
+import com.grepp.efy.domain.estimate.quote.dto.QuoteResponse;
 import com.grepp.efy.domain.estimate.servicerequest.ServiceRequest;
 import com.grepp.efy.domain.estimate.servicerequest.ServiceRequestService;
 import com.grepp.efy.domain.user.expertprofile.ExpertProfile;
@@ -16,6 +18,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Objects;
 
 import static com.grepp.efy.global.exception.ErrorCode.*;
@@ -30,6 +33,23 @@ public class QuoteService {
     private final ServiceRequestService serviceRequestService;
     private final ExpertProfileService expertProfileService;
     private final QuoteMapper quoteMapper;
+
+    public List<QuoteResponse> getQuotes(Long memberId) {
+        Member member = memberService.getMemberEntity(memberId);
+
+        if (!member.getRole().equals(MemberRole.EXPERT)) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        expertProfileService.getExpertProfileByMemberId(memberId);
+        List<QuoteStatus> visibleStatuses = List.of(QuoteStatus.SENT, QuoteStatus.REQUESTED);
+
+        return quoteRepository
+                .findAllByExpertProfileMemberIdAndQuoteStatusInOrderBySentAtDesc(memberId, visibleStatuses)
+                .stream()
+                .map(quoteMapper::toResponse)
+                .toList();
+    }
 
     @Transactional
     public QuoteCreateResponse createQuote(Long memberId, Long requestId, QuoteCreateRequest createRequest) {
