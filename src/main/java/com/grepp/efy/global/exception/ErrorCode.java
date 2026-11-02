@@ -67,6 +67,9 @@ public enum ErrorCode {
     DUPLICATE_ANSWER_EXCEPTION(HttpStatus.BAD_REQUEST, "동일한 질문에 중복 답변할 수 없습니다."),
     REQUEST_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "요청서를 찾을 수 없습니다."),
     INVALID_REQUEST_STATUS_EXCEPTION(HttpStatus.BAD_REQUEST, "취소할 수 없는 상태의 요청서입니다."),
+    CLOSED_REQUEST_QUOTE_NOT_ALLOWED_EXCEPTION(HttpStatus.BAD_REQUEST, "취소되었거나 종료된 요청서에는 견적을 발송할 수 없습니다."),
+    DUPLICATE_QUOTE_NOT_ALLOWED_EXCEPTION(HttpStatus.CONFLICT, "동일한 요청서에는 견적을 중복해서 발송할 수 없습니다."),
+    QUOTE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "견적서를 찾을 수 없습니다."),
 
     // ⑥ 리뷰·찜·좋아요
 
@@ -82,6 +85,8 @@ public enum ErrorCode {
     FILE_COUNT_EXCEEDED_EXCEPTION(HttpStatus.BAD_REQUEST, "파일은 한 번에 10개까지 업로드할 수 있습니다."),
     FILE_TOO_LARGE_EXCEPTION(HttpStatus.CONTENT_TOO_LARGE, "파일 크기가 너무 큽니다."),
     FILE_UPLOAD_FAILED_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),
+    FILE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "파일을 찾을 수 없습니다."),
+    FILE_FORBIDDEN_EXCEPTION(HttpStatus.FORBIDDEN, "본인이 업로드한 파일만 사용할 수 있습니다."),
 
     ;
 

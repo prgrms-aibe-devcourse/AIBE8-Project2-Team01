@@ -541,6 +541,17 @@ VALUES ((SELECT ep.id
                   JOIN member m ON ep.member_id = m.id
          WHERE m.email = 'expert2@example.com'), 38);
 
+-- expert2를 이사 서비스 매칭 테스트 대상으로 추가
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+SELECT ep.id, 101
+FROM expert_profile ep
+         JOIN member m ON ep.member_id = m.id
+WHERE m.email = 'expert2@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM expert_profile_services eps
+                  WHERE eps.expert_profile_id = ep.id
+                    AND eps.services_id = 101);
+
 -- 요청서 고정 질문 모든 서비스 카테고리에서 동일하게 사용
 INSERT INTO question (content, is_required, display_order)
 VALUES ('어떤 서비스가 필요하신가요?', TRUE, 1),
@@ -649,6 +660,50 @@ INSERT INTO service_request
 VALUES ((SELECT id FROM member WHERE email = 'expert1@example.com'),
         101, 39, 'OPEN',
         DATEADD('MINUTE', -50, CURRENT_TIMESTAMP));
+
+-- 견적서 시드 데이터
+-- expert1 → requestId 1
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id,
+       sr.id,
+       '이사 작업 전체 진행 가능합니다.',
+       300000,
+       'SENT',
+       DATEADD('HOUR', -1, CURRENT_TIMESTAMP)
+FROM expert_profile ep
+         JOIN member m
+              ON ep.member_id = m.id
+         JOIN service_request sr
+              ON sr.id = 1
+WHERE m.email = 'expert1@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM quote q
+                  WHERE q.expert_id = ep.id
+                    AND q.service_request_id = sr.id);
+
+-- expert2 → requestId 4
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id,
+       sr.id,
+       '서초구 이사 작업 가능합니다.',
+       280000,
+       'SENT',
+       DATEADD('HOUR', -2, CURRENT_TIMESTAMP)
+FROM expert_profile ep
+         JOIN member m
+              ON ep.member_id = m.id
+         JOIN service_request sr
+              ON sr.id = 4
+WHERE m.email = 'expert2@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM quote q
+                  WHERE q.expert_id = ep.id
+                    AND q.service_request_id = sr.id);
+
+-- 견적이 존재하는 요청서는 MATCHED 상태로 설정
+UPDATE service_request
+SET request_status = 'MATCHED'
+WHERE id IN (1, 4);
 
 
 -- H2 로컬: 고정 ID 시드 다음 번호부터 새 항목을 등록합니다.

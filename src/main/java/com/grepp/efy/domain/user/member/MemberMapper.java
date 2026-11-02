@@ -14,6 +14,7 @@ public interface MemberMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "tokenVersion", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
+    @Mapping(target = "image", ignore = true)
     Member toEntity(MemberCreateRequest memberCreateRequest);
 
     MemberResponse toResponse(Member member);

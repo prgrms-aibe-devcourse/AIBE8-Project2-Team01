@@ -10,6 +10,7 @@ import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
 import com.grepp.efy.global.util.PageableFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,6 +31,9 @@ public class MemberService {
     private final MemberMapper memberMapper;
     private final RefreshTokenService refreshTokenService;
 
+    @Value("${app.password-min-length:4}")
+    private int passwordMinLength;
+
     public PageResponse<MemberResponse> getMembers(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
         Pageable pageable = PageableFactory.create(pageNumber, pageSize, sortBy, sortOrder, SORTABLE_FIELDS);
         Page<Member> page = memberRepository.findByDeletedAtIsNull(pageable);
@@ -44,6 +48,7 @@ public class MemberService {
     @Transactional
     public Member create(MemberCreateRequest memberCreateRequest) {
 
+        checkPassword(memberCreateRequest.getPassword());
         ensureNotReserved(memberCreateRequest.getEmail(), memberCreateRequest.getNickname());
         if (memberRepository.existsByPhone(memberCreateRequest.getPhone())) {
             throw new BusinessException(ErrorCode.DUPLICATE_PHONE_EXCEPTION);
@@ -69,6 +74,9 @@ public class MemberService {
     @Transactional
     public MemberResponse updateMember(Long memberId, MemberUpdateRequest request) {
         Member member = getMemberEntity(memberId);
+        if (request.getPassword() != null) {
+            checkPassword(request.getPassword());
+        }
 
         if (request.getNickname() != null) {
             ensureNotReserved(null, request.getNickname());
@@ -131,7 +139,7 @@ public class MemberService {
         member.setDeletedAt(LocalDateTime.now());
         member.setNickname("탈퇴한회원_" + memberId);
         member.setEmail("deleted_" + memberId + "@deleted.local");
-        member.setPhone(null);
+        member.setPhone("deleted_" + memberId);
         member.setPassword(null);
         invalidateTokens(member);
     }
@@ -151,6 +159,14 @@ public class MemberService {
     private void invalidateTokens(Member member) {
         refreshTokenService.deleteByMemberId(member.getId());
         member.setTokenVersion(member.getTokenVersion() + 1);
+    }
+
+    // 비밀번호는 원문을 유지하고 환경별 최소 길이와 최대 20자를 검사
+    private void checkPassword(String password) {
+        if (password == null || password.isBlank()
+                || password.length() < passwordMinLength || password.length() > 20) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION);
+        }
     }
 
     private void ensureNotReserved(String email, String nickname) {

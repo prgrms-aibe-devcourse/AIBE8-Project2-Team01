@@ -6,6 +6,9 @@ import com.grepp.efy.domain.basedata.secondcategory.SecondCategory;
 import com.grepp.efy.domain.basedata.secondcategory.SecondCategoryService;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegion;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegionService;
+import com.grepp.efy.domain.file.UploadFile;
+import com.grepp.efy.domain.file.UploadFileService;
+import com.grepp.efy.domain.file.UploadFileVisibility;
 import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileCreateRequest;
 import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileResponse;
 import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileUpdateRequest;
@@ -16,6 +19,7 @@ import com.grepp.efy.domain.user.member.dto.MemberResponse;
 import com.grepp.efy.domain.user.member.dto.MemberRoleUpdateRequest;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
+import com.grepp.efy.global.storage.SupabaseStorageClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,11 +37,13 @@ public class ExpertProfileService {
     private final SecondCategoryService secondCategoryService;
     private final FirstRegionService firstRegionService;
     private final SecondRegionService secondRegionService;
+    private final UploadFileService uploadFileService;
+    private final SupabaseStorageClient storageClient;
 
     public ExpertProfileResponse getExpertProfile(Long expertProfileId) {
         ExpertProfile expertProfile = getExpertProfileEntity(expertProfileId);
         memberService.getMemberEntity(expertProfile.getMember().getId());
-        return expertProfileMapper.toResponse(expertProfile);
+        return expertProfileMapper.toResponse(expertProfile, getImageUrl(expertProfile));
     }
 
     @Transactional
@@ -63,9 +69,19 @@ public class ExpertProfileService {
         );
         checkProfile(expertProfile);
 
+        if (createRequest.getImageId() != null) {
+            UploadFile image = uploadFileService.getMyUploadFileEntity(
+                    createRequest.getImageId(), memberId
+            );
+            if (image.getVisibility() != UploadFileVisibility.PUBLIC) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION);
+            }
+            member.setImage(image);
+        }
+
         ExpertProfile savedExpertProfile = expertProfileRepository.save(expertProfile);
         memberService.changeToExpert(memberId);
-        return expertProfileMapper.toResponse(savedExpertProfile);
+        return expertProfileMapper.toResponse(savedExpertProfile, getImageUrl(savedExpertProfile));
     }
 
     @Transactional
@@ -88,7 +104,7 @@ public class ExpertProfileService {
                 UpdateRequest.getRegionIds()
         );
         checkProfile(expertProfile);
-        return expertProfileMapper.toResponse(expertProfile);
+        return expertProfileMapper.toResponse(expertProfile, getImageUrl(expertProfile));
     }
 
     @Transactional
@@ -125,6 +141,16 @@ public class ExpertProfileService {
     public ExpertProfile getExpertProfileByMemberId(Long memberId) {
         return expertProfileRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EXPERT_PROFILE_NOT_FOUND_EXCEPTION));
+    }
+
+    // 공개 가능한 회원 프로필 사진만 URL로 반환. 사진이 없으면 null
+    private String getImageUrl(ExpertProfile expertProfile) {
+        UploadFile image = expertProfile.getMember().getImage();
+        if (image == null || image.getDeletedAt() != null
+                || image.getVisibility() != UploadFileVisibility.PUBLIC) {
+            return null;
+        }
+        return storageClient.createUrl(image.getVisibility(), image.getStoragePath());
     }
 
     // 전달된 소개·경력만 수정하고 경력에 명시적으로 null을 보내면 삭제

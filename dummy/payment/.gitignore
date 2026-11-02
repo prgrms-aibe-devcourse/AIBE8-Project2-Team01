@@ -1,0 +1,3 @@
+# 의존성·빌드 결과물
+node_modules/
+dist/
