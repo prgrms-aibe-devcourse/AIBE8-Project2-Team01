@@ -63,7 +63,7 @@ class AuthRefreshTests {
                         .cookie(cookie(refreshToken)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andReturn();
-        String newAccess = new ObjectMapper().readTree(result.getResponse().getContentAsString()).get("accessToken").asText();
+        String newAccess = new ObjectMapper().readTree(result.getResponse().getContentAsString()).get("accessToken").asString();
         Claims claims = jwtProvider.parseToken(newAccess);
         assertEquals(memberId.toString(), claims.getSubject());
         assertEquals("EXPERT", claims.get("role", String.class));
@@ -221,7 +221,7 @@ class AuthRefreshTests {
         return new Cookie(RefreshTokenCookie.NAME, token);
     }
 
-    private int count(String token) {
+    private Integer count(String token) {
         return jdbcTemplate.queryForObject("select count(*) from refresh_token where token = ?", Integer.class, token);
     }
 }

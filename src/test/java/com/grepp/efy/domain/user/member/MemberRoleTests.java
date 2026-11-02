@@ -276,7 +276,7 @@ class MemberRoleTests {
         return jwtProvider.createToken(new CustomUserDetails(memberService.getMemberEntity(memberId)));
     }
 
-    private int count(String sql, Long memberId) {
+    private Integer count(String sql, Long memberId) {
         return jdbcTemplate.queryForObject(sql, Integer.class, memberId);
     }
 }
