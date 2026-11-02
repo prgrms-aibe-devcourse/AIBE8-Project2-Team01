@@ -63,7 +63,7 @@ class AuthRefreshTests {
                         .cookie(cookie(refreshToken)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andReturn();
-        String newAccess = new ObjectMapper().readTree(result.getResponse().getContentAsString()).get("accessToken").asText();
+        String newAccess = new ObjectMapper().readTree(result.getResponse().getContentAsString()).get("accessToken").asString();
         Claims claims = jwtProvider.parseToken(newAccess);
         assertEquals(memberId.toString(), claims.getSubject());
         assertEquals("EXPERT", claims.get("role", String.class));
@@ -192,7 +192,9 @@ class AuthRefreshTests {
     private Long createMember() {
         String suffix = UUID.randomUUID().toString();
         String email = suffix + "@test.local";
-        jdbcTemplate.update("insert into member(email, nickname, role, created_at, token_version) values (?, ?, 'USER', CURRENT_TIMESTAMP, 0)", email, suffix.substring(0, 20));
+        Long nextId = jdbcTemplate.queryForObject("select coalesce(max(id), 0) + 1 from member", Long.class);
+        String phone = String.format("%011d", nextId);
+        jdbcTemplate.update("insert into member(email, nickname, phone, role, created_at, token_version) values (?, ?, ?, 'USER', CURRENT_TIMESTAMP, 0)", email, suffix.substring(0, 20), phone);
         Long id = jdbcTemplate.queryForObject("select id from member where email = ?", Long.class, email);
         memberIds.add(id);
         return id;
@@ -219,7 +221,7 @@ class AuthRefreshTests {
         return new Cookie(RefreshTokenCookie.NAME, token);
     }
 
-    private int count(String token) {
+    private Integer count(String token) {
         return jdbcTemplate.queryForObject("select count(*) from refresh_token where token = ?", Integer.class, token);
     }
 }

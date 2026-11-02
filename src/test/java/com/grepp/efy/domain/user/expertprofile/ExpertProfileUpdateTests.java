@@ -45,7 +45,7 @@ class ExpertProfileUpdateTests {
 
     @Test
     void 고수와_일반회원이_본인소개를_수정하고_공개조회() throws Exception {
-        Long memberId = createMember("USER");
+        Long memberId = createMember();
         String token = token(memberId);
         Long profileId = createProfile(token);
         for (String role : List.of("EXPERT", "USER")) {
@@ -74,7 +74,7 @@ class ExpertProfileUpdateTests {
 
     @Test
     void 생략과_null유지_및_선택경력_null삭제를_구분() throws Exception {
-        Long memberId = createMember("USER");
+        Long memberId = createMember();
         String token = token(memberId);
         Long profileId = createProfile(token);
         String before = getProfile(profileId);
@@ -95,7 +95,7 @@ class ExpertProfileUpdateTests {
 
     @Test
     void 서비스와_대표서비스는_최종조합으로_검사() throws Exception {
-        Long memberId = createMember("USER");
+        Long memberId = createMember();
         String token = token(memberId);
         Long profileId = createProfile(token);
         String before = getProfile(profileId);
@@ -117,7 +117,7 @@ class ExpertProfileUpdateTests {
 
     @Test
     void 대표서비스만_또는_제공서비스만_수정해도_나머지는_유지() throws Exception {
-        Long memberId = createMember("USER");
+        Long memberId = createMember();
         String token = token(memberId);
         Long profileId = createProfile(token);
         mockMvc.perform(patch(URL).header("Authorization", "Bearer " + token)
@@ -136,7 +136,7 @@ class ExpertProfileUpdateTests {
 
     @Test
     void 전국_시도전체_개별시군구_수정과_기존지역삭제() throws Exception {
-        Long memberId = createMember("USER");
+        Long memberId = createMember();
         String token = token(memberId);
         Long profileId = createProfile(token);
         Long districtId = districtId();
@@ -165,7 +165,7 @@ class ExpertProfileUpdateTests {
 
     @Test
     void 잘못된텍스트와_경력범위를_거절하고_기존값유지() throws Exception {
-        Long memberId = createMember("USER");
+        Long memberId = createMember();
         String token = token(memberId);
         Long profileId = createProfile(token);
         String before = getProfile(profileId);
@@ -184,7 +184,7 @@ class ExpertProfileUpdateTests {
 
     @Test
     void 없는카테고리와_지역_조회실패시_소개와_연결도_전체롤백() throws Exception {
-        Long memberId = createMember("USER");
+        Long memberId = createMember();
         String token = token(memberId);
         Long profileId = createProfile(token);
         String before = getProfile(profileId);
@@ -203,7 +203,7 @@ class ExpertProfileUpdateTests {
     void 미인증_프로필없음_ADMIN_탈퇴회원_차단() throws Exception {
         mockMvc.perform(patch(URL).contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isUnauthorized());
-        Long memberId = createMember("USER");
+        Long memberId = createMember();
         String token = token(memberId);
         mockMvc.perform(patch(URL).header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON).content("{}"))
@@ -221,10 +221,10 @@ class ExpertProfileUpdateTests {
 
     @Test
     void 타인ID와_필드표시를_보내도_타인프로필이나_경력을_바꿀수없음() throws Exception {
-        Long memberId = createMember("USER");
+        Long memberId = createMember();
         String token = token(memberId);
         Long profileId = createProfile(token);
-        Long otherMemberId = createMember("USER");
+        Long otherMemberId = createMember();
         Long otherProfileId = createProfile(token(otherMemberId));
         String otherBefore = getProfile(otherProfileId);
         mockMvc.perform(patch(URL).header("Authorization", "Bearer " + token)
@@ -245,10 +245,12 @@ class ExpertProfileUpdateTests {
                 .andExpect(jsonPath("$.components.schemas.ExpertProfileUpdateRequest.properties.careerYearsSet").doesNotExist());
     }
 
-    private Long createMember(String role) {
+    private Long createMember() {
         String suffix = UUID.randomUUID().toString();
         String email = suffix + "@test.local";
-        jdbcTemplate.update("insert into member(email, nickname, role, created_at, token_version) values (?, ?, ?, CURRENT_TIMESTAMP, 0)", email, suffix.substring(0, 20), role);
+        Long nextId = jdbcTemplate.queryForObject("select coalesce(max(id), 0) + 1 from member", Long.class);
+        String phone = String.format("%011d", nextId);
+        jdbcTemplate.update("insert into member(email, nickname, phone, role, created_at, token_version) values (?, ?, ?, 'USER', CURRENT_TIMESTAMP, 0)", email, suffix.substring(0, 20), phone);
         Long id = jdbcTemplate.queryForObject("select id from member where email = ?", Long.class, email);
         memberIds.add(id);
         return id;

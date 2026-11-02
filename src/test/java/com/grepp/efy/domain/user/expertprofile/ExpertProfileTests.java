@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -90,10 +91,13 @@ class ExpertProfileTests {
         Long memberId = createMember("USER");
         Long districtId = jdbcTemplate.queryForObject(
                 "select min(id) from second_region where first_region_id <> 1", Long.class);
-        String body = BODY.replace("\"nationwide\":true", """
-                "nationwide":false,"wholeRegionIds":[1],"regionIds":[%d],
-                "careerYears":0,"careerDescription":"경력 설명"
-                """.formatted(districtId));
+        assertNotNull(districtId);
+        String body = """
+                {"shortIntro":"  한 줄 소개  ","description":"  서비스 상세 설명입니다.  ",
+                 "serviceIds":[101,102],"primaryCategoryId":101,
+                 "nationwide":false,"wholeRegionIds":[1],"regionIds":[%d],
+                 "careerYears":0,"careerDescription":"경력 설명"}
+                """.formatted(districtId);
         String response = mockMvc.perform(post(URL).header("Authorization", "Bearer " + token(memberId))
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
@@ -202,8 +206,10 @@ class ExpertProfileTests {
     private Long createMember(String role) {
         String suffix = UUID.randomUUID().toString();
         String email = suffix + "@test.local";
-        jdbcTemplate.update("insert into member(email, nickname, role, created_at, token_version) values (?, ?, ?, CURRENT_TIMESTAMP, 0)",
-                email, suffix.substring(0, 20), role);
+        Long nextId = jdbcTemplate.queryForObject("select coalesce(max(id), 0) + 1 from member", Long.class);
+        String phone = String.format("%011d", nextId);
+        jdbcTemplate.update("insert into member(email, nickname, phone, role, created_at, token_version) values (?, ?, ?, ?, CURRENT_TIMESTAMP, 0)",
+                email, suffix.substring(0, 20), phone, role);
         Long id = jdbcTemplate.queryForObject("select id from member where email = ?", Long.class, email);
         memberIds.add(id);
         return id;
@@ -217,7 +223,7 @@ class ExpertProfileTests {
         return jdbcTemplate.queryForObject("select role from member where id = ?", String.class, memberId);
     }
 
-    private int profileCount(Long memberId) {
+    private Integer profileCount(Long memberId) {
         return jdbcTemplate.queryForObject("select count(*) from expert_profile where member_id = ?", Integer.class, memberId);
     }
 }
