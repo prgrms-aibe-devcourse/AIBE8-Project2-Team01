@@ -13,5 +13,5 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, 
     boolean existsByMemberIdAndSecondCategoryIdAndRequestStatusAndCreatedAtAfter(
             Long memberId, Long secondCategoryId, RequestStatus requestStatus, LocalDateTime expirationBoundary);
 
-    List<ServiceRequest> findByMemberIdOrderByCreatedAtDesc(Long id);
+    List<ServiceRequest> findByMemberIdAndRequestStatusNotOrderByCreatedAtDesc(Long member_id, RequestStatus requestStatus);
 }
