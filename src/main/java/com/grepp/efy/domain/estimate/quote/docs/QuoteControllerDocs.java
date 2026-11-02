@@ -7,10 +7,12 @@ import com.grepp.efy.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +22,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@Tag(name = "견적서", description = "견적서 작성 및 발송 API")
+@Tag(name = "견적서", description = "견적서 작성·목록·상세 조회 API")
+@SecurityRequirement(name = "bearerAuth")
 public interface QuoteControllerDocs {
 
     @Operation(
@@ -43,8 +46,8 @@ public interface QuoteControllerDocs {
             @ApiResponse(responseCode = "404", description = "견적서 또는 고수 프로필을 찾을 수 없음")
     })
     ResponseEntity<QuoteResponse> getQuote(
-            @Parameter(name = "quoteId", description = "조회할 견적서 ID", required = true, example = "1")
             @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(name = "quoteId", description = "조회할 견적서 ID", required = true, in = ParameterIn.PATH, example = "1")
             @PathVariable Long quoteId);
 
     @Operation(
