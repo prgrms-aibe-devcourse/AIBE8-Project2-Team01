@@ -44,8 +44,7 @@ public class PostService {
     @Transactional
     public PostResponse getPostById(Long postId, @Nullable MemberRole role) {
 
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+        Post post = findPost(postId);
 
         // 숨김 글은 관리자만 조회 (404로 처리하여 일반 사용자가 숨김 사실을 모르게)
         if (!post.isVisible() && role != MemberRole.ADMIN) {
@@ -93,8 +92,7 @@ public class PostService {
     @Transactional
     public PostResponse updatePost(Long postId, Long memberId, PostUpdateRequest postUpdateRequest) {
 
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+        Post post = findPost(postId);
 
         // 숨김 글은 작성자도 수정 불가
         if (!post.isVisible()) {
@@ -120,6 +118,36 @@ public class PostService {
         post.update(category, region, postUpdateRequest.getTitle(), postUpdateRequest.getContent(), images);
 
         return toResponse(post);
+    }
+
+    @Transactional
+    public void deletePost(Long postId, Long memberId, MemberRole role) {
+
+        Post post = findPost(postId);
+
+        if (role != MemberRole.ADMIN) {
+            // 숨김 글은 관리자만 삭제 (작성자도 404)
+            if (!post.isVisible()) {
+                throw new BusinessException(ErrorCode.POST_NOT_FOUND_EXCEPTION);
+            }
+            if (!post.getMember().getId().equals(memberId)) {
+                throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
+            }
+            // TIP/PROMOTION 은 작성자가 현재도 고수여야 삭제 가능
+            if ((post.getBoardType() == BoardType.TIP || post.getBoardType() == BoardType.PROMOTION)
+                && post.getMember().getRole() != MemberRole.EXPERT) {
+                throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
+            }
+        }
+
+        post.delete();
+    }
+
+    // 삭제된 글은 없는 글과 동일하게 404
+    private Post findPost(Long postId) {
+        return postRepository.findById(postId)
+                .filter(post -> post.getDeletedAt() == null)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
     }
 
     private @Nullable SecondRegion findRegion(@Nullable Long regionId) {

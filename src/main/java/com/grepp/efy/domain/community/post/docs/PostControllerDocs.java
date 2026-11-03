@@ -192,4 +192,46 @@ public interface PostControllerDocs {
             @Parameter(hidden = true) CustomUserDetails userDetails,
             @Positive Long postId,
             @Valid PostUpdateRequest postUpdateRequest);
+
+    @Operation(summary = "게시글 삭제",
+            description = "작성자 본인과 관리자만 삭제할 수 있습니다. 관리자는 숨김 글을 포함해 모든 글을 삭제할 수 있습니다. "
+                    + "숨김 처리된 글은 관리자가 아니면 작성자도 삭제할 수 없고 404로 응답합니다. "
+                    + "TIP·PROMOTION 글은 작성자가 현재도 고수여야 삭제할 수 있으며, 관리자에게는 이 조건을 적용하지 않습니다. "
+                    + "논리 삭제 방식으로 삭제 시각만 기록하며, 삭제된 글은 이후 모든 조회에서 제외되고 복구할 수 없습니다. "
+                    + "삭제된 글의 댓글·좋아요·이미지는 그대로 남습니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "204", description = "삭제 성공")
+    @ApiResponse(responseCode = "400", description = "postId가 정수가 아니거나 1 미만",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "정수가 아님", value = """
+                            {
+                              "message": "경로 또는 쿼리 값의 타입이 올바르지 않습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "1 미만", value = """
+                            {
+                              "message": "입력값이 올바르지 않습니다."
+                            }
+                            """)
+            }))
+    @ApiResponse(responseCode = "401", description = "인증 실패")
+    @ApiResponse(responseCode = "403", description = "작성자도 관리자도 아닌 회원의 삭제, 또는 고수가 아닌 작성자의 TIP·PROMOTION 글 삭제",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "권한 없음", value = """
+                            {
+                              "message": "접근 권한이 없습니다."
+                            }
+                            """)
+            }))
+    @ApiResponse(responseCode = "404", description = "존재하지 않거나 이미 삭제된 게시글, 또는 관리자가 아닌 회원의 숨김 글 삭제",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "게시글 없음", value = """
+                            {
+                              "message": "존재하지 않는 게시물입니다."
+                            }
+                            """)
+            }))
+    ResponseEntity<Void> deletePost(
+            @Parameter(hidden = true) CustomUserDetails userDetails,
+            @Positive Long postId);
 }
