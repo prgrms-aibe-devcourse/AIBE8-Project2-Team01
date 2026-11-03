@@ -1,23 +1,29 @@
 package com.grepp.efy.domain.community.post;
 
+import com.grepp.efy.domain.basedata.firstcategory.FirstCategoryRepository;
+import com.grepp.efy.domain.basedata.firstregion.FirstRegionRepository;
 import com.grepp.efy.domain.basedata.secondcategory.SecondCategory;
 import com.grepp.efy.domain.basedata.secondcategory.SecondCategoryRepository;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegion;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegionRepository;
-import com.grepp.efy.domain.community.post.dto.PostRequest;
-import com.grepp.efy.domain.community.post.dto.PostResponse;
-import com.grepp.efy.domain.community.post.dto.PostUpdateRequest;
+import com.grepp.efy.domain.community.post.dto.*;
 import com.grepp.efy.domain.file.UploadFile;
 import com.grepp.efy.domain.file.UploadFileRepository;
 import com.grepp.efy.domain.file.UploadFileVisibility;
 import com.grepp.efy.domain.user.member.Member;
 import com.grepp.efy.domain.user.member.MemberRepository;
 import com.grepp.efy.domain.user.member.MemberRole;
+import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
 import com.grepp.efy.global.storage.SupabaseStorageClient;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +32,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -34,12 +39,46 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
-    private final SecondCategoryRepository categoryRepository;
-    private final SecondRegionRepository regionRepository;
+    private final FirstCategoryRepository firstCategoryRepository;
+    private final FirstRegionRepository firstRegionRepository;
+    private final SecondCategoryRepository secondCategoryRepository;
+    private final SecondRegionRepository secondRegionRepository;
     private final UploadFileRepository uploadFileRepository;
 
     private final PostMapper postMapper;
     private final SupabaseStorageClient storageClient;
+
+    public PageResponse<PostSummaryResponse> getPublicPosts(
+            PostSearchCondition condition
+    ) {
+
+        // 소분류가 있다면 대분류는 무시 (지역도 동일)
+        Long firstCategoryId = condition.secondCategoryId() != null ? null : condition.firstCategoryId();
+        Long firstRegionId = condition.secondRegionId() != null ? null : condition.firstRegionId();
+
+        validateExists(firstCategoryRepository, firstCategoryId);
+        validateExists(secondCategoryRepository, condition.secondCategoryId());
+        validateExists(firstRegionRepository, firstRegionId);
+        validateExists(secondRegionRepository, condition.secondRegionId());
+
+        // 1. 몇 페이지를 몇 개씩, 어떤 순서로 가져올지 (사용자는 1부터, Spring은 0부터 셈)
+        Pageable pageable = PageRequest.of(condition.pageNumber() - 1, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // 2. DB 조회
+        Page<Post> page = postRepository.findPublicPosts(
+                condition.boardType(),
+                condition.keyword(),
+                firstCategoryId,
+                condition.secondCategoryId(),
+                firstRegionId,
+                condition.secondRegionId(),
+                pageable);
+
+        // 3. 엔티티 → 응답 DTO 변환 후 페이지 정보와 함께 포장
+        return PageResponse.of(page, page.getContent().stream()
+                .map(post -> postMapper.toSummary(post, thumbnailUrl(post)))
+                .toList());
+    }
 
     @Transactional
     public PostResponse getPostById(Long postId, @Nullable MemberRole role) {
@@ -134,8 +173,7 @@ public class PostService {
                 throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
             }
             // TIP/PROMOTION 은 작성자가 현재도 고수여야 삭제 가능
-            if ((post.getBoardType() == BoardType.TIP || post.getBoardType() == BoardType.PROMOTION)
-                && post.getMember().getRole() != MemberRole.EXPERT) {
+            if ((post.getBoardType() == BoardType.TIP || post.getBoardType() == BoardType.PROMOTION) && post.getMember().getRole() != MemberRole.EXPERT) {
                 throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
             }
         }
@@ -152,13 +190,13 @@ public class PostService {
 
     private @Nullable SecondRegion findRegion(@Nullable Long regionId) {
         return regionId == null ? null
-                : regionRepository.findById(regionId)
+                : secondRegionRepository.findById(regionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND_EXCEPTION));
     }
 
     private @Nullable SecondCategory findCategory(@Nullable Long categoryId) {
         return categoryId == null ? null
-                : categoryRepository.findById(categoryId)
+                : secondCategoryRepository.findById(categoryId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND_EXCEPTION));
     }
 
@@ -177,6 +215,15 @@ public class PostService {
         return postMapper.toResponse(post, imageResponses, profileImageUrl);
     }
 
+    // 첫 번째 이미지 URL, 이미지가 없으면 null
+    private @Nullable String thumbnailUrl(Post post) {
+        if (post.getImages().isEmpty()) {
+            return null;
+        }
+        UploadFile first = post.getImages().getFirst();
+        return storageClient.createUrl(first.getVisibility(), first.getStoragePath());
+    }
+
     private static void validateBoardPolicy(BoardType boardType, Member member, List<Long> imageIds) {
         if ((boardType == BoardType.TIP || boardType == BoardType.PROMOTION)
                 && member.getRole() != MemberRole.EXPERT) {
@@ -184,6 +231,14 @@ public class PostService {
         }
         if (boardType == BoardType.TIP && imageIds.isEmpty()) {
             throw new BusinessException(ErrorCode.POST_IMAGE_REQUIRED_EXCEPTION);
+        }
+    }
+
+    private static void validateExists(
+            JpaRepository<?, Long> repository,
+            @Nullable Long id) {
+        if (id != null && !repository.existsById(id)) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION);
         }
     }
 

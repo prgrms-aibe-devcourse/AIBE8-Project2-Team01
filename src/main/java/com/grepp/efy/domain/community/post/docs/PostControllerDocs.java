@@ -1,8 +1,11 @@
 package com.grepp.efy.domain.community.post.docs;
 
+import com.grepp.efy.domain.community.post.BoardType;
 import com.grepp.efy.domain.community.post.dto.PostRequest;
 import com.grepp.efy.domain.community.post.dto.PostResponse;
+import com.grepp.efy.domain.community.post.dto.PostSummaryResponse;
 import com.grepp.efy.domain.community.post.dto.PostUpdateRequest;
+import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.exception.ErrorResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,11 +17,45 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
 
 @Tag(name = "커뮤니티 게시글", description = "커뮤니티 게시글 API")
 public interface PostControllerDocs {
+
+    @Operation(summary = "공개 게시글 목록 조회",
+            description = "토큰 없이 조회할 수 있습니다. 게시판별 글을 최신순으로 20개씩 반환하며, 페이지 크기와 정렬은 바꿀 수 없습니다. "
+                    + "숨김 처리된 글과 삭제된 글은 목록과 totalElements에서 제외합니다. "
+                    + "keyword는 제목 또는 본문에 포함된 글을 찾습니다. "
+                    + "1차 카테고리·지역을 지정하면 하위 2차 전체가 대상이며, 1차와 2차를 함께 보내면 2차가 우선합니다. "
+                    + "결과가 없거나 마지막 페이지를 넘으면 빈 content로 200을 반환합니다. "
+                    + "thumbnailUrl은 첫 번째 이미지 URL이며 이미지가 없으면 null, "
+                    + "카테고리·지역을 지정하지 않은 글은 category·region이 null입니다. "
+                    + "수정되지 않은 글의 updatedAt은 createdAt과 같습니다.")
+    @ApiResponse(responseCode = "200", description = "조회 성공. 게시글 목록과 페이지 정보 반환")
+    @ApiResponse(responseCode = "400", description = "boardType 누락·오류, pageNumber 오류, keyword 오류, 존재하지 않는 카테고리·지역 ID",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "타입 오류 (잘못된 boardType, 정수가 아닌 pageNumber·ID)", value = """
+                            {
+                              "message": "경로 또는 쿼리 값의 타입이 올바르지 않습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "입력값 오류 (boardType 누락, pageNumber 1 미만, keyword 공백·길이, 없는 카테고리·지역)", value = """
+                            {
+                              "message": "입력값이 올바르지 않습니다."
+                            }
+                            """)
+            }))
+    ResponseEntity<PageResponse<PostSummaryResponse>> getPublicPosts(
+            @Parameter(description = "게시판 종류", required = true) BoardType boardType,
+            @Parameter(description = "페이지 번호 (1부터, 기본값 1)") @Positive Integer pageNumber,
+            @Parameter(description = "제목·본문 검색어 (1~50자)") @Size(min = 1, max = 50) @Pattern(regexp = ".*\\S.*") String keyword,
+            @Parameter(description = "1차 카테고리 ID") Long firstCategoryId,
+            @Parameter(description = "2차 카테고리 ID (1차보다 우선)") Long secondCategoryId,
+            @Parameter(description = "1차 지역(시/도) ID") Long firstRegionId,
+            @Parameter(description = "2차 지역(시/군/구) ID (1차보다 우선)") Long secondRegionId);
 
     @Operation(summary = "게시글 상세 조회",
             description = "토큰 없이 조회할 수 있으며, 만료되었거나 유효하지 않은 토큰은 비로그인으로 취급합니다. "
