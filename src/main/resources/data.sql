@@ -715,3 +715,10 @@ ALTER TABLE first_region
     ALTER COLUMN id RESTART WITH 17;
 ALTER TABLE second_region
     ALTER COLUMN id RESTART WITH 285;
+
+-- 크레딧 충전 상품: 1크레딧 = 1,000원, 추가 크레딧은 MVP에서 지급하지 않음
+INSERT INTO credit_product (id, name, price, credit_amount, bonus_credit, is_active, created_at)
+VALUES (1, '크레딧 10개', 10000, 10, 0, TRUE, CURRENT_TIMESTAMP),
+       (2, '크레딧 30개', 30000, 30, 0, TRUE, CURRENT_TIMESTAMP),
+       (3, '크레딧 50개', 50000, 50, 0, TRUE, CURRENT_TIMESTAMP),
+       (4, '크레딧 100개', 100000, 100, 0, TRUE, CURRENT_TIMESTAMP);

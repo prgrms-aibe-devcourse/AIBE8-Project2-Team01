@@ -207,4 +207,19 @@ class CreditTests {
     private String token(Long memberId) {
         return jwtProvider.createToken(new CustomUserDetails(memberService.getMemberEntity(memberId)));
     }
+
+    @Test
+    void 판매중인_충전상품을_가격순으로_조회() throws Exception {
+        Long memberId = createMember("EXPERT");
+        mockMvc.perform(get("/api/credit-products").header("Authorization", "Bearer " + token(memberId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(4))
+                .andExpect(jsonPath("$[0].price").value(10000))
+                .andExpect(jsonPath("$[0].creditAmount").value(10))
+                .andExpect(jsonPath("$[3].price").value(100000));
+
+        Long userId = createMember("USER");
+        mockMvc.perform(get("/api/credit-products").header("Authorization", "Bearer " + token(userId)))
+                .andExpect(status().isForbidden());
+    }
 }

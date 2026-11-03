@@ -79,7 +79,7 @@ public enum ErrorCode {
     DUPLICATE_CREDIT_RESERVATION_EXCEPTION(HttpStatus.CONFLICT, "이미 크레딧이 예약된 견적서입니다."),
     CREDIT_RESERVATION_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "견적서의 크레딧 예약을 찾을 수 없습니다."),
     INVALID_CREDIT_RESERVATION_STATUS_EXCEPTION(HttpStatus.CONFLICT, "처리할 수 없는 크레딧 예약 상태입니다."),
-
+    CREDIT_PRODUCT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "충전 상품을 찾을 수 없습니다."),
     // ⑧ 채팅
 
 
