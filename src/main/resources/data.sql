@@ -666,6 +666,11 @@ INSERT INTO service_request (member_id, second_category_id, second_region_id, re
 VALUES ((SELECT id FROM member WHERE email = 'customer2@example.com'),
         101, 39, 'OPEN', DATEADD('HOUR', -25, CURRENT_TIMESTAMP));
 
+-- 10. 이사 / 강남구: 등록 80시간 경과 → 만료 견적 테스트용 요청서
+INSERT INTO service_request (member_id, second_category_id, second_region_id, request_status, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'customer2@example.com'),
+        101, 39, 'OPEN', DATEADD('HOUR', -80, CURRENT_TIMESTAMP));
+
 -- 견적서 시드 데이터
 -- expert1 → requestId 1
 INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
@@ -685,6 +690,19 @@ WHERE m.email = 'expert1@example.com'
                   FROM quote q
                   WHERE q.expert_id = ep.id
                     AND q.service_request_id = sr.id);
+
+-- expert1 → requestId 10: 발송 73시간 경과 (72시간 만료 테스트)
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id,
+       10,
+       '만료 테스트용 견적입니다.',
+       200000,
+       'SENT',
+       DATEADD('HOUR', -73,
+               CURRENT_TIMESTAMP)
+FROM expert_profile ep
+         JOIN member m ON ep.member_id = m.id
+WHERE m.email = 'expert1@example.com';
 
 -- expert2 → requestId 4
 INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)

@@ -39,16 +39,16 @@ public class QuoteService {
 
     public List<QuoteResponse> getQuotes(Long memberId) {
         validateExpertAccess(memberId);
-        List<QuoteStatus> visibleStatuses = List.of(QuoteStatus.SENT, QuoteStatus.REQUESTED);
 
         List<Quote> quoteList = quoteRepository
-                .findAllByExpertProfileMemberIdAndQuoteStatusInOrderBySentAtDesc(memberId, visibleStatuses);
+                .findValidQuotesByExpertMemberId(memberId, QuoteStatus.REQUESTED, validBoundary());
+
         return quoteMapper.toResponseList(quoteList);
     }
 
     public QuoteResponse getQuote(Long memberId, Long quoteId) {
         validateExpertAccess(memberId);
-        Quote quote = getQuoteEntity(quoteId);
+        Quote quote = getValidQuoteEntity(quoteId);
         Long quoteOwnerId = quote.getExpertProfile().getMember().getId();
 
         if (!quoteOwnerId.equals(memberId)) {
@@ -65,8 +65,7 @@ public class QuoteService {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
         }
 
-        List<QuoteStatus> visibleStatuses = List.of(QuoteStatus.SENT, QuoteStatus.REQUESTED);
-        List<Quote> quotes = quoteRepository.findAllByServiceRequestIdAndQuoteStatusInOrderBySentAtDesc(requestId, visibleStatuses);
+        List<Quote> quotes = quoteRepository.findValidQuotesByRequestId(requestId, QuoteStatus.REQUESTED, validBoundary());
 
         return quoteMapper.toRequestResponseList(quotes);
     }
@@ -113,7 +112,7 @@ public class QuoteService {
     public void deleteQuote(Long memberId, Long quoteId) {
         validateExpertAccess(memberId);
 
-        Quote quote = getQuoteEntity(quoteId);
+        Quote quote = getValidQuoteEntity(quoteId);
 
         if (!quote.getExpertProfile().getMember().getId().equals(memberId)) {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
@@ -135,6 +134,20 @@ public class QuoteService {
         }
 
         return expertProfileService.getExpertProfileByMemberId(memberId);
+    }
+
+    private LocalDateTime validBoundary() {
+        return LocalDateTime.now().minusHours(Quote.VALID_HOURS);
+    }
+
+    private Quote getValidQuoteEntity(Long quoteId) {
+        Quote quote = getQuoteEntity(quoteId);
+
+        if (quote.getQuoteStatus().equals(QuoteStatus.SENT) && !quote.getSentAt().isAfter(validBoundary())) {
+            throw new BusinessException(QUOTE_NOT_FOUND_EXCEPTION);
+        }
+
+        return quote;
     }
 
     public Quote getQuoteEntity(Long quoteId) {
