@@ -47,29 +47,18 @@ public class ServiceRequestService {
     private final ExpertProfileService expertProfileService;
 
     public List<ServiceRequestListResponse> getMatchedRequests(Long memberId) {
-        Member member = memberService.getMemberEntity(memberId);
-
-        if (!member.getRole().equals(MemberRole.EXPERT)) {
-            throw new BusinessException(FORBIDDEN_EXCEPTION);
-        }
-
-        ExpertProfile expertProfile = expertProfileService.getExpertProfileByMemberId(member.getId());
+        ExpertProfile expertProfile = validateExpertAccess(memberId);
         List<Long> categoryIds = expertProfile.getServices().stream().map(SecondCategory::getId).toList();
         List<Long> regionIds = expertProfile.getRegions().stream().map(SecondRegion::getId).toList();
 
         List<ServiceRequest> requests = serviceRequestRepository
-                .findMatchedRequests(categoryIds, regionIds, expertProfile.isNationwide(), RequestStatus.CLOSED, member.getId());
+                .findMatchedRequests(categoryIds, regionIds, expertProfile.isNationwide(), RequestStatus.CLOSED, memberId);
 
         return serviceRequestMapper.toRequestListResponse(requests);
     }
 
     public List<ServiceRequestListResponse> getMyRequests(Long memberId) {
-        Member member = memberService.getMemberEntity(memberId);
-
-        if (!member.getRole().equals(MemberRole.USER)) {
-            throw new BusinessException(FORBIDDEN_EXCEPTION);
-        }
-
+        Member member = validateUserAccess(memberId);
         List<ServiceRequest> requests = getRequestsList(member);
 
         return serviceRequestMapper.toRequestListResponse(requests);
@@ -86,18 +75,8 @@ public class ServiceRequestService {
             }
         } else if (member.getRole().equals(MemberRole.EXPERT)) {
             ExpertProfile expertProfile = expertProfileService.getExpertProfileByMemberId(memberId);
-            Long categoryId = request.getSecondCategory().getId();
-            Long regionId = request.getSecondRegion().getId();
 
-            boolean categoryMatched = expertProfile.getServices().stream()
-                    .anyMatch(category -> category.getId().equals(categoryId));
-
-            boolean regionMatched = expertProfile.getRegions().stream()
-                    .anyMatch(region -> region.getId().equals(regionId));
-
-            boolean nationwide = expertProfile.isNationwide();
-
-            if (!categoryMatched || (!regionMatched && !nationwide)) {
+            if (!isMatchedExpert(expertProfile, request)) {
                 throw new BusinessException(FORBIDDEN_EXCEPTION);
             }
         } else if (!member.getRole().equals(MemberRole.ADMIN)) {
@@ -115,11 +94,7 @@ public class ServiceRequestService {
 
     @Transactional
     public ServiceRequestCreateResponse createRequest(Long memberId, ServiceRequestCreateRequest request) {
-        Member member = memberService.getMemberEntity(memberId);
-        if (!member.getRole().equals(MemberRole.USER)) {
-            throw new BusinessException(FORBIDDEN_EXCEPTION);
-        }
-
+        Member member = validateUserAccess(memberId);
         SecondCategory category = categoryService.getSecondCategoryEntity(request.getSecondCategoryId());
         SecondRegion region = regionService.getSecondRegionEntity(request.getSecondRegionId());
 
@@ -145,12 +120,8 @@ public class ServiceRequestService {
 
     @Transactional
     public void cancelRequest(Long memberId, Long requestId) {
-        Member member = memberService.getMemberEntity(memberId);
         ServiceRequest request = getRequestEntity(requestId);
-
-        if (!member.getRole().equals(MemberRole.USER)) {
-            throw new BusinessException(FORBIDDEN_EXCEPTION);
-        }
+        Member member = validateUserAccess(memberId);
 
         if (!member.getId().equals(request.getMember().getId())) {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
@@ -211,5 +182,39 @@ public class ServiceRequestService {
     private List<ServiceRequest> getRequestsList(Member member) {
         return serviceRequestRepository
                 .findByMemberIdAndRequestStatusNotOrderByCreatedAtDesc(member.getId(), RequestStatus.CLOSED);
+    }
+
+    public boolean isMatchedExpert(ExpertProfile expertProfile, ServiceRequest request) {
+        Long categoryId = request.getSecondCategory().getId();
+        Long regionId = request.getSecondRegion().getId();
+
+        boolean categoryMatched = expertProfile.getServices().stream()
+                .anyMatch(category -> category.getId().equals(categoryId));
+
+        boolean regionMatched = expertProfile.isNationwide()
+                || expertProfile.getRegions().stream()
+                .anyMatch(region -> region.getId().equals(regionId));
+
+        return categoryMatched && regionMatched;
+    }
+
+    private Member validateUserAccess(Long memberId) {
+        Member member = memberService.getMemberEntity(memberId);
+
+        if (!member.getRole().equals(MemberRole.USER)) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        return member;
+    }
+
+    private ExpertProfile validateExpertAccess(Long memberId) {
+        Member member = memberService.getMemberEntity(memberId);
+
+        if (!member.getRole().equals(MemberRole.EXPERT)) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        return expertProfileService.getExpertProfileByMemberId(memberId);
     }
 }

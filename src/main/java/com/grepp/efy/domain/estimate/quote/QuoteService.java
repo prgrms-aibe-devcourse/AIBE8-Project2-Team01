@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
 
 import static com.grepp.efy.global.exception.ErrorCode.*;
 
@@ -71,13 +70,7 @@ public class QuoteService {
 
     @Transactional
     public QuoteCreateResponse createQuote(Long memberId, Long requestId, QuoteCreateRequest createRequest) {
-        Member member = memberService.getMemberEntity(memberId);
-
-        if (!member.getRole().equals(MemberRole.EXPERT)) {
-            throw new BusinessException(FORBIDDEN_EXCEPTION);
-        }
-
-        ExpertProfile expertProfile = expertProfileService.getExpertProfileByMemberId(memberId);
+        ExpertProfile expertProfile = validateExpertAccess(memberId);
         ServiceRequest serviceRequest = serviceRequestService.getRequestEntity(requestId);
 
         if (serviceRequest.getMember().getId().equals(memberId)) {
@@ -88,7 +81,7 @@ public class QuoteService {
             throw new BusinessException(CLOSED_REQUEST_QUOTE_NOT_ALLOWED_EXCEPTION);
         }
 
-        if (!canSendQuote(expertProfile, serviceRequest)) {
+        if (!serviceRequestService.isMatchedExpert(expertProfile, serviceRequest)) {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
         }
 
@@ -111,8 +104,7 @@ public class QuoteService {
     public void deleteQuote(Long memberId, Long quoteId) {
         validateExpertAccess(memberId);
 
-        Quote quote = quoteRepository.findById(quoteId)
-                .orElseThrow(() -> new BusinessException(QUOTE_NOT_FOUND_EXCEPTION));
+        Quote quote = getQuoteEntity(quoteId);
 
         if (!quote.getExpertProfile().getMember().getId().equals(memberId)) {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
@@ -126,28 +118,14 @@ public class QuoteService {
         quoteRepository.delete(quote);
     }
 
-    private boolean canSendQuote(ExpertProfile expertProfile, ServiceRequest serviceRequest) {
-        Long categoryId = serviceRequest.getSecondCategory().getId();
-        Long regionId = serviceRequest.getSecondRegion().getId();
-
-        boolean categoryMatched = expertProfile.getServices().stream()
-                .anyMatch(category -> Objects.equals(category.getId(), categoryId));
-
-        boolean regionMatched = expertProfile.isNationwide()
-                || expertProfile.getRegions().stream()
-                .anyMatch(region -> Objects.equals(region.getId(), regionId));
-
-        return categoryMatched && regionMatched;
-    }
-
-    private void validateExpertAccess(Long memberId) {
+    private ExpertProfile validateExpertAccess(Long memberId) {
         Member member = memberService.getMemberEntity(memberId);
 
         if (!member.getRole().equals(MemberRole.EXPERT)) {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
         }
 
-        expertProfileService.getExpertProfileByMemberId(memberId);
+        return expertProfileService.getExpertProfileByMemberId(memberId);
     }
 
     public Quote getQuoteEntity(Long quoteId) {
