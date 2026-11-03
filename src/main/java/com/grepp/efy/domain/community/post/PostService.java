@@ -15,6 +15,7 @@ import com.grepp.efy.domain.user.member.MemberRole;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
 import com.grepp.efy.global.storage.SupabaseStorageClient;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,24 @@ public class PostService {
 
     private final PostMapper postMapper;
     private final SupabaseStorageClient storageClient;
+
+    @Transactional
+    public PostResponse getPostById(Long postId, @Nullable MemberRole role) {
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+
+        // 숨김 글은 관리자만 조회 (404로 처리하여 일반 사용자가 숨김 사실을 모르게)
+        if (!post.isVisible() && role != MemberRole.ADMIN) {
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND_EXCEPTION);
+        }
+
+        postRepository.increaseViewCount(postId);
+
+        return toResponse(post).toBuilder()
+                .viewCount(post.getViewCount() + 1)
+                .build();
+    }
 
     @Transactional
     public PostResponse createPost(Long memberId, PostRequest postRequest) {
@@ -73,14 +92,18 @@ public class PostService {
                 .images(images)
                 .build());
 
+        return toResponse(post);
+    }
+
+    private PostResponse toResponse(Post post) {
         // 게시글 이미지 목록
-        List<PostResponse.PostImage> imageResponses = images.stream()
+        List<PostResponse.PostImage> imageResponses = post.getImages().stream()
                 .map(file -> new PostResponse.PostImage(
                         file.getId(), storageClient.createUrl(file.getVisibility(), file.getStoragePath())))
                 .toList();
 
         // 작성자 프로필 사진 URL
-        UploadFile profile = member.getImage();
+        UploadFile profile = post.getMember().getImage();
         String profileImageUrl = profile == null ? null
                 : storageClient.createUrl(profile.getVisibility(), profile.getStoragePath());
 

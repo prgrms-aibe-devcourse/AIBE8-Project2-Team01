@@ -12,10 +12,46 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
 
 @Tag(name = "커뮤니티 게시글", description = "커뮤니티 게시글 API")
 public interface PostControllerDocs {
+
+    @Operation(summary = "게시글 상세 조회",
+            description = "토큰 없이 조회할 수 있으며, 만료되었거나 유효하지 않은 토큰은 비로그인으로 취급합니다. "
+                    + "숨김 처리된 글은 관리자만 조회할 수 있고, 작성자를 포함한 그 외 사용자에게는 404로 응답합니다. "
+                    + "조회할 때마다 조회수가 1 증가하며(중복 방지 없음), 응답에는 증가가 반영된 값을 담습니다. "
+                    + "이미지가 없으면 images는 빈 배열, 프로필 사진이 없으면 memberProfileImageUrl은 null, "
+                    + "카테고리·지역을 지정하지 않은 글은 category·region이 null입니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "200", description = "조회 성공",
+            content = @Content(schema = @Schema(implementation = PostResponse.class)))
+    @ApiResponse(responseCode = "400", description = "postId가 정수가 아니거나 1 미만",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "정수가 아님", value = """
+                            {
+                              "message": "경로 또는 쿼리 값의 타입이 올바르지 않습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "1 미만", value = """
+                            {
+                              "message": "입력값이 올바르지 않습니다."
+                            }
+                            """)
+            }))
+    @ApiResponse(responseCode = "404", description = "존재하지 않는 게시글, 또는 관리자가 아닌 사용자의 숨김 글 조회",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "게시글 없음", value = """
+                            {
+                              "message": "존재하지 않는 게시물입니다."
+                            }
+                            """)
+            }))
+    ResponseEntity<PostResponse> getPostById(
+            @Parameter(hidden = true) CustomUserDetails userDetails,
+            @Positive Long postId);
 
     @Operation(summary = "게시글 작성",
             description = "이미지는 먼저 POST /api/files로 PUBLIC 업로드한 뒤 받은 fileId를 imageIds에 원하는 순서대로 넣습니다(최대 10개). "
@@ -80,5 +116,5 @@ public interface PostControllerDocs {
             }))
     ResponseEntity<PostResponse> createPost(
             @Parameter(hidden = true) CustomUserDetails userDetails,
-            PostRequest postRequest);
+            @Valid PostRequest postRequest);
 }
