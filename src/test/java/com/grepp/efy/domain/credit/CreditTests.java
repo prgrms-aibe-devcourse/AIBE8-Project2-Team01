@@ -31,8 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -331,6 +330,53 @@ class CreditTests {
                 "select payment_status from payment where order_id = ?", String.class, orderId));
         assertEquals(0, jdbcTemplate.queryForObject(
                 "select count(*) from credit_wallet where member_id = ?", Integer.class, memberId));
+    }
+
+    @Test
+    void 사용자취소는_CANCELED_그외는_FAILED로_기록() throws Exception {
+        Long memberId = createMember("EXPERT");
+        String orderId = createOrder(memberId, 1);
+        mockMvc.perform(patch("/api/payments/" + orderId + "/fail").header("Authorization", "Bearer " + token(memberId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"code\":\"PAY_PROCESS_CANCELED\",\"message\":\"사용자가 결제를 취소했습니다.\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paymentStatus").value("CANCELED"));
+
+        Long otherId = createMember("EXPERT");
+        String otherOrderId = createOrder(otherId, 1);
+        for (int i = 0; i < 2; i++) { // 같은 실패를 두 번 기록해도 결과가 같다
+            mockMvc.perform(patch("/api/payments/" + otherOrderId + "/fail").header("Authorization", "Bearer " + token(otherId))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"code\":\"REJECT_CARD_COMPANY\",\"message\":\"카드사 거절\"}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.paymentStatus").value("FAILED"));
+        }
+        assertEquals("CANCELED", jdbcTemplate.queryForObject(
+                "select payment_status from payment where order_id = ?", String.class, orderId));
+        assertEquals("FAILED", jdbcTemplate.queryForObject(
+                "select payment_status from payment where order_id = ?", String.class, otherOrderId));
+    }
+
+    @Test
+    void 승인완료_주문과_남의_주문은_실패기록_거절() throws Exception {
+        Long memberId = createMember("EXPERT");
+        String orderId = createOrder(memberId, 1);
+        mockMvc.perform(post("/api/payments/confirm").header("Authorization", "Bearer " + token(memberId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"paymentKey\":\"test_pk_4\",\"orderId\":\"" + orderId + "\",\"amount\":10000}"))
+                .andExpect(status().isOk());
+
+        String failBody = "{\"code\":\"PAY_PROCESS_CANCELED\",\"message\":\"취소\"}";
+        mockMvc.perform(patch("/api/payments/" + orderId + "/fail").header("Authorization", "Bearer " + token(memberId))
+                        .contentType(MediaType.APPLICATION_JSON).content(failBody))
+                .andExpect(status().isConflict());
+
+        Long otherId = createMember("EXPERT");
+        mockMvc.perform(patch("/api/payments/" + orderId + "/fail").header("Authorization", "Bearer " + token(otherId))
+                        .contentType(MediaType.APPLICATION_JSON).content(failBody))
+                .andExpect(status().isForbidden());
+        assertEquals("DONE", jdbcTemplate.queryForObject(
+                "select payment_status from payment where order_id = ?", String.class, orderId));
     }
 
     // ===== 도우미 메서드 =====

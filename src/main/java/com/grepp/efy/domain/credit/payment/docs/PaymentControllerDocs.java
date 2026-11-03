@@ -1,9 +1,6 @@
 package com.grepp.efy.domain.credit.payment.docs;
 
-import com.grepp.efy.domain.credit.payment.dto.PaymentConfirmRequest;
-import com.grepp.efy.domain.credit.payment.dto.PaymentConfirmResponse;
-import com.grepp.efy.domain.credit.payment.dto.PaymentCreateRequest;
-import com.grepp.efy.domain.credit.payment.dto.PaymentCreateResponse;
+import com.grepp.efy.domain.credit.payment.dto.*;
 import com.grepp.efy.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,4 +32,17 @@ public interface PaymentControllerDocs {
     @ApiResponse(responseCode = "502", description = "토스 결제 승인 실패")
     ResponseEntity<PaymentConfirmResponse> confirmPayment(@Parameter(hidden = true) CustomUserDetails userDetails,
                                                           PaymentConfirmRequest request);
+
+    @Operation(summary = "결제 실패·취소 기록",
+            description = "토스 결제창에서 실패 또는 취소로 돌아온 주문을 기록합니다. 사용자 취소(PAY_PROCESS_CANCELED)는 CANCELED, 그 외는 FAILED로 저장합니다. 이미 기록된 주문은 같은 결과를 반환합니다.")
+    @ApiResponse(responseCode = "200", description = "기록 완료")
+    @ApiResponse(responseCode = "400", description = "입력값 검증 실패")
+    @ApiResponse(responseCode = "401", description = "인증 없음·실패")
+    @ApiResponse(responseCode = "403", description = "고수 권한 없음 또는 본인 주문이 아님")
+    @ApiResponse(responseCode = "404", description = "없는 주문")
+    @ApiResponse(responseCode = "409", description = "이미 승인·확인 중·환불된 주문")
+    ResponseEntity<PaymentFailResponse> failPayment(@Parameter(hidden = true) CustomUserDetails userDetails,
+                                                    String orderId,
+                                                    PaymentFailRequest request);
+
 }
