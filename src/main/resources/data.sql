@@ -661,6 +661,11 @@ VALUES ((SELECT id FROM member WHERE email = 'expert1@example.com'),
         101, 39, 'OPEN',
         DATEADD('MINUTE', -50, CURRENT_TIMESTAMP));
 
+-- 9. 이사 / 강남구: 등록 25시간 경과 → 견적 접수 기간 만료 테스트
+INSERT INTO service_request (member_id, second_category_id, second_region_id, request_status, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'customer2@example.com'),
+        101, 39, 'OPEN', DATEADD('HOUR', -25, CURRENT_TIMESTAMP));
+
 -- 견적서 시드 데이터
 -- expert1 → requestId 1
 INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)

@@ -1,5 +1,6 @@
 package com.grepp.efy.domain.estimate.quote;
 
+import com.grepp.efy.domain.credit.reservation.CreditReservationService;
 import com.grepp.efy.domain.estimate.enums.QuoteStatus;
 import com.grepp.efy.domain.estimate.enums.RequestStatus;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
@@ -19,6 +20,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.grepp.efy.global.exception.ErrorCode.*;
@@ -32,6 +34,7 @@ public class QuoteService {
     private final MemberService memberService;
     private final ServiceRequestService serviceRequestService;
     private final ExpertProfileService expertProfileService;
+    private final CreditReservationService creditReservationService;
     private final QuoteMapper quoteMapper;
 
     public List<QuoteResponse> getQuotes(Long memberId) {
@@ -81,6 +84,10 @@ public class QuoteService {
             throw new BusinessException(CLOSED_REQUEST_QUOTE_NOT_ALLOWED_EXCEPTION);
         }
 
+        if (serviceRequest.getCreatedAt().plusHours(ServiceRequest.VALID_HOURS).isBefore(LocalDateTime.now())) {
+            throw new BusinessException(EXPIRED_REQUEST_QUOTE_NOT_ALLOWED_EXCEPTION);
+        }
+
         if (!serviceRequestService.isMatchedExpert(expertProfile, serviceRequest)) {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
         }
@@ -96,6 +103,8 @@ public class QuoteService {
             // uk_quote_expert_request 제약 위반은 중복 견적으로 처리
             throw new BusinessException(DUPLICATE_QUOTE_NOT_ALLOWED_EXCEPTION);
         }
+
+        creditReservationService.reserveForQuote(memberId, quote.getId());
 
         return quoteMapper.toCreateResponse(quote);
     }

@@ -135,7 +135,7 @@ public class ServiceRequestService {
     }
 
     private void validateDuplicateRequest(Long memberId, Long secondCategoryId) {
-        LocalDateTime expirationBoundary = LocalDateTime.now().minusHours(24);
+        LocalDateTime expirationBoundary = LocalDateTime.now().minusHours(ServiceRequest.VALID_HOURS);
 
         boolean exists = serviceRequestRepository.existsByMemberIdAndSecondCategoryIdAndRequestStatusAndCreatedAtAfter(
                 memberId, secondCategoryId, RequestStatus.OPEN, expirationBoundary);
