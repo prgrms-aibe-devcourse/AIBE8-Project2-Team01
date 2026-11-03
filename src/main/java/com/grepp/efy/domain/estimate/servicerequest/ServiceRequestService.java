@@ -4,9 +4,12 @@ import com.grepp.efy.domain.basedata.secondcategory.SecondCategory;
 import com.grepp.efy.domain.basedata.secondcategory.SecondCategoryService;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegion;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegionService;
+import com.grepp.efy.domain.credit.reservation.CreditReservationService;
+import com.grepp.efy.domain.estimate.enums.QuoteStatus;
 import com.grepp.efy.domain.estimate.enums.RequestStatus;
 import com.grepp.efy.domain.estimate.question.Question;
 import com.grepp.efy.domain.estimate.question.QuestionService;
+import com.grepp.efy.domain.estimate.quote.QuoteRepository;
 import com.grepp.efy.domain.estimate.requestanswer.RequestAnswer;
 import com.grepp.efy.domain.estimate.requestanswer.RequestAnswerMapper;
 import com.grepp.efy.domain.estimate.requestanswer.RequestAnswerRepository;
@@ -45,6 +48,8 @@ public class ServiceRequestService {
     private final ServiceRequestMapper serviceRequestMapper;
     private final RequestAnswerMapper requestAnswerMapper;
     private final ExpertProfileService expertProfileService;
+    private final QuoteRepository quoteRepository;
+    private final CreditReservationService creditReservationService;
 
     public List<ServiceRequestListResponse> getMatchedRequests(Long memberId) {
         ExpertProfile expertProfile = validateExpertAccess(memberId);
@@ -132,6 +137,12 @@ public class ServiceRequestService {
         }
 
         request.setRequestStatus(RequestStatus.CLOSED);
+
+        List<Long> sentQuoteIds = quoteRepository.findIdsByServiceRequestIdAndQuoteStatus(requestId, QuoteStatus.SENT);
+        if (!sentQuoteIds.isEmpty()) {
+            creditReservationService.releaseReservations(sentQuoteIds);
+            quoteRepository.deleteAllByIdInBatch(sentQuoteIds);
+        }
     }
 
     private void validateDuplicateRequest(Long memberId, Long secondCategoryId) {

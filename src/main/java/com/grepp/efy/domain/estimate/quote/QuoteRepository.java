@@ -30,4 +30,12 @@ public interface QuoteRepository extends JpaRepository<Quote, Long> {
             ORDER BY q.sentAt DESC
             """)
     List<Quote> findValidQuotesByRequestId(Long requestId, QuoteStatus requested, LocalDateTime boundary);
+
+    @Query("""
+            SELECT q.id
+            FROM Quote q
+            WHERE q.serviceRequest.id = :requestId
+              AND q.quoteStatus = :status
+            """)
+    List<Long> findIdsByServiceRequestIdAndQuoteStatus(Long requestId, QuoteStatus status);
 }
