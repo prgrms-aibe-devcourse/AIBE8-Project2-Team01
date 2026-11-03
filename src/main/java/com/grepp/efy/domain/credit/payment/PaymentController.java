@@ -1,6 +1,8 @@
 package com.grepp.efy.domain.credit.payment;
 
 import com.grepp.efy.domain.credit.payment.docs.PaymentControllerDocs;
+import com.grepp.efy.domain.credit.payment.dto.PaymentConfirmRequest;
+import com.grepp.efy.domain.credit.payment.dto.PaymentConfirmResponse;
 import com.grepp.efy.domain.credit.payment.dto.PaymentCreateRequest;
 import com.grepp.efy.domain.credit.payment.dto.PaymentCreateResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
@@ -28,5 +30,13 @@ public class PaymentController implements PaymentControllerDocs {
             @Valid @RequestBody PaymentCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(paymentService.createPayment(userDetails.getMemberId(), request));
+    }
+
+    @PostMapping("/payments/confirm")
+    @Override
+    public ResponseEntity<PaymentConfirmResponse> confirmPayment(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody PaymentConfirmRequest request) {
+        return ResponseEntity.ok(paymentService.confirmPayment(userDetails.getMemberId(), request));
     }
 }
