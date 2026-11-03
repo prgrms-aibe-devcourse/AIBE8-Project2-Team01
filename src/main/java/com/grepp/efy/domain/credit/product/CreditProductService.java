@@ -1,8 +1,7 @@
 package com.grepp.efy.domain.credit.product;
 
+import com.grepp.efy.domain.credit.CreditAccessValidator;
 import com.grepp.efy.domain.credit.product.dto.CreditProductResponse;
-import com.grepp.efy.domain.user.member.Member;
-import com.grepp.efy.domain.user.member.MemberRole;
 import com.grepp.efy.domain.user.member.MemberService;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
@@ -19,13 +18,11 @@ public class CreditProductService {
 
     private final CreditProductRepository creditProductRepository;
     private final MemberService memberService;
+    private final CreditAccessValidator creditAccessValidator;
 
     // 고수가 충전할 수 있는 판매 중 상품을 가격 오름차순으로 조회한다.
     public List<CreditProductResponse> getCreditProducts(Long memberId) {
-        Member member = memberService.getMemberEntity(memberId);
-        if (member.getRole() != MemberRole.EXPERT) {
-            throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
-        }
+        creditAccessValidator.getExpert(memberId);
         return creditProductRepository.findAllByActiveTrueOrderByPriceAsc().stream()
                 .map(product -> new CreditProductResponse(
                         product.getId(), product.getName(), product.getPrice(), product.getCreditAmount()))
