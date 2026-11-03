@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,7 +23,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -46,6 +49,7 @@ class CreditTests {
     @AfterEach
     void cleanUp() {
         for (Long memberId : memberIds) {
+            jdbcTemplate.update("delete from payment where member_id = ?", memberId);
             String wallet = "(select id from credit_wallet where member_id = ?)";
             jdbcTemplate.update("delete from credit_history where credit_wallet_id in " + wallet, memberId);
             jdbcTemplate.update("delete from credit_reservation where credit_wallet_id in " + wallet, memberId);
@@ -221,5 +225,41 @@ class CreditTests {
         Long userId = createMember("USER");
         mockMvc.perform(get("/api/credit-products").header("Authorization", "Bearer " + token(userId)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 서버의_상품가격으로_READY_주문을_생성() throws Exception {
+        Long memberId = createMember("EXPERT");
+        // 요청에 금액을 넣어도 무시하고 서버의 상품 가격으로 주문한다
+        mockMvc.perform(post("/api/payments").header("Authorization", "Bearer " + token(memberId))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"creditProductId\":2,\"amount\":1}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.orderId").value(startsWith("efy-")))
+                .andExpect(jsonPath("$.orderName").value("크레딧 30개"))
+                .andExpect(jsonPath("$.amount").value(30000));
+        assertEquals("READY", jdbcTemplate.queryForObject(
+                "select payment_status from payment where member_id = ?", String.class, memberId));
+        assertEquals(30, jdbcTemplate.queryForObject(
+                "select credit_amount from payment where member_id = ?", Integer.class, memberId));
+    }
+
+    @Test
+    void 잘못된_상품과_권한없는_주문생성_거절() throws Exception {
+        Long expertId = createMember("EXPERT");
+        for (String body : List.of("{}", "{\"creditProductId\":0}", "{")) {
+            mockMvc.perform(post("/api/payments").header("Authorization", "Bearer " + token(expertId))
+                            .contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isBadRequest());
+        }
+        mockMvc.perform(post("/api/payments").header("Authorization", "Bearer " + token(expertId))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"creditProductId\":999}"))
+                .andExpect(status().isNotFound());
+
+        Long userId = createMember("USER");
+        mockMvc.perform(post("/api/payments").header("Authorization", "Bearer " + token(userId))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"creditProductId\":1}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/payments").contentType(MediaType.APPLICATION_JSON).content("{\"creditProductId\":1}"))
+                .andExpect(status().isUnauthorized());
     }
 }
