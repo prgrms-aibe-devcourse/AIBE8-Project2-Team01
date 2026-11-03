@@ -85,6 +85,10 @@ public enum ErrorCode {
     CREDIT_RESERVATION_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "견적서의 크레딧 예약을 찾을 수 없습니다."),
     INVALID_CREDIT_RESERVATION_STATUS_EXCEPTION(HttpStatus.CONFLICT, "처리할 수 없는 크레딧 예약 상태입니다."),
     CREDIT_PRODUCT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "충전 상품을 찾을 수 없습니다."),
+    PAYMENT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "결제 정보를 찾을 수 없습니다."),
+    PAYMENT_AMOUNT_MISMATCH_EXCEPTION(HttpStatus.BAD_REQUEST, "결제 금액이 주문 금액과 일치하지 않습니다."),
+    INVALID_PAYMENT_STATUS_EXCEPTION(HttpStatus.CONFLICT, "처리할 수 없는 결제 상태입니다."),
+    PAYMENT_CONFIRM_FAILED_EXCEPTION(HttpStatus.BAD_GATEWAY, "결제 승인에 실패했습니다."),
     // ⑧ 채팅
 
 
