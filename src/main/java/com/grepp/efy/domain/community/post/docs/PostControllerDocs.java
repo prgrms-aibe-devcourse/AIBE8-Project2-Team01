@@ -5,6 +5,9 @@ import com.grepp.efy.domain.community.post.dto.PostRequest;
 import com.grepp.efy.domain.community.post.dto.PostResponse;
 import com.grepp.efy.domain.community.post.dto.PostSummaryResponse;
 import com.grepp.efy.domain.community.post.dto.PostUpdateRequest;
+import com.grepp.efy.domain.community.post.dto.PostVisibilityHistoryResponse;
+import com.grepp.efy.domain.community.post.dto.PostVisibilityRequest;
+import com.grepp.efy.domain.community.post.dto.PostVisibilityResponse;
 import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.exception.ErrorResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
@@ -339,5 +342,58 @@ public interface PostControllerDocs {
             }))
     ResponseEntity<Void> deletePost(
             @Parameter(hidden = true) CustomUserDetails userDetails,
+            @Positive Long postId);
+
+    @Operation(summary = "관리자 게시글 공개/비공개 전환",
+            description = "관리자만 호출할 수 있습니다. 토글이 아니라 원하는 상태를 isVisible로 직접 지정하며, "
+                    + "이미 같은 상태여도 200으로 응답합니다. "
+                    + "상태가 실제로 바뀐 경우에만 변경 이력(관리자, 변경 시각, 변경 후 상태, 사유)을 저장합니다. "
+                    + "공개 여부만 바꾸며 글의 updatedAt은 갱신하지 않습니다. 삭제된 글은 바꿀 수 없습니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "200", description = "변경 성공 (같은 상태 요청 포함)",
+            content = @Content(schema = @Schema(implementation = PostVisibilityResponse.class)))
+    @ApiResponse(responseCode = "400", description = "postId 오류, isVisible 누락·형식 오류, reason 길이 오류",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "입력값 오류 (postId 1 미만, isVisible 누락, reason 공백·200자 초과)", value = """
+                            {
+                              "message": "입력값이 올바르지 않습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "본문 형식 오류 (isVisible이 true/false가 아님)", value = """
+                            {
+                              "message": "요청 본문을 읽을 수 없습니다. JSON 형식을 확인해주세요."
+                            }
+                            """)
+            }))
+    @ApiResponse(responseCode = "401", description = "인증 실패")
+    @ApiResponse(responseCode = "403", description = "관리자가 아님",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "존재하지 않거나 삭제된 게시글",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "게시글 없음", value = """
+                            {
+                              "message": "존재하지 않는 게시물입니다."
+                            }
+                            """)
+            }))
+    ResponseEntity<PostVisibilityResponse> changeVisibility(
+            @Parameter(hidden = true) CustomUserDetails userDetails,
+            @Positive Long postId,
+            @Valid PostVisibilityRequest request);
+
+    @Operation(summary = "관리자 게시글 공개/비공개 변경 이력 조회",
+            description = "관리자만 호출할 수 있습니다. 변경 이력을 최신순(같은 시각이면 historyId 내림차순)으로 페이지 없이 모두 반환합니다. "
+                    + "삭제된 글의 이력도 조회할 수 있습니다. 이력이 없으면 histories는 빈 배열, 사유가 없으면 reason은 null입니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "200", description = "조회 성공",
+            content = @Content(schema = @Schema(implementation = PostVisibilityHistoryResponse.class)))
+    @ApiResponse(responseCode = "400", description = "postId가 정수가 아니거나 1 미만",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "401", description = "인증 실패")
+    @ApiResponse(responseCode = "403", description = "관리자가 아님",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "존재하지 않는 게시글",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    ResponseEntity<PostVisibilityHistoryResponse> getVisibilityHistory(
             @Positive Long postId);
 }

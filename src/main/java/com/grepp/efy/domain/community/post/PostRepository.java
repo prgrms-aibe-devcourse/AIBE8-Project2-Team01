@@ -13,6 +13,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("update Post p set p.viewCount = p.viewCount + 1 where p.id = :id")
     void increaseViewCount(@Param("id") Long id);
 
+    // 엔티티를 바꾸면 @PreUpdate가 updatedAt을 갱신하므로, 공개 여부만 바로 UPDATE
+    @Modifying
+    @Query("update Post p set p.isVisible = :isVisible where p.id = :id")
+    void updateVisibility(@Param("id") Long id, @Param("isVisible") boolean isVisible);
+
     @Query(value = """
         select p from Post p
         join fetch p.member

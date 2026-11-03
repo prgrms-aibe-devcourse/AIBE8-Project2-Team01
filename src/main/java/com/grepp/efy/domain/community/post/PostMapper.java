@@ -4,6 +4,7 @@ import com.grepp.efy.domain.basedata.secondcategory.SecondCategory;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegion;
 import com.grepp.efy.domain.community.post.dto.PostResponse;
 import com.grepp.efy.domain.community.post.dto.PostSummaryResponse;
+import com.grepp.efy.domain.community.post.dto.PostVisibilityHistoryResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -45,4 +46,10 @@ public interface PostMapper {
     @Mapping(target = "likeCount", ignore = true)
     @Mapping(target = "isVisible", source = "post.visible")
     PostSummaryResponse toSummary(Post post, String thumbnailUrl);
+
+    @Mapping(target = "historyId", source = "id")
+    @Mapping(target = "isVisible", source = "visible")
+    @Mapping(target = "adminId", source = "admin.id")
+    @Mapping(target = "adminNickname", source = "admin.nickname")
+    PostVisibilityHistoryResponse.History toHistory(PostVisibilityHistory history);
 }
