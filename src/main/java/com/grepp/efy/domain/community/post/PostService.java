@@ -44,6 +44,7 @@ public class PostService {
     private final SecondCategoryRepository secondCategoryRepository;
     private final SecondRegionRepository secondRegionRepository;
     private final UploadFileRepository uploadFileRepository;
+    private final PostVisibilityHistoryRepository postVisibilityHistoryRepository;
 
     private final PostMapper postMapper;
     private final SupabaseStorageClient storageClient;
@@ -203,6 +204,43 @@ public class PostService {
         }
 
         post.delete();
+    }
+
+    // 원하는 상태를 직접 지정 (토글 아님). 상태가 실제로 바뀔 때만 이력 저장
+    @Transactional
+    public PostVisibilityResponse changeVisibility(Long postId, Long adminId, PostVisibilityRequest request) {
+
+        Post post = findPost(postId);
+        boolean isVisible = request.getIsVisible();
+
+        if (post.isVisible() != isVisible) {
+            // updatedAt은 글 내용 수정 시각이므로 건드리지 않는다
+            postRepository.updateVisibility(postId, isVisible);
+
+            postVisibilityHistoryRepository.save(PostVisibilityHistory.builder()
+                    .post(post)
+                    .admin(memberRepository.getReferenceById(adminId))
+                    .isVisible(isVisible)
+                    .reason(request.getReason())
+                    .build());
+        }
+
+        return new PostVisibilityResponse(postId, isVisible);
+    }
+
+    // 삭제된 글의 이력도 조회 가능
+    public PostVisibilityHistoryResponse getVisibilityHistory(Long postId) {
+
+        if (!postRepository.existsById(postId)) {
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND_EXCEPTION);
+        }
+
+        List<PostVisibilityHistoryResponse.History> histories = postVisibilityHistoryRepository
+                .findByPostIdOrderByCreatedAtDescIdDesc(postId).stream()
+                .map(postMapper::toHistory)
+                .toList();
+
+        return new PostVisibilityHistoryResponse(postId, histories);
     }
 
     // 삭제된 글은 없는 글과 동일하게 404

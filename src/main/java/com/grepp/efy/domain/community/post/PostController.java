@@ -6,6 +6,9 @@ import com.grepp.efy.domain.community.post.dto.PostResponse;
 import com.grepp.efy.domain.community.post.dto.PostSearchCondition;
 import com.grepp.efy.domain.community.post.dto.PostSummaryResponse;
 import com.grepp.efy.domain.community.post.dto.PostUpdateRequest;
+import com.grepp.efy.domain.community.post.dto.PostVisibilityHistoryResponse;
+import com.grepp.efy.domain.community.post.dto.PostVisibilityRequest;
+import com.grepp.efy.domain.community.post.dto.PostVisibilityResponse;
 import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -153,5 +156,29 @@ public class PostController implements PostControllerDocs {
         postService.deletePost(postId, userDetails.getMemberId(), userDetails.getRole());
 
         return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    @PatchMapping("/admin/posts/{postId}/visibility")
+    public ResponseEntity<PostVisibilityResponse> changeVisibility(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable @Positive Long postId,
+            @Valid @RequestBody PostVisibilityRequest request
+    ) {
+
+        PostVisibilityResponse response = postService.changeVisibility(postId, userDetails.getMemberId(), request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @GetMapping("/admin/posts/{postId}/visibility-history")
+    public ResponseEntity<PostVisibilityHistoryResponse> getVisibilityHistory(
+            @PathVariable @Positive Long postId
+    ) {
+
+        PostVisibilityHistoryResponse response = postService.getVisibilityHistory(postId);
+
+        return ResponseEntity.ok(response);
     }
 }
