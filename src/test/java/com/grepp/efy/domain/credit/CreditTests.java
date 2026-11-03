@@ -100,6 +100,35 @@ class CreditTests {
                 .andExpect(status().isForbidden());
     }
 
+    // ===== 예약 목록 =====
+
+    @Test
+    void 예약중인_견적만_조회() throws Exception {
+        Long memberId = createMember("EXPERT");
+        createWallet(memberId, 10);
+        Long reservedQuote = nextQuoteId();
+        Long releasedQuote = nextQuoteId();
+        creditReservationService.reserveForQuote(memberId, reservedQuote);
+        creditReservationService.reserveForQuote(memberId, releasedQuote);
+        creditReservationService.releaseReservation(releasedQuote);
+
+        mockMvc.perform(get("/api/members/me/credit-reservations").header("Authorization", "Bearer " + token(memberId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].quoteId").value(reservedQuote))
+                .andExpect(jsonPath("$[0].amount").value(2));
+
+        Long noWalletId = createMember("EXPERT");
+        mockMvc.perform(get("/api/members/me/credit-reservations").header("Authorization", "Bearer " + token(noWalletId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        Long userId = createMember("USER");
+        mockMvc.perform(get("/api/members/me/credit-reservations").header("Authorization", "Bearer " + token(userId)))
+                .andExpect(status().isForbidden());
+    }
+
+
     // ===== 예약·차감·해제 =====
 
     @Test

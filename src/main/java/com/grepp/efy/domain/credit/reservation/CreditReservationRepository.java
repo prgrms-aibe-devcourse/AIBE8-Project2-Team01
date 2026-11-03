@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CreditReservationRepository extends JpaRepository<CreditReservation, Long> {
@@ -21,4 +22,8 @@ public interface CreditReservationRepository extends JpaRepository<CreditReserva
             + "where r.creditWallet.id = :walletId and r.reservationStatus = :status")
     long sumAmountByWalletIdAndStatus(@Param("walletId") Long walletId,
                                       @Param("status") CreditReservationStatus status);
+
+    List<CreditReservation> findAllByCreditWalletIdAndReservationStatusOrderByCreatedAtDescIdDesc(
+            Long creditWalletId, CreditReservationStatus reservationStatus);
+
 }
