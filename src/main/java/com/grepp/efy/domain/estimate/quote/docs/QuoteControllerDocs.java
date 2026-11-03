@@ -130,4 +130,30 @@ public interface QuoteControllerDocs {
             )
             @Valid @RequestBody QuoteCreateRequest request
     );
+
+    @Operation(
+            summary = "견적서 회수 및 삭제",
+            description = """
+                    로그인한 고수가 발송한 견적서를 회수하고 삭제한다.
+                    
+                    - EXPERT 권한이 필요하다.
+                    - 본인이 발송한 견적서만 삭제할 수 있다.
+                    - SENT 상태의 견적서만 삭제할 수 있다.
+                    - REQUESTED 상태의 견적서는 삭제할 수 없다.
+                    - 삭제 성공 시 견적서는 물리적으로 삭제된다.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "견적서 삭제 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "403", description = "고수 권한이 없거나 본인의 견적서가 아님"),
+            @ApiResponse(responseCode = "404", description = "견적서를 찾을 수 없음"),
+            @ApiResponse(responseCode = "409", description = "이미 의뢰 요청된 견적서는 삭제할 수 없음")
+    })
+    ResponseEntity<Void> deleteQuote(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(name = "quoteId", description = "삭제할 견적서 ID",
+                    required = true, in = ParameterIn.PATH, example = "1")
+            @PathVariable Long quoteId
+    );
 }
