@@ -26,6 +26,7 @@ public interface ExpertProfileMapper {
     @Mapping(target = "regions", ignore = true)
     ExpertProfile toEntity(ExpertProfileCreateRequest expertProfileRequest);
 
+    @Mapping(target = "nickname", source = "expertProfile.member.nickname")
     @Mapping(target = "imageId", source = "expertProfile.member.image.id")
     ExpertProfileResponse toResponse(ExpertProfile expertProfile, String imageUrl);
 

@@ -8,6 +8,7 @@ import java.util.Set;
 
 public record ExpertProfileResponse(
         Long id,
+        String nickname,
         String shortIntro,
         String description,
         Integer careerYears,
