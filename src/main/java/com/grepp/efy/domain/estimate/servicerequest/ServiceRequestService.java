@@ -57,7 +57,9 @@ public class ServiceRequestService {
         List<Long> regionIds = expertProfile.getRegions().stream().map(SecondRegion::getId).toList();
 
         List<ServiceRequest> requests = serviceRequestRepository
-                .findMatchedRequests(categoryIds, regionIds, expertProfile.isNationwide(), RequestStatus.CLOSED, memberId);
+                .findMatchedRequests(categoryIds, regionIds, expertProfile.isNationwide(),
+                        RequestStatus.CLOSED, memberId,
+                        LocalDateTime.now().minusHours(ServiceRequest.VALID_HOURS));
 
         return serviceRequestMapper.toRequestListResponse(requests);
     }

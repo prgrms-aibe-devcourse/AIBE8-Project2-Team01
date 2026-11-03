@@ -83,7 +83,7 @@ public class QuoteService {
             throw new BusinessException(CLOSED_REQUEST_QUOTE_NOT_ALLOWED_EXCEPTION);
         }
 
-        if (serviceRequest.getCreatedAt().plusHours(ServiceRequest.VALID_HOURS).isBefore(LocalDateTime.now())) {
+        if (!serviceRequest.getCreatedAt().isAfter(LocalDateTime.now().minusHours(ServiceRequest.VALID_HOURS))) {
             throw new BusinessException(EXPIRED_REQUEST_QUOTE_NOT_ALLOWED_EXCEPTION);
         }
 
