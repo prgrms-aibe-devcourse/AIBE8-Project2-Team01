@@ -7,5 +7,5 @@ public interface FirstCategoryRepository extends JpaRepository<FirstCategory, Lo
 
     List<FirstCategory> findAllByOrderByIdAsc();
 
-    boolean existsByNameIgnoreCase(String name);
+    boolean existsByNameKey(String name);
 }
