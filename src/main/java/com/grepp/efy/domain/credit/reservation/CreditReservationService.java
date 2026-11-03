@@ -1,8 +1,10 @@
 package com.grepp.efy.domain.credit.reservation;
 
+import com.grepp.efy.domain.credit.CreditAccessValidator;
 import com.grepp.efy.domain.credit.history.CreditHistory;
 import com.grepp.efy.domain.credit.history.CreditHistoryRepository;
 import com.grepp.efy.domain.credit.history.CreditHistoryType;
+import com.grepp.efy.domain.credit.reservation.dto.CreditReservationResponse;
 import com.grepp.efy.domain.credit.wallet.CreditWallet;
 import com.grepp.efy.domain.credit.wallet.CreditWalletRepository;
 import com.grepp.efy.global.exception.BusinessException;
@@ -23,6 +25,7 @@ public class CreditReservationService {
     private final CreditWalletRepository creditWalletRepository;
     private final CreditReservationRepository creditReservationRepository;
     private final CreditHistoryRepository creditHistoryRepository;
+    private final CreditAccessValidator creditAccessValidator;
 
     // 견적 발송 시 견적 저장과 같은 트랜잭션에서 호출한다.
     // 지갑을 잠근 뒤 사용 가능 크레딧(보유 - 예약)이 2 이상이면 견적서 1건에 2크레딧을 예약한다.
@@ -89,4 +92,19 @@ public class CreditReservationService {
     public void releaseReservations(List<Long> quoteIds) {
         quoteIds.forEach(this::releaseReservation);
     }
+
+    // 고수 본인의 예약 중인 견적 목록. 지갑이 없으면 빈 목록
+    public List<CreditReservationResponse> getMyReservations(Long memberId) {
+        creditAccessValidator.getExpert(memberId);
+        return creditWalletRepository.findByMemberId(memberId)
+                .map(wallet -> creditReservationRepository
+                        .findAllByCreditWalletIdAndReservationStatusOrderByCreatedAtDescIdDesc(
+                                wallet.getId(), CreditReservationStatus.RESERVED)
+                        .stream()
+                        .map(reservation -> new CreditReservationResponse(
+                                reservation.getQuoteId(), reservation.getAmount(), reservation.getCreatedAt()))
+                        .toList())
+                .orElse(List.of());
+    }
+
 }

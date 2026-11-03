@@ -1,10 +1,7 @@
 package com.grepp.efy.domain.credit.payment;
 
 import com.grepp.efy.domain.credit.CreditAccessValidator;
-import com.grepp.efy.domain.credit.payment.dto.PaymentConfirmRequest;
-import com.grepp.efy.domain.credit.payment.dto.PaymentConfirmResponse;
-import com.grepp.efy.domain.credit.payment.dto.PaymentCreateRequest;
-import com.grepp.efy.domain.credit.payment.dto.PaymentCreateResponse;
+import com.grepp.efy.domain.credit.payment.dto.*;
 import com.grepp.efy.domain.credit.product.CreditProduct;
 import com.grepp.efy.domain.credit.product.CreditProductService;
 import com.grepp.efy.domain.credit.wallet.CreditWalletService;
@@ -25,6 +22,7 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class PaymentService {
 
+    private static final String USER_CANCEL_CODE = "PAY_PROCESS_CANCELED";
     private final PaymentRepository paymentRepository;
     private final CreditProductService creditProductService;
     private final CreditAccessValidator creditAccessValidator;
@@ -89,5 +87,29 @@ public class PaymentService {
         payment.setApprovedAt(LocalDateTime.now());
         long balance = creditWalletService.chargeForPayment(payment.getMember(), payment.getId(), payment.getCreditAmount());
         return new PaymentConfirmResponse(payment.getOrderId(), PaymentStatus.DONE, payment.getCreditAmount(), balance);
+    }
+
+    // 토스 결제창에서 실패·취소로 돌아왔을 때 READY 주문을 CANCELED 또는 FAILED로 기록한다
+    @Transactional
+    public PaymentFailResponse failPayment(Long memberId, String orderId, PaymentFailRequest request) {
+        creditAccessValidator.getExpert(memberId);
+        Payment payment = paymentRepository.findByOrderIdForUpdate(orderId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND_EXCEPTION));
+        if (!payment.getMember().getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
+        }
+        // 이미 실패·취소로 기록된 주문은 다시 요청해도 기존 결과를 반환한다
+        if (payment.getPaymentStatus() == PaymentStatus.FAILED || payment.getPaymentStatus() == PaymentStatus.CANCELED) {
+            return new PaymentFailResponse(payment.getOrderId(), payment.getPaymentStatus());
+        }
+        if (payment.getPaymentStatus() != PaymentStatus.READY) {
+            throw new BusinessException(ErrorCode.INVALID_PAYMENT_STATUS_EXCEPTION);
+        }
+
+        PaymentStatus status = USER_CANCEL_CODE.equals(request.getCode())
+                ? PaymentStatus.CANCELED
+                : PaymentStatus.FAILED;
+        payment.setPaymentStatus(status);
+        return new PaymentFailResponse(payment.getOrderId(), status);
     }
 }
