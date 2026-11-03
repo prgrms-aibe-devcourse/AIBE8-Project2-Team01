@@ -4,6 +4,7 @@ import com.grepp.efy.domain.estimate.enums.QuoteStatus;
 import com.grepp.efy.domain.estimate.servicerequest.ServiceRequest;
 import com.grepp.efy.domain.user.expertprofile.ExpertProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -38,4 +39,20 @@ public interface QuoteRepository extends JpaRepository<Quote, Long> {
               AND q.quoteStatus = :status
             """)
     List<Long> findIdsByServiceRequestIdAndQuoteStatus(Long requestId, QuoteStatus status);
+
+    @Query("""
+            SELECT q.id
+            FROM Quote q
+            WHERE q.quoteStatus = :status
+              AND q.sentAt <= :boundary
+            """)
+    List<Long> findExpiredQuoteIds(QuoteStatus status, LocalDateTime boundary);
+
+    @Modifying
+    @Query("""
+            DELETE FROM Quote q
+            WHERE q.id IN :ids
+              AND q.quoteStatus = :status
+            """)
+    int deleteByIdsAndStatus(List<Long> ids, QuoteStatus status);
 }

@@ -126,6 +126,19 @@ public class QuoteService {
         quoteRepository.delete(quote);
     }
 
+    // 유효기간(72시간)이 지난 SENT 견적의 크레딧 예약을 해제하고 삭제한다. 삭제한 건수를 반환한다
+    @Transactional
+    public int deleteExpiredQuotes() {
+        List<Long> expiredIds = quoteRepository.findExpiredQuoteIds(QuoteStatus.SENT, validBoundary());
+
+        if (expiredIds.isEmpty()) {
+            return 0;
+        }
+
+        creditReservationService.releaseReservations(expiredIds);
+        return quoteRepository.deleteByIdsAndStatus(expiredIds, QuoteStatus.SENT);
+    }
+
     private ExpertProfile validateExpertAccess(Long memberId) {
         Member member = memberService.getMemberEntity(memberId);
 
