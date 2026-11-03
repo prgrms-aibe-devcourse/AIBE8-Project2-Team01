@@ -44,4 +44,22 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                                @Param("firstRegionId") Long firstRegionId,
                                @Param("secondRegionId") Long secondRegionId,
                                Pageable pageable);
+
+    // boardType이 null이면 전체 게시판
+    @Query(value = """
+        select p from Post p
+        join fetch p.member
+        left join fetch p.secondCategory sc left join fetch sc.firstCategory
+        left join fetch p.secondRegion sr left join fetch sr.firstRegion
+        where p.member.id = :memberId and p.isVisible = true and p.deletedAt is null
+          and (:boardType is null or p.boardType = :boardType)
+        """,
+            countQuery = """
+        select count(p) from Post p
+        where p.member.id = :memberId and p.isVisible = true and p.deletedAt is null
+          and (:boardType is null or p.boardType = :boardType)
+        """)
+    Page<Post> findMyPosts(@Param("memberId") Long memberId,
+                           @Param("boardType") BoardType boardType,
+                           Pageable pageable);
 }
