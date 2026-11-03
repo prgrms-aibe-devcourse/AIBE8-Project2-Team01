@@ -47,21 +47,20 @@ public class QuoteService {
     }
 
     public QuoteResponse getQuote(Long memberId, Long quoteId) {
-        validateExpertAccess(memberId);
+        Member member = memberService.getMemberEntity(memberId);
         Quote quote = getValidQuoteEntity(quoteId);
-        Long quoteOwnerId = quote.getExpertProfile().getMember().getId();
 
-        if (!quoteOwnerId.equals(memberId)) {
-            throw new BusinessException(FORBIDDEN_EXCEPTION);
-        }
+        validateQuoteReadAccess(member, quote);
 
         return quoteMapper.toResponse(quote);
     }
 
     public List<QuoteRequestResponse> getRequestQuotes(Long memberId, Long requestId) {
+        Member member = memberService.getMemberEntity(memberId);
         ServiceRequest serviceRequest = serviceRequestService.getRequestEntity(requestId);
 
-        if (!serviceRequest.getMember().getId().equals(memberId)) {
+        boolean isAdmin = member.getRole().equals(MemberRole.ADMIN);
+        if (!isAdmin && !serviceRequest.getMember().getId().equals(memberId)) {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
         }
 
@@ -126,7 +125,6 @@ public class QuoteService {
         quoteRepository.delete(quote);
     }
 
-    // 유효기간(72시간)이 지난 SENT 견적의 크레딧 예약을 해제하고 삭제한다. 삭제한 건수를 반환한다
     @Transactional
     public int deleteExpiredQuotes() {
         List<Long> expiredIds = quoteRepository.findExpiredQuoteIds(QuoteStatus.SENT, validBoundary());
@@ -137,6 +135,37 @@ public class QuoteService {
 
         creditReservationService.releaseReservations(expiredIds);
         return quoteRepository.deleteByIdsAndStatus(expiredIds, QuoteStatus.SENT);
+    }
+
+    @Transactional
+    public Quote requestQuote(Long customerId, Long quoteId) {
+        Quote quote = quoteRepository.findByIdForUpdate(quoteId)
+                .orElseThrow(() -> new BusinessException(QUOTE_NOT_FOUND_EXCEPTION));
+        ServiceRequest serviceRequest = quote.getServiceRequest();
+
+        if (!serviceRequest.getMember().getId().equals(customerId)) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        if (quote.getQuoteStatus().equals(QuoteStatus.REQUESTED)) {
+            throw new BusinessException(ALREADY_REQUESTED_QUOTE_EXCEPTION);
+        }
+
+        if (!quote.getSentAt().isAfter(validBoundary())) {
+            throw new BusinessException(QUOTE_NOT_FOUND_EXCEPTION);
+        }
+
+        if (serviceRequest.getRequestStatus().equals(RequestStatus.CLOSED)) {
+            throw new BusinessException(CLOSED_REQUEST_QUOTE_REQUEST_NOT_ALLOWED_EXCEPTION);
+        }
+
+        quote.setQuoteStatus(QuoteStatus.REQUESTED);
+
+        if (serviceRequest.getRequestStatus().equals(RequestStatus.OPEN)) {
+            serviceRequest.setRequestStatus(RequestStatus.MATCHED);
+        }
+
+        return quote;
     }
 
     private ExpertProfile validateExpertAccess(Long memberId) {
@@ -151,6 +180,18 @@ public class QuoteService {
 
     private LocalDateTime validBoundary() {
         return LocalDateTime.now().minusHours(Quote.VALID_HOURS);
+    }
+
+    private void validateQuoteReadAccess(Member member, Quote quote) {
+        if (member.getRole().equals(MemberRole.ADMIN)) {
+            return;
+        }
+        boolean isSender = quote.getExpertProfile().getMember().getId().equals(member.getId());
+        boolean isRequestOwner = quote.getServiceRequest().getMember().getId().equals(member.getId());
+
+        if (!isSender && !isRequestOwner) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
     }
 
     private Quote getValidQuoteEntity(Long quoteId) {

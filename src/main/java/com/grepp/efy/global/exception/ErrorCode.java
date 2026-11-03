@@ -73,6 +73,8 @@ public enum ErrorCode {
     QUOTE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "견적서를 찾을 수 없습니다."),
     QUOTE_DELETE_NOT_ALLOWED_EXCEPTION(HttpStatus.CONFLICT, "의뢰 요청된 견적서는 삭제할 수 없습니다. 변경 사항은 채팅으로 조율해주세요."),
     EXPIRED_REQUEST_QUOTE_NOT_ALLOWED_EXCEPTION(HttpStatus.BAD_REQUEST, "견적 접수 기간(24시간)이 지난 요청서에는 견적을 발송할 수 없습니다."),
+    ALREADY_REQUESTED_QUOTE_EXCEPTION(HttpStatus.CONFLICT, "이미 의뢰 요청된 견적서입니다."),
+    CLOSED_REQUEST_QUOTE_REQUEST_NOT_ALLOWED_EXCEPTION(HttpStatus.BAD_REQUEST, "취소된 요청서의 견적서에는 의뢰 요청할 수 없습니다."),
 
     // ⑥ 리뷰·찜·좋아요
 
@@ -82,7 +84,11 @@ public enum ErrorCode {
     DUPLICATE_CREDIT_RESERVATION_EXCEPTION(HttpStatus.CONFLICT, "이미 크레딧이 예약된 견적서입니다."),
     CREDIT_RESERVATION_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "견적서의 크레딧 예약을 찾을 수 없습니다."),
     INVALID_CREDIT_RESERVATION_STATUS_EXCEPTION(HttpStatus.CONFLICT, "처리할 수 없는 크레딧 예약 상태입니다."),
-
+    CREDIT_PRODUCT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "충전 상품을 찾을 수 없습니다."),
+    PAYMENT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "결제 정보를 찾을 수 없습니다."),
+    PAYMENT_AMOUNT_MISMATCH_EXCEPTION(HttpStatus.BAD_REQUEST, "결제 금액이 주문 금액과 일치하지 않습니다."),
+    INVALID_PAYMENT_STATUS_EXCEPTION(HttpStatus.CONFLICT, "처리할 수 없는 결제 상태입니다."),
+    PAYMENT_CONFIRM_FAILED_EXCEPTION(HttpStatus.BAD_GATEWAY, "결제 승인에 실패했습니다."),
     // ⑧ 채팅
 
 

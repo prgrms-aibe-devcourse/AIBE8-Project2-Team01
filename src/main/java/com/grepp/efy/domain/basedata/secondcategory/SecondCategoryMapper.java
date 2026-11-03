@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 public interface SecondCategoryMapper {
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "nameKey", ignore = true)
     @Mapping(target = "firstCategory", ignore = true)
     SecondCategory toEntity(SecondCategoryCreateRequest request);
 

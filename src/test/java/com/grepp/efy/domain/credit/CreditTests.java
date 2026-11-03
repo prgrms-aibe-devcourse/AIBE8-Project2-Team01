@@ -1,5 +1,6 @@
 package com.grepp.efy.domain.credit;
 
+import com.grepp.efy.domain.credit.payment.TossPaymentsClient;
 import com.grepp.efy.domain.credit.reservation.CreditReservationService;
 import com.grepp.efy.domain.user.member.MemberService;
 import com.grepp.efy.global.exception.BusinessException;
@@ -8,11 +9,16 @@ import com.grepp.efy.global.security.CustomUserDetails;
 import com.grepp.efy.global.security.JwtProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,9 +26,13 @@ import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -42,10 +52,13 @@ class CreditTests {
     JwtProvider jwtProvider;
     @Autowired
     CreditReservationService creditReservationService;
+    @MockitoBean
+    TossPaymentsClient tossPaymentsClient; // 실제 토스 대신 가짜 객체. 설정이 없으면 승인 성공처럼 동작
 
     @AfterEach
     void cleanUp() {
         for (Long memberId : memberIds) {
+            jdbcTemplate.update("delete from payment where member_id = ?", memberId);
             String wallet = "(select id from credit_wallet where member_id = ?)";
             jdbcTemplate.update("delete from credit_history where credit_wallet_id in " + wallet, memberId);
             jdbcTemplate.update("delete from credit_reservation where credit_wallet_id in " + wallet, memberId);
@@ -53,6 +66,8 @@ class CreditTests {
             jdbcTemplate.update("delete from member where id = ?", memberId);
         }
     }
+
+    // ===== 잔액 조회 =====
 
     @Test
     void 지갑이_없는_고수는_잔액0으로_조회() throws Exception {
@@ -84,6 +99,8 @@ class CreditTests {
         mockMvc.perform(get(URL).header("Authorization", "Bearer " + token(userId)))
                 .andExpect(status().isForbidden());
     }
+
+    // ===== 예약·차감·해제 =====
 
     @Test
     void 사용가능_크레딧이_부족하면_예약거절() {
@@ -174,7 +191,122 @@ class CreditTests {
         assertEquals(1, success);
     }
 
-    private void assertError(ErrorCode expected, org.junit.jupiter.api.function.Executable executable) {
+    // ===== 충전 상품 =====
+
+    @Test
+    void 판매중인_충전상품을_가격순으로_조회() throws Exception {
+        Long memberId = createMember("EXPERT");
+        mockMvc.perform(get("/api/credit-products").header("Authorization", "Bearer " + token(memberId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(4))
+                .andExpect(jsonPath("$[0].price").value(10000))
+                .andExpect(jsonPath("$[0].creditAmount").value(10))
+                .andExpect(jsonPath("$[3].price").value(100000));
+
+        Long userId = createMember("USER");
+        mockMvc.perform(get("/api/credit-products").header("Authorization", "Bearer " + token(userId)))
+                .andExpect(status().isForbidden());
+    }
+
+    // ===== 충전 주문 생성 =====
+
+    @Test
+    void 서버의_상품가격으로_READY_주문을_생성() throws Exception {
+        Long memberId = createMember("EXPERT");
+        // 요청에 금액을 넣어도 무시하고 서버의 상품 가격으로 주문한다
+        mockMvc.perform(post("/api/payments").header("Authorization", "Bearer " + token(memberId))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"creditProductId\":2,\"amount\":1}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.orderId").value(startsWith("efy-")))
+                .andExpect(jsonPath("$.orderName").value("크레딧 30개"))
+                .andExpect(jsonPath("$.amount").value(30000));
+        assertEquals("READY", jdbcTemplate.queryForObject(
+                "select payment_status from payment where member_id = ?", String.class, memberId));
+        assertEquals(30, jdbcTemplate.queryForObject(
+                "select credit_amount from payment where member_id = ?", Integer.class, memberId));
+    }
+
+    @Test
+    void 잘못된_상품과_권한없는_주문생성_거절() throws Exception {
+        Long expertId = createMember("EXPERT");
+        for (String body : List.of("{}", "{\"creditProductId\":0}", "{")) {
+            mockMvc.perform(post("/api/payments").header("Authorization", "Bearer " + token(expertId))
+                            .contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isBadRequest());
+        }
+        mockMvc.perform(post("/api/payments").header("Authorization", "Bearer " + token(expertId))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"creditProductId\":999}"))
+                .andExpect(status().isNotFound());
+
+        Long userId = createMember("USER");
+        mockMvc.perform(post("/api/payments").header("Authorization", "Bearer " + token(userId))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"creditProductId\":1}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/payments").contentType(MediaType.APPLICATION_JSON).content("{\"creditProductId\":1}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ===== 결제 승인 =====
+
+    @Test
+    void 승인하면_크레딧을_한번만_지급() throws Exception {
+        Long memberId = createMember("EXPERT");
+        String orderId = createOrder(memberId, 2); // 크레딧 30개, 30,000원
+        String body = "{\"paymentKey\":\"test_pk_1\",\"orderId\":\"" + orderId + "\",\"amount\":30000}";
+
+        for (int i = 0; i < 2; i++) { // 같은 주문을 두 번 승인 요청
+            mockMvc.perform(post("/api/payments/confirm").header("Authorization", "Bearer " + token(memberId))
+                            .contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.paymentStatus").value("DONE"))
+                    .andExpect(jsonPath("$.chargedCredit").value(30))
+                    .andExpect(jsonPath("$.balance").value(30));
+        }
+        verify(tossPaymentsClient, times(1)).confirm(anyString(), eq(orderId), eq(30000L));
+        assertEquals(30L, balance(memberId));
+        assertEquals(1, jdbcTemplate.queryForObject(
+                "select count(*) from credit_history where credit_wallet_id = (select id from credit_wallet where member_id = ?)"
+                        + " and history_type = 'CHARGE' and amount = 30 and balance_after = 30",
+                Integer.class, memberId));
+    }
+
+    @Test
+    void 금액이_다르거나_남의_주문이면_승인거절() throws Exception {
+        Long memberId = createMember("EXPERT");
+        String orderId = createOrder(memberId, 1);
+        mockMvc.perform(post("/api/payments/confirm").header("Authorization", "Bearer " + token(memberId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"paymentKey\":\"test_pk_2\",\"orderId\":\"" + orderId + "\",\"amount\":100}"))
+                .andExpect(status().isBadRequest());
+
+        Long otherId = createMember("EXPERT");
+        mockMvc.perform(post("/api/payments/confirm").header("Authorization", "Bearer " + token(otherId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"paymentKey\":\"test_pk_2\",\"orderId\":\"" + orderId + "\",\"amount\":10000}"))
+                .andExpect(status().isForbidden());
+        verify(tossPaymentsClient, never()).confirm(anyString(), anyString(), anyLong());
+    }
+
+    @Test
+    void 토스가_거절하면_FAILED로_기록하고_지급하지_않음() throws Exception {
+        Long memberId = createMember("EXPERT");
+        String orderId = createOrder(memberId, 1);
+        doThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST))
+                .when(tossPaymentsClient).confirm(anyString(), anyString(), anyLong());
+
+        mockMvc.perform(post("/api/payments/confirm").header("Authorization", "Bearer " + token(memberId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"paymentKey\":\"test_pk_3\",\"orderId\":\"" + orderId + "\",\"amount\":10000}"))
+                .andExpect(status().isBadGateway());
+        assertEquals("FAILED", jdbcTemplate.queryForObject(
+                "select payment_status from payment where order_id = ?", String.class, orderId));
+        assertEquals(0, jdbcTemplate.queryForObject(
+                "select count(*) from credit_wallet where member_id = ?", Integer.class, memberId));
+    }
+
+    // ===== 도우미 메서드 =====
+
+    private void assertError(ErrorCode expected, Executable executable) {
         BusinessException e = assertThrows(BusinessException.class, executable);
         assertEquals(expected, e.getErrorCode());
     }
@@ -194,6 +326,13 @@ class CreditTests {
     private void createWallet(Long memberId, long balance) {
         jdbcTemplate.update("insert into credit_wallet(member_id, balance, created_at, updated_at) values (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
                 memberId, balance);
+    }
+
+    private String createOrder(Long memberId, long productId) throws Exception {
+        mockMvc.perform(post("/api/payments").header("Authorization", "Bearer " + token(memberId))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"creditProductId\":" + productId + "}"))
+                .andExpect(status().isCreated());
+        return jdbcTemplate.queryForObject("select order_id from payment where member_id = ?", String.class, memberId);
     }
 
     private Long balance(Long memberId) {

@@ -21,6 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
+@SuppressWarnings("NonAsciiCharacters")
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -43,10 +44,10 @@ class BaseDataTests {
                 {"first-regions", "firstRegionId", "second-regions", "SecondRegionCreateRequest", "SecondRegionRequest", "secondRegionId"}
         }) {
             var operation = document.get("paths").get("/api/admin/" + c[0] + "/{" + c[1] + "}/" + c[2]).get("post");
-            assertEquals(c[1], operation.get("parameters").get(0).get("name").asText());
-            assertEquals("path", operation.get("parameters").get(0).get("in").asText());
+            assertEquals(c[1], operation.get("parameters").get(0).get("name").asString());
+            assertEquals("path", operation.get("parameters").get(0).get("in").asString());
             assertEquals("#/components/schemas/" + c[3], operation.get("requestBody").get("content")
-                    .get("application/json").get("schema").get("$ref").asText());
+                    .get("application/json").get("schema").get("$ref").asString());
             var schemas = document.get("components").get("schemas");
             assertFalse(schemas.get(c[3]).get("properties").has(c[1]));
             assertTrue(schemas.get(c[4]).get("properties").has(c[1]));
@@ -63,9 +64,9 @@ class BaseDataTests {
             assertTrue(operation.get("responses").has("404"));
             var secondDelete = document.get("paths").get("/api/admin/" + c[2] + "/{" + c[5] + "}")
                     .get("delete").get("responses").get("409");
-            assertEquals("다른 데이터에서 참조 중", secondDelete.get("description").asText());
+            assertEquals("다른 데이터에서 참조 중", secondDelete.get("description").asString());
             if (c[0].equals("first-categories")) {
-                assertEquals("이름 중복", operation.get("responses").get("409").get("description").asText());
+                assertEquals("이름 중복", operation.get("responses").get("409").get("description").asString());
             }
         }
     }
@@ -222,7 +223,7 @@ class BaseDataTests {
     @Test
     void DB에서도_하위_항목의_필수_FK를_보장한다() {
         assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update(
-                "insert into second_category(name, first_category_id) values ('테스트',null)"));
+                "insert into second_category(name, name_key, first_category_id) values ('테스트','테스트',null)"));
     }
 
     @Test
@@ -235,8 +236,8 @@ class BaseDataTests {
     @Test
     @WithMockUser(roles = "ADMIN")
     void 서비스에서_이름의_대소문자를_구분하지_않고_중복을_검사한다() throws Exception {
-        jdbcTemplate.update("insert into first_category(name) values ('Test')");
-        jdbcTemplate.update("insert into second_category(name,first_category_id) values ('Test',1)");
+        jdbcTemplate.update("insert into first_category(name,name_key) values ('Test','test')");
+        jdbcTemplate.update("insert into second_category(name,name_key,first_category_id) values ('Test','test',1)");
         jdbcTemplate.update("insert into first_region(code,name) values ('9900000000','Test')");
         jdbcTemplate.update("insert into second_region(code,name,first_region_id) values ('9911000000','Test',1)");
 
@@ -281,7 +282,7 @@ class BaseDataTests {
     @Test
     @WithMockUser(roles = "ADMIN")
     void 이름이_같아도_소속을_옮기면_새_상위_항목에서_중복을_검사한다() throws Exception {
-        jdbcTemplate.update("insert into second_category(name,first_category_id) values ('이사',2)");
+        jdbcTemplate.update("insert into second_category(name,name_key,first_category_id) values ('이사','이사',2)");
         jdbcTemplate.update("insert into second_region(code,name,first_region_id) values ('9911000000','종로구',3)");
 
         mockMvc.perform(put("/api/admin/second-categories/101").contentType(MediaType.APPLICATION_JSON)

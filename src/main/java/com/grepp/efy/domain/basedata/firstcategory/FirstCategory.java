@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+
 @Entity
 @Getter
 @Setter
@@ -17,6 +18,15 @@ public class FirstCategory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(nullable = false, length = 50)
     private String name;
+
+    @Column(nullable = false, unique = true, length = 150)
+    private String nameKey; // 표시 이름은 유지하고 소문자로 통일한 값에 중복 제약 적용
+
+    @PrePersist
+    @PreUpdate
+    private void updateNameKey() {
+        nameKey = name.toLowerCase();
+    }
 }
