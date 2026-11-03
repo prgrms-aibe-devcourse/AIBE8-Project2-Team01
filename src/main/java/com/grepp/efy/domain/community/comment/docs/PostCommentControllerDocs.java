@@ -92,4 +92,78 @@ public interface PostCommentControllerDocs {
             @Parameter(hidden = true) CustomUserDetails userDetails,
             @Positive Long postId,
             @Valid PostCommentRequest request);
+
+    @Operation(summary = "댓글 수정",
+            description = "작성자 본인만 수정할 수 있으며, 관리자도 다른 사람의 댓글은 수정할 수 없습니다. "
+                    + "부모 글이 삭제되었거나 숨김 처리된 경우 작성자를 포함해 404로 응답합니다. "
+                    + "전체 교체 방식이라 imageIds를 보내지 않으면 이미지가 비워집니다. "
+                    + "content(trim 후)와 imageIds(순서 포함)가 모두 기존과 같으면 updatedAt을 갱신하지 않습니다. "
+                    + "수정해도 게시글의 commentCount는 변하지 않습니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "200", description = "수정 성공 (변경 없음 포함)",
+            content = @Content(schema = @Schema(implementation = PostCommentResponse.class)))
+    @ApiResponse(responseCode = "400", description = "commentId 오류, content 누락·길이 오류, 이미지 2개 이상, 사용할 수 없는 이미지",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "입력값 오류", value = """
+                            {
+                              "message": "입력값이 올바르지 않습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "사용할 수 없는 이미지", value = """
+                            {
+                              "message": "사용할 수 없는 이미지가 포함되어 있습니다."
+                            }
+                            """)
+            }))
+    @ApiResponse(responseCode = "401", description = "인증 실패")
+    @ApiResponse(responseCode = "403", description = "댓글 작성자가 아님 (관리자 포함)",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "권한 없음", value = """
+                            {
+                              "message": "접근 권한이 없습니다."
+                            }
+                            """)
+            }))
+    @ApiResponse(responseCode = "404", description = "존재하지 않거나 삭제된 댓글, 또는 부모 글이 삭제·숨김 처리됨",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "댓글 없음", value = """
+                            {
+                              "message": "존재하지 않는 댓글입니다."
+                            }
+                            """)
+            }))
+    ResponseEntity<PostCommentResponse> updateComment(
+            @Parameter(hidden = true) CustomUserDetails userDetails,
+            @Positive Long commentId,
+            @Valid PostCommentRequest request);
+
+    @Operation(summary = "댓글 삭제",
+            description = "작성자 본인과 관리자만 삭제할 수 있습니다. 관리자는 부모 글이 숨김이어도 삭제할 수 있습니다. "
+                    + "부모 글이 삭제된 경우 관리자를 포함해 404, 부모 글이 숨김이면 관리자가 아닌 사용자(작성자 포함)에게 404로 응답합니다. "
+                    + "논리 삭제 방식으로 삭제 시각만 기록하며 복구할 수 없습니다. "
+                    + "삭제하면 게시글의 commentCount가 1 감소합니다(0 미만으로 내려가지 않음).")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "204", description = "삭제 성공")
+    @ApiResponse(responseCode = "400", description = "commentId가 정수가 아니거나 1 미만",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "401", description = "인증 실패")
+    @ApiResponse(responseCode = "403", description = "작성자도 관리자도 아닌 사용자가 공개 글의 댓글을 삭제",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "권한 없음", value = """
+                            {
+                              "message": "접근 권한이 없습니다."
+                            }
+                            """)
+            }))
+    @ApiResponse(responseCode = "404", description = "존재하지 않거나 이미 삭제된 댓글, 부모 글 삭제, 또는 관리자가 아닌 사용자의 숨김 글 댓글 삭제",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "댓글 없음", value = """
+                            {
+                              "message": "존재하지 않는 댓글입니다."
+                            }
+                            """)
+            }))
+    ResponseEntity<Void> deleteComment(
+            @Parameter(hidden = true) CustomUserDetails userDetails,
+            @Positive Long commentId);
 }

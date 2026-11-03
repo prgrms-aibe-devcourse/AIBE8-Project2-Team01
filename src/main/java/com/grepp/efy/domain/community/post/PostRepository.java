@@ -23,6 +23,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("update Post p set p.commentCount = p.commentCount + 1 where p.id = :id")
     void increaseCommentCount(@Param("id") Long id);
 
+    // 0 미만으로 내려가지 않도록 0보다 클 때만 감소
+    @Modifying
+    @Query("update Post p set p.commentCount = p.commentCount - 1 where p.id = :id and p.commentCount > 0")
+    void decreaseCommentCount(@Param("id") Long id);
+
     @Query(value = """
         select p from Post p
         join fetch p.member

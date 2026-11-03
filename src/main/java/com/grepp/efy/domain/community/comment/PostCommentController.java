@@ -46,4 +46,29 @@ public class PostCommentController implements PostCommentControllerDocs {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @Override
+    @PutMapping("/comments/{commentId}")
+    public ResponseEntity<PostCommentResponse> updateComment(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable @Positive Long commentId,
+            @Valid @RequestBody PostCommentRequest request
+    ) {
+
+        PostCommentResponse response = postCommentService.updateComment(commentId, userDetails.getMemberId(), request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable @Positive Long commentId
+    ) {
+
+        postCommentService.deleteComment(commentId, userDetails.getMemberId(), userDetails.getRole());
+
+        return ResponseEntity.noContent().build();
+    }
 }

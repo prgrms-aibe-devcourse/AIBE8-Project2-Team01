@@ -72,4 +72,24 @@ public class PostComment {
             this.images.addAll(images);
         }
     }
+
+    // 바뀐 게 없으면 false (updatedAt 그대로)
+    public boolean update(String content, List<UploadFile> images) {
+        boolean changed = !this.content.equals(content) || !this.images.equals(images);
+
+        if (!changed) {
+            return false;
+        }
+
+        this.content = content;
+        this.images.clear();
+        this.images.addAll(images);
+        // 이미지만 바뀌면 post_comment 행 UPDATE가 없어 @PreUpdate가 안 돌므로 직접 갱신
+        this.updatedAt = LocalDateTime.now();
+        return true;
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }
