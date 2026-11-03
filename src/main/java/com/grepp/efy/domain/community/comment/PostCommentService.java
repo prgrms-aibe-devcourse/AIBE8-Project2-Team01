@@ -7,6 +7,7 @@ import com.grepp.efy.domain.community.post.PostRepository;
 import com.grepp.efy.domain.community.post.PostService;
 import com.grepp.efy.domain.community.post.dto.PostResponse;
 import com.grepp.efy.domain.file.UploadFile;
+import com.grepp.efy.domain.reaction.postlike.PostCommentLikeRepository;
 import com.grepp.efy.domain.user.member.MemberRepository;
 import com.grepp.efy.domain.user.member.MemberRole;
 import com.grepp.efy.global.common.PageResponse;
@@ -22,8 +23,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -34,10 +37,12 @@ public class PostCommentService {
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
     private final PostService postService;
+    private final PostCommentLikeRepository postCommentLikeRepository;
     private final SupabaseStorageClient storageClient;
 
-    // 숨김 글의 댓글은 관리자만 조회 (그 외에는 글이 없는 것처럼 404)
-    public PageResponse<PostCommentResponse> getComments(Long postId, int pageNumber, @Nullable MemberRole role) {
+    // 숨김 글의 댓글은 관리자만 조회 (그 외에는 글이 없는 것처럼 404). 비로그인(memberId == null)이면 liked는 모두 false
+    public PageResponse<PostCommentResponse> getComments(Long postId, int pageNumber,
+                                                         @Nullable Long memberId, @Nullable MemberRole role) {
 
         Post post = findPost(postId);
         if (!post.isVisible() && role != MemberRole.ADMIN) {
@@ -50,8 +55,13 @@ public class PostCommentService {
 
         Page<PostComment> page = postCommentRepository.findComments(postId, pageable);
 
+        // 이 페이지에서 내가 좋아요한 댓글을 한 번에 조회
+        Set<Long> likedIds = memberId == null || page.isEmpty() ? Set.of()
+                : new HashSet<>(postCommentLikeRepository.findLikedCommentIds(memberId,
+                        page.getContent().stream().map(PostComment::getId).toList()));
+
         return PageResponse.of(page, page.getContent().stream()
-                .map(this::toResponse)
+                .map(comment -> toResponse(comment, likedIds.contains(comment.getId())))
                 .toList());
     }
 
@@ -78,7 +88,8 @@ public class PostCommentService {
         // 댓글 저장과 같은 트랜잭션에서 증가
         postRepository.increaseCommentCount(postId);
 
-        return toResponse(comment);
+        // 방금 만든 댓글이라 좋아요는 없다
+        return toResponse(comment, false);
     }
 
     // 작성자 본인만 (관리자 포함 타인은 403). 부모 글이 숨김이면 작성자도 404
@@ -100,7 +111,7 @@ public class PostCommentService {
 
         comment.update(request.getContent(), images);
 
-        return toResponse(comment);
+        return toResponse(comment, postCommentLikeRepository.existsByMemberIdAndCommentId(memberId, commentId));
     }
 
     // 작성자와 관리자만. 관리자는 숨김 글의 댓글도 삭제 가능
@@ -125,8 +136,8 @@ public class PostCommentService {
         postRepository.decreaseCommentCount(comment.getPost().getId());
     }
 
-    // 삭제된 댓글, 또는 부모 글이 삭제된 댓글은 없는 댓글과 동일하게 404
-    private PostComment findComment(Long commentId) {
+    // 삭제된 댓글, 또는 부모 글이 삭제된 댓글은 없는 댓글과 동일하게 404 (좋아요에서도 사용)
+    public PostComment findComment(Long commentId) {
         return postCommentRepository.findById(commentId)
                 .filter(comment -> comment.getDeletedAt() == null)
                 .filter(comment -> comment.getPost().getDeletedAt() == null)
@@ -140,7 +151,7 @@ public class PostCommentService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
     }
 
-    private PostCommentResponse toResponse(PostComment comment) {
+    private PostCommentResponse toResponse(PostComment comment, boolean liked) {
         List<PostResponse.PostImage> images = comment.getImages().stream()
                 .map(file -> new PostResponse.PostImage(file.getId(), url(file)))
                 .toList();
@@ -155,9 +166,8 @@ public class PostCommentService {
                 .isExpert(comment.getMember().getRole() == MemberRole.EXPERT)
                 .content(comment.getContent())
                 .images(images)
-                // 좋아요 도메인 구현 전까지 0 / false
-                .likeCount(0)
-                .liked(false)
+                .likeCount(comment.getLikeCount())
+                .liked(liked)
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .build();

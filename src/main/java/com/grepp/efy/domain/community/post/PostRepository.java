@@ -28,6 +28,19 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("update Post p set p.commentCount = p.commentCount - 1 where p.id = :id and p.commentCount > 0")
     void decreaseCommentCount(@Param("id") Long id);
 
+    // 동시에 여러 좋아요가 들어와도 어긋나지 않도록 DB에서 직접 증감 (감소는 0보다 클 때만)
+    @Modifying
+    @Query("update Post p set p.likeCount = p.likeCount + 1 where p.id = :id")
+    void increaseLikeCount(@Param("id") Long id);
+
+    @Modifying
+    @Query("update Post p set p.likeCount = p.likeCount - 1 where p.id = :id and p.likeCount > 0")
+    void decreaseLikeCount(@Param("id") Long id);
+
+    // 엔티티가 아니라 값만 조회하므로 영속성 컨텍스트가 아닌 DB의 현재 값을 읽는다
+    @Query("select p.likeCount from Post p where p.id = :id")
+    long findLikeCount(@Param("id") Long id);
+
     @Query(value = """
         select p from Post p
         join fetch p.member
