@@ -6,7 +6,8 @@ import com.grepp.efy.domain.estimate.enums.QuoteStatus;
 import java.time.LocalDateTime;
 
 @JsonPropertyOrder({"quoteId", "serviceRequestId", "secondCategoryName", "secondRegionName",
-        "description", "price", "quoteStatus", "sentAt"})
+        "expertProfileId", "expertNickname", "description", "price", "quoteStatus", "sentAt"})
 public record QuoteResponse(Long quoteId, Long serviceRequestId, String secondCategoryName, String secondRegionName,
+                            Long expertProfileId, String expertNickname,
                             String description, Long price, QuoteStatus quoteStatus, LocalDateTime sentAt) {
 }
