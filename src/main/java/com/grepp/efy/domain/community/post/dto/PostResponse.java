@@ -1,10 +1,12 @@
 package com.grepp.efy.domain.community.post.dto;
 
 import com.grepp.efy.domain.community.post.BoardType;
+import lombok.Builder;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Builder(toBuilder = true)
 public record PostResponse(
         Long postId,
         BoardType boardType,

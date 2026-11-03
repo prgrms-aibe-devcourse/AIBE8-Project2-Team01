@@ -5,14 +5,12 @@ import com.grepp.efy.domain.community.post.dto.PostRequest;
 import com.grepp.efy.domain.community.post.dto.PostResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,6 +19,19 @@ public class PostController implements PostControllerDocs {
 
     private final PostService postService;
 
+    @Override
+    @GetMapping("/public/posts/{postId}")
+    public ResponseEntity<PostResponse> getPostById(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable @Positive Long postId
+    ) {
+
+        PostResponse response = postService.getPostById(postId, userDetails == null ? null : userDetails.getRole());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
     @PostMapping("/posts")
     public ResponseEntity<PostResponse> createPost(
             @AuthenticationPrincipal CustomUserDetails userDetails,
