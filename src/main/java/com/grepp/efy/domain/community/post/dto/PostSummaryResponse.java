@@ -18,7 +18,8 @@ public record PostSummaryResponse(
         long likeCount,
         long viewCount,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        boolean isVisible
 ) {
 
 }

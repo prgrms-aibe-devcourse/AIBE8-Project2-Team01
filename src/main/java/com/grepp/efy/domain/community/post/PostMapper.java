@@ -43,5 +43,6 @@ public interface PostMapper {
     @Mapping(target = "region", source = "post.secondRegion")
     @Mapping(target = "commentCount", ignore = true)
     @Mapping(target = "likeCount", ignore = true)
+    @Mapping(target = "isVisible", source = "post.visible")
     PostSummaryResponse toSummary(Post post, String thumbnailUrl);
 }
