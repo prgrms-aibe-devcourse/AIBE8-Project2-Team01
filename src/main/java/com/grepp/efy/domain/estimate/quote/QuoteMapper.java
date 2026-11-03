@@ -2,6 +2,7 @@ package com.grepp.efy.domain.estimate.quote;
 
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateResponse;
+import com.grepp.efy.domain.estimate.quote.dto.QuoteRequestResponse;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteResponse;
 import com.grepp.efy.domain.estimate.servicerequest.ServiceRequest;
 import com.grepp.efy.domain.user.expertprofile.ExpertProfile;
@@ -31,4 +32,11 @@ public interface QuoteMapper {
     QuoteResponse toResponse(Quote quote);
 
     List<QuoteResponse> toResponseList(List<Quote> quotes);
+
+    @Mapping(target = "quoteId", source = "id")
+    @Mapping(target = "expertProfileId", source = "expertProfile.id")
+    @Mapping(target = "expertNickname", source = "expertProfile.member.nickname")
+    QuoteRequestResponse toRequestResponse(Quote quote);
+
+    List<QuoteRequestResponse> toRequestResponseList(List<Quote> quotes);
 }

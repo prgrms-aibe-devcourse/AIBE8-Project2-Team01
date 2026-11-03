@@ -4,6 +4,7 @@ import com.grepp.efy.domain.estimate.enums.QuoteStatus;
 import com.grepp.efy.domain.estimate.enums.RequestStatus;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateResponse;
+import com.grepp.efy.domain.estimate.quote.dto.QuoteRequestResponse;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteResponse;
 import com.grepp.efy.domain.estimate.servicerequest.ServiceRequest;
 import com.grepp.efy.domain.estimate.servicerequest.ServiceRequestService;
@@ -53,6 +54,19 @@ public class QuoteService {
         }
 
         return quoteMapper.toResponse(quote);
+    }
+
+    public List<QuoteRequestResponse> getRequestQuotes(Long memberId, Long requestId) {
+        ServiceRequest serviceRequest = serviceRequestService.getRequestEntity(requestId);
+
+        if (!serviceRequest.getMember().getId().equals(memberId)) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        List<QuoteStatus> visibleStatuses = List.of(QuoteStatus.SENT, QuoteStatus.REQUESTED);
+        List<Quote> quotes = quoteRepository.findAllByServiceRequestIdAndQuoteStatusInOrderBySentAtDesc(requestId, visibleStatuses);
+
+        return quoteMapper.toRequestResponseList(quotes);
     }
 
     @Transactional
