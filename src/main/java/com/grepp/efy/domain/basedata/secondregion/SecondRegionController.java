@@ -4,6 +4,7 @@ import com.grepp.efy.domain.basedata.secondregion.docs.SecondRegionControllerDoc
 import com.grepp.efy.domain.basedata.secondregion.dto.SecondRegionRequest;
 import com.grepp.efy.domain.basedata.secondregion.dto.SecondRegionCreateRequest;
 import com.grepp.efy.domain.basedata.secondregion.dto.SecondRegionResponse;
+import com.grepp.efy.domain.basedata.region.RegionLock;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.List;
 @RequestMapping("/api")
 public class SecondRegionController implements SecondRegionControllerDocs {
 
+    private final RegionLock regionLock;
     private final SecondRegionService secondRegionService;
 
     @GetMapping("/public/first-regions/{firstRegionId}/second-regions")
@@ -29,18 +31,24 @@ public class SecondRegionController implements SecondRegionControllerDocs {
     @PostMapping("/admin/first-regions/{firstRegionId}/second-regions")
     @Override
     public ResponseEntity<SecondRegionResponse> createSecondRegion(@PathVariable @Positive(message = "상위 항목 ID는 양수로 입력해 주세요.") Long firstRegionId, @Valid @RequestBody SecondRegionCreateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(secondRegionService.createSecondRegion(firstRegionId, request));
+        synchronized (regionLock) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(secondRegionService.createSecondRegion(firstRegionId, request));
+        }
     }
 
     @PutMapping("/admin/second-regions/{secondRegionId}")
     @Override
     public ResponseEntity<SecondRegionResponse> updateSecondRegion(@PathVariable Long secondRegionId, @Valid @RequestBody SecondRegionRequest request) {
-        return ResponseEntity.ok(secondRegionService.updateSecondRegion(secondRegionId, request));
+        synchronized (regionLock) {
+            return ResponseEntity.ok(secondRegionService.updateSecondRegion(secondRegionId, request));
+        }
     }
 
     @DeleteMapping("/admin/second-regions/{secondRegionId}")
     @Override
     public ResponseEntity<SecondRegionResponse> deleteSecondRegion(@PathVariable Long secondRegionId) {
-        return ResponseEntity.ok(secondRegionService.deleteSecondRegion(secondRegionId));
+        synchronized (regionLock) {
+            return ResponseEntity.ok(secondRegionService.deleteSecondRegion(secondRegionId));
+        }
     }
 }

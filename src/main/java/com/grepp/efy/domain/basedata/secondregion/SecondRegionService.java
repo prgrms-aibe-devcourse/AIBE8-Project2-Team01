@@ -19,6 +19,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class SecondRegionService {
 
+
     private final SecondRegionRepository secondRegionRepository;
     private final SecondRegionMapper secondRegionMapper;
     private final FirstRegionService firstRegionService;
@@ -75,8 +76,8 @@ public class SecondRegionService {
     }
 
     private void checkDuplicateName(String name, Long firstRegionId) {
-        if (secondRegionRepository.existsByNameIgnoreCaseAndFirstRegionId(
-                name, firstRegionId)) {
+        if (secondRegionRepository.existsByNameKeyAndFirstRegionId(
+                name.toLowerCase(), firstRegionId)) {
             throw new BusinessException(ErrorCode.DUPLICATE_REGION_EXCEPTION);
         }
     }

@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 public interface SecondRegionMapper {
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "nameKey", ignore = true)
     @Mapping(target = "firstRegion", ignore = true)
     SecondRegion toEntity(SecondRegionCreateRequest request);
 

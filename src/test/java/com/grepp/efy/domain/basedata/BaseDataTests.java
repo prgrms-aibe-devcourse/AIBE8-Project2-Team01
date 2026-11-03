@@ -228,9 +228,9 @@ class BaseDataTests {
 
     @Test
     void DB에서도_같은_상위_지역의_동일한_이름_중복을_막는다() {
-        jdbcTemplate.update("insert into second_region(code,name,first_region_id) values ('9911000000','Test',1)");
+        jdbcTemplate.update("insert into second_region(code,name,name_key,first_region_id) values ('9911000000','Test','test',1)");
         assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update(
-                "insert into second_region(code,name,first_region_id) values ('9912000000','Test',1)"));
+                "insert into second_region(code,name,name_key,first_region_id) values ('9912000000','Test','test',1)"));
     }
 
     @Test
@@ -238,8 +238,8 @@ class BaseDataTests {
     void 서비스에서_이름의_대소문자를_구분하지_않고_중복을_검사한다() throws Exception {
         jdbcTemplate.update("insert into first_category(name,name_key) values ('Test','test')");
         jdbcTemplate.update("insert into second_category(name,name_key,first_category_id) values ('Test','test',1)");
-        jdbcTemplate.update("insert into first_region(code,name) values ('9900000000','Test')");
-        jdbcTemplate.update("insert into second_region(code,name,first_region_id) values ('9911000000','Test',1)");
+        jdbcTemplate.update("insert into first_region(code,name,name_key) values ('9900000000','Test','test')");
+        jdbcTemplate.update("insert into second_region(code,name,name_key,first_region_id) values ('9911000000','Test','test',1)");
 
         mockMvc.perform(post("/api/admin/first-categories").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"TEST\"}"))
@@ -283,7 +283,7 @@ class BaseDataTests {
     @WithMockUser(roles = "ADMIN")
     void 이름이_같아도_소속을_옮기면_새_상위_항목에서_중복을_검사한다() throws Exception {
         jdbcTemplate.update("insert into second_category(name,name_key,first_category_id) values ('이사','이사',2)");
-        jdbcTemplate.update("insert into second_region(code,name,first_region_id) values ('9911000000','종로구',3)");
+        jdbcTemplate.update("insert into second_region(code,name,name_key,first_region_id) values ('9911000000','종로구','종로구',3)");
 
         mockMvc.perform(put("/api/admin/second-categories/101").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"이사\",\"firstCategoryId\":2}"))
