@@ -57,6 +57,34 @@ public interface PostControllerDocs {
             @Parameter(description = "1차 지역(시/도) ID") Long firstRegionId,
             @Parameter(description = "2차 지역(시/군/구) ID (1차보다 우선)") Long secondRegionId);
 
+    @Operation(summary = "내 게시글 목록 조회",
+            description = "토큰으로 식별한 본인이 쓴 글을 최신순으로 20개씩 반환하며, 페이지 크기와 정렬은 바꿀 수 없습니다. "
+                    + "boardType을 생략하면 전체 게시판의 글을 반환합니다. "
+                    + "숨김 처리된 글과 삭제된 글은 목록과 totalElements에서 제외합니다. "
+                    + "결과가 없거나 마지막 페이지를 넘으면 빈 content로 200을 반환합니다. "
+                    + "응답 항목 규칙(thumbnailUrl, category, region, updatedAt)은 공개 게시글 목록과 같습니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "200", description = "조회 성공. 게시글 목록과 페이지 정보 반환")
+    @ApiResponse(responseCode = "400", description = "boardType 오류, pageNumber 오류",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "타입 오류 (잘못된 boardType, 정수가 아닌 pageNumber)", value = """
+                            {
+                              "message": "경로 또는 쿼리 값의 타입이 올바르지 않습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "입력값 오류 (pageNumber 1 미만)", value = """
+                            {
+                              "message": "입력값이 올바르지 않습니다."
+                            }
+                            """)
+            }))
+    @ApiResponse(responseCode = "401", description = "토큰이 없거나 만료·유효하지 않음",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    ResponseEntity<PageResponse<PostSummaryResponse>> getMyPosts(
+            @Parameter(hidden = true) CustomUserDetails userDetails,
+            @Parameter(description = "게시판 종류 (생략하면 전체)") BoardType boardType,
+            @Parameter(description = "페이지 번호 (1부터, 기본값 1)") @Positive Integer pageNumber);
+
     @Operation(summary = "게시글 상세 조회",
             description = "토큰 없이 조회할 수 있으며, 만료되었거나 유효하지 않은 토큰은 비로그인으로 취급합니다. "
                     + "숨김 처리된 글은 관리자만 조회할 수 있고, 작성자를 포함한 그 외 사용자에게는 404로 응답합니다. "

@@ -53,6 +53,24 @@ public class PostController implements PostControllerDocs {
     }
 
     @Override
+    @GetMapping("/members/me/posts")
+    public ResponseEntity<PageResponse<PostSummaryResponse>> getMyPosts(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(required = false) BoardType boardType,
+            @RequestParam(defaultValue = "1") @Positive Integer pageNumber
+    ) {
+
+        PostSearchCondition condition = PostSearchCondition.builder()
+                .boardType(boardType)
+                .pageNumber(pageNumber)
+                .build();
+
+        PageResponse<PostSummaryResponse> response = postService.getMyPosts(userDetails.getMemberId(), condition);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
     @GetMapping("/public/posts/{postId}")
     public ResponseEntity<PostResponse> getPostById(
             @AuthenticationPrincipal CustomUserDetails userDetails,

@@ -61,8 +61,8 @@ public class PostService {
         validateExists(firstRegionRepository, firstRegionId);
         validateExists(secondRegionRepository, condition.secondRegionId());
 
-        // 1. 몇 페이지를 몇 개씩, 어떤 순서로 가져올지 (사용자는 1부터, Spring은 0부터 셈)
-        Pageable pageable = PageRequest.of(condition.pageNumber() - 1, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+        // 1. 몇 페이지를 몇 개씩, 어떤 순서로 가져올지
+        Pageable pageable = latestFirst(condition.pageNumber());
 
         // 2. DB 조회
         Page<Post> page = postRepository.findPublicPosts(
@@ -75,9 +75,15 @@ public class PostService {
                 pageable);
 
         // 3. 엔티티 → 응답 DTO 변환 후 페이지 정보와 함께 포장
-        return PageResponse.of(page, page.getContent().stream()
-                .map(post -> postMapper.toSummary(post, thumbnailUrl(post)))
-                .toList());
+        return toSummaryPage(page);
+    }
+
+    // 내가 쓴 글 (숨김·삭제 글 제외, 최신순 20개 고정)
+    public PageResponse<PostSummaryResponse> getMyPosts(Long memberId, PostSearchCondition condition) {
+
+        Page<Post> page = postRepository.findMyPosts(memberId, condition.boardType(), latestFirst(condition.pageNumber()));
+
+        return toSummaryPage(page);
     }
 
     @Transactional
@@ -213,6 +219,17 @@ public class PostService {
                 : storageClient.createUrl(profile.getVisibility(), profile.getStoragePath());
 
         return postMapper.toResponse(post, imageResponses, profileImageUrl);
+    }
+
+    // 사용자는 1페이지부터, Spring은 0부터 셈. 크기 20·최신순 고정
+    private static Pageable latestFirst(int pageNumber) {
+        return PageRequest.of(pageNumber - 1, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+    }
+
+    private PageResponse<PostSummaryResponse> toSummaryPage(Page<Post> page) {
+        return PageResponse.of(page, page.getContent().stream()
+                .map(post -> postMapper.toSummary(post, thumbnailUrl(post)))
+                .toList());
     }
 
     // 첫 번째 이미지 URL, 이미지가 없으면 null
