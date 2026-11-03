@@ -107,6 +107,25 @@ public class QuoteService {
         return quoteMapper.toCreateResponse(quote);
     }
 
+    @Transactional
+    public void deleteQuote(Long memberId, Long quoteId) {
+        validateExpertAccess(memberId);
+
+        Quote quote = quoteRepository.findById(quoteId)
+                .orElseThrow(() -> new BusinessException(QUOTE_NOT_FOUND_EXCEPTION));
+
+        if (!quote.getExpertProfile().getMember().getId().equals(memberId)) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
+
+        if (quote.getQuoteStatus().equals(QuoteStatus.REQUESTED) ||
+                quote.getServiceRequest().getRequestStatus().equals(RequestStatus.MATCHED)) {
+            throw new BusinessException(QUOTE_DELETE_NOT_ALLOWED_EXCEPTION);
+        }
+
+        quoteRepository.delete(quote);
+    }
+
     private boolean canSendQuote(ExpertProfile expertProfile, ServiceRequest serviceRequest) {
         Long categoryId = serviceRequest.getSecondCategory().getId();
         Long regionId = serviceRequest.getSecondRegion().getId();
