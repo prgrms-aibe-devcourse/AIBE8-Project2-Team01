@@ -90,8 +90,10 @@ public enum ErrorCode {
     PAYMENT_AMOUNT_MISMATCH_EXCEPTION(HttpStatus.BAD_REQUEST, "결제 금액이 주문 금액과 일치하지 않습니다."),
     INVALID_PAYMENT_STATUS_EXCEPTION(HttpStatus.CONFLICT, "처리할 수 없는 결제 상태입니다."),
     PAYMENT_CONFIRM_FAILED_EXCEPTION(HttpStatus.BAD_GATEWAY, "결제 승인에 실패했습니다."),
-    // ⑧ 채팅
 
+    // ⑧ 채팅
+    NOT_QUOTE_PARTY_EXCEPTION(HttpStatus.FORBIDDEN, "해당 견적서의 당사자가 아닙니다."),
+    CHAT_ROOM_ALREADY_EXISTS_EXCEPTION(HttpStatus.CONFLICT, "이미 채팅방이 존재합니다."),
 
     // ⑨ 파일 (공통)
     FILE_EMPTY_EXCEPTION(HttpStatus.BAD_REQUEST, "빈 파일은 업로드할 수 없습니다."),
