@@ -1,6 +1,7 @@
 package com.grepp.efy.domain.user.expertprofile.dto;
 
 import jakarta.validation.constraints.*;
+import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,6 +28,11 @@ public class ExpertProfileCreateRequest {
     private String careerDescription;
 
     private Long imageId;
+
+    @Valid
+    @Size(max = 10, message = "작업 사진은 최대 10장까지 선택해 주세요.")
+    private List<@NotNull(message = "작업 사진 선택 정보가 올바르지 않습니다.") WorkImageRequest> workImages;
+
 
     // 요청에서는 중복을 검사할 수 있도록 List로 받는다.
     @NotEmpty(message = "제공 서비스를 하나 이상 선택해 주세요.")

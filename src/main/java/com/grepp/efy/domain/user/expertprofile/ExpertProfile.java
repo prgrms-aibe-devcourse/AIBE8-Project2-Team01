@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -52,4 +54,8 @@ public class ExpertProfile {
 
     @ManyToMany
     private Set<SecondRegion> regions = new HashSet<>(); // 개별 선택한 시군구
+    // 프로필에서 연결을 제거하면 작업 사진 정보만 삭제하고 업로드 파일은 유지한다.
+    @OneToMany(mappedBy = "expertProfile", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC")
+    private List<WorkImage> workImages = new ArrayList<>();
 }
