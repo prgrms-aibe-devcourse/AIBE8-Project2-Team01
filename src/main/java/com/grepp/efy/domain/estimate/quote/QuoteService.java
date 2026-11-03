@@ -118,11 +118,11 @@ public class QuoteService {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
         }
 
-        if (quote.getQuoteStatus().equals(QuoteStatus.REQUESTED) ||
-                quote.getServiceRequest().getRequestStatus().equals(RequestStatus.MATCHED)) {
+        if (quote.getQuoteStatus().equals(QuoteStatus.REQUESTED)) {
             throw new BusinessException(QUOTE_DELETE_NOT_ALLOWED_EXCEPTION);
         }
 
+        creditReservationService.releaseReservation(quoteId);
         quoteRepository.delete(quote);
     }
 
