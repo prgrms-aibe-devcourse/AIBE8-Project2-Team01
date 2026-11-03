@@ -62,6 +62,7 @@ public class QuoteController implements QuoteControllerDocs {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Override
     @DeleteMapping("/quotes/{quoteId}")
     public ResponseEntity<Void> deleteQuote(
             @AuthenticationPrincipal CustomUserDetails userDetails,
