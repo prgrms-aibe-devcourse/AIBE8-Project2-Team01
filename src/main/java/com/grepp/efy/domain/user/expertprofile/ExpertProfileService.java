@@ -9,9 +9,7 @@ import com.grepp.efy.domain.basedata.secondregion.SecondRegionService;
 import com.grepp.efy.domain.file.UploadFile;
 import com.grepp.efy.domain.file.UploadFileService;
 import com.grepp.efy.domain.file.UploadFileVisibility;
-import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileCreateRequest;
-import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileResponse;
-import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileUpdateRequest;
+import com.grepp.efy.domain.user.expertprofile.dto.*;
 import com.grepp.efy.domain.user.member.Member;
 import com.grepp.efy.domain.user.member.MemberRole;
 import com.grepp.efy.domain.user.member.MemberService;
@@ -24,8 +22,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +43,7 @@ public class ExpertProfileService {
     public ExpertProfileResponse getExpertProfile(Long expertProfileId) {
         ExpertProfile expertProfile = getExpertProfileEntity(expertProfileId);
         memberService.getMemberEntity(expertProfile.getMember().getId());
-        return expertProfileMapper.toResponse(expertProfile, getImageUrl(expertProfile));
+        return expertProfileMapper.toResponse(expertProfile, getImageUrl(expertProfile), getWorkImages(expertProfile));
     }
 
     @Transactional
@@ -79,9 +79,11 @@ public class ExpertProfileService {
             member.setImage(image);
         }
 
+        setWorkImages(expertProfile, createRequest.getWorkImages(), memberId);
+
         ExpertProfile savedExpertProfile = expertProfileRepository.save(expertProfile);
         memberService.changeToExpert(memberId);
-        return expertProfileMapper.toResponse(savedExpertProfile, getImageUrl(savedExpertProfile));
+        return expertProfileMapper.toResponse(savedExpertProfile, getImageUrl(savedExpertProfile), getWorkImages(savedExpertProfile));
     }
 
     @Transactional
@@ -104,7 +106,8 @@ public class ExpertProfileService {
                 UpdateRequest.getRegionIds()
         );
         checkProfile(expertProfile);
-        return expertProfileMapper.toResponse(expertProfile, getImageUrl(expertProfile));
+        setWorkImages(expertProfile, UpdateRequest.getWorkImages(), memberId);
+        return expertProfileMapper.toResponse(expertProfile, getImageUrl(expertProfile), getWorkImages(expertProfile));
     }
 
     @Transactional
@@ -141,6 +144,49 @@ public class ExpertProfileService {
     public ExpertProfile getExpertProfileByMemberId(Long memberId) {
         return expertProfileRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EXPERT_PROFILE_NOT_FOUND_EXCEPTION));
+    }
+
+    private void setWorkImages(ExpertProfile profile, List<WorkImageRequest> requests, Long memberId) {
+        if (requests == null) {
+            return;
+        }
+        if (requests.size() > 10) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION);
+        }
+        List<WorkImage> images = new ArrayList<>();
+        Set<Long> fileIds = new HashSet<>();
+        for (WorkImageRequest request : requests) {
+            if (request == null || request.getFileId() == null || !fileIds.add(request.getFileId())
+                    || (request.getDescription() != null && request.getDescription().length() > 200)) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION);
+            }
+            UploadFile file = uploadFileService.getMyUploadFileEntity(request.getFileId(), memberId);
+            if (file.getVisibility() != UploadFileVisibility.PUBLIC
+                    || !Set.of("image/jpeg", "image/png", "image/webp").contains(file.getContentType().split(";")[0].trim().toLowerCase())
+                    || file.getSize() <= 0 || file.getSize() > 5 * 1024 * 1024) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION);
+            }
+            WorkImage image = new WorkImage();
+            image.setExpertProfile(profile);
+            image.setFile(file);
+            image.setDescription(request.getDescription());
+            image.setDisplayOrder(images.size());
+            images.add(image);
+        }
+        profile.getWorkImages().clear();
+        profile.getWorkImages().addAll(images);
+    }
+
+    private List<WorkImageResponse> getWorkImages(ExpertProfile profile) {
+        List<WorkImageResponse> responses = new ArrayList<>();
+        for (WorkImage image : profile.getWorkImages()) {
+            UploadFile file = image.getFile();
+            if (file.getDeletedAt() == null && file.getVisibility() == UploadFileVisibility.PUBLIC) {
+                responses.add(new WorkImageResponse(file.getId(),
+                        storageClient.createUrl(file.getVisibility(), file.getStoragePath()), image.getDescription()));
+            }
+        }
+        return responses;
     }
 
     // 공개 가능한 회원 프로필 사진만 URL로 반환. 사진이 없으면 null

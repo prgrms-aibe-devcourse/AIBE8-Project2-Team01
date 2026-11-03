@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -32,6 +34,11 @@ public class ExpertProfileUpdateRequest {
     private Boolean nationwide;
     private List<Long> wholeRegionIds;
     private List<Long> regionIds;
+
+    @Valid
+    @Size(max = 10, message = "작업 사진은 최대 10장까지 선택해 주세요.")
+    private List<@NotNull(message = "작업 사진 선택 정보가 올바르지 않습니다.") WorkImageRequest> workImages;
+
 
     // 경력은 생략하면 유지하고 명시적으로 null을 보내면 삭제한다.
     @JsonIgnore

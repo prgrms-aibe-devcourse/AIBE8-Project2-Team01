@@ -4,6 +4,7 @@ import com.grepp.efy.domain.basedata.firstregion.dto.FirstRegionResponse;
 import com.grepp.efy.domain.basedata.secondcategory.dto.SecondCategoryResponse;
 import com.grepp.efy.domain.basedata.secondregion.dto.SecondRegionResponse;
 
+import java.util.List;
 import java.util.Set;
 
 public record ExpertProfileResponse(
@@ -19,6 +20,7 @@ public record ExpertProfileResponse(
         SecondCategoryResponse primaryCategory,
         boolean nationwide,
         Set<FirstRegionResponse> wholeRegions,
-        Set<SecondRegionResponse> regions
+        Set<SecondRegionResponse> regions,
+        List<WorkImageResponse> workImages
 ) {
 }

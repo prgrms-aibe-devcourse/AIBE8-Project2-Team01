@@ -19,7 +19,7 @@ import org.springframework.http.ResponseEntity;
 public interface ExpertProfileControllerDocs {
 
     @Operation(summary = "고수 프로필 공개 조회",
-            description = "로그인 없이 프로필 ID로 조회합니다. 회원 닉네임(nickname)·소개·경력·제공 서비스·대표 서비스·활동 지역과 회원 공통 프로필 이미지 파일 ID(imageId)와 공개 URL(imageUrl)을 반환합니다. 회원 닉네임을 변경하면 최신 닉네임을 반환합니다. 사진이 없으면 두 값은 null이며 삭제되거나 비공개인 사진의 URL은 반환하지 않습니다. 이메일·전화번호는 포함하지 않습니다. "
+            description = "로그인 없이 프로필 ID로 조회합니다. 회원 닉네임(nickname)·소개·경력·제공 서비스·대표 서비스·활동 지역과 회원 공통 프로필 이미지 파일 ID(imageId)와 공개 URL(imageUrl)을 반환합니다. 회원 닉네임을 변경하면 최신 닉네임을 반환합니다. 사진이 없으면 두 값은 null이며 삭제되거나 비공개인 사진의 URL은 반환하지 않습니다. workImages는 파일 ID·공개 URL·설명을 표시 순서대로 반환하며 사진이 없으면 빈 배열입니다. 이메일·전화번호는 포함하지 않습니다. "
                     + "현재 역할이 USER여도 조회할 수 있지만 탈퇴 회원의 프로필은 조회할 수 없습니다.")
     @ApiResponse(responseCode = "200", description = "고수 프로필 조회 성공",
             content = @Content(schema = @Schema(implementation = ExpertProfileResponse.class)))
@@ -51,7 +51,7 @@ public interface ExpertProfileControllerDocs {
     @Operation(summary = "첫 고수 프로필 등록",
             description = "인증된 USER의 본인 프로필을 등록하고 EXPERT로 전환합니다. 실패하면 전체 작업을 취소합니다. "
                     + "대표 서비스는 제공 서비스에 포함해야 합니다. 전국과 개별 지역은 함께 선택할 수 없으며 "
-                    + "시도 전체와 같은 시도의 시군구도 함께 선택할 수 없습니다. 공통 파일 업로드 후 받은 imageId로 본인의 PUBLIC 파일을 회원 공통 프로필 사진으로 연결할 수 있습니다. imageId를 생략하면 기존 사진을 유지합니다.")
+                    + "시도 전체와 같은 시도의 시군구도 함께 선택할 수 없습니다. 공통 파일 업로드 후 받은 imageId로 본인의 PUBLIC 파일을 회원 공통 프로필 사진으로 연결할 수 있습니다. imageId를 생략하면 기존 사진을 유지합니다. workImages에는 본인 PUBLIC 이미지의 fileId와 선택 설명(최대 200자)을 최대 10개까지 전달하며 배열 순서가 표시 순서입니다. 같은 파일은 중복 선택할 수 없습니다.")
     @SecurityRequirement(name = "accessToken")
     @ApiResponse(responseCode = "201", description = "등록 및 고수 전환 성공",
             content = @Content(schema = @Schema(implementation = ExpertProfileResponse.class)))
@@ -69,7 +69,7 @@ public interface ExpertProfileControllerDocs {
             description = "USER·EXPERT가 본인 프로필을 부분 수정합니다. 생략한 항목은 유지하며 경력 연수·경력 설명은 명시적인 null로 삭제할 수 있습니다. "
                     + "다른 항목의 null은 기존 값을 유지합니다. 서비스와 지역 목록은 보내면 해당 목록 전체를 교체합니다. "
                     + "전국으로 변경할 때 기존 지역을 지우려면 wholeRegionIds와 regionIds를 빈 배열로 함께 보냅니다. "
-                    + "최종 선택 조합은 등록과 같은 규칙으로 검사하며 실패하면 기존 데이터를 유지합니다. 사진 수정은 후속 작업입니다.")
+                    + "최종 선택 조합은 등록과 같은 규칙으로 검사하며 실패하면 기존 데이터를 유지합니다. workImages는 생략·null이면 유지하고 빈 배열이면 모두 연결 해제하며 목록을 보내면 전체 교체합니다. 작업 사진은 본인 PUBLIC 이미지 최대 10장·장당 5MB이며 설명은 최대 200자입니다. 연결 해제 시 업로드 파일 자체는 삭제하지 않습니다. 회원 프로필 사진은 별도 회원 사진 API로 수정합니다.")
     @SecurityRequirement(name = "accessToken")
     @ApiResponse(responseCode = "200", description = "수정된 고수 프로필 반환",
             content = @Content(schema = @Schema(implementation = ExpertProfileResponse.class)))

@@ -26,6 +26,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -205,7 +206,7 @@ class ExpertProfileTests {
         Long memberId = createMember("USER");
         // 응답 변환 단계에서 실패시켜 앞서 실행된 INSERT와 역할 변경의 롤백을 확인한다.
         doThrow(new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION))
-                .when(expertProfileMapper).toResponse(any(ExpertProfile.class), nullable(String.class));
+                .when(expertProfileMapper).toResponse(any(ExpertProfile.class), nullable(String.class), anyList());
         mockMvc.perform(post(URL).header("Authorization", "Bearer " + token(memberId))
                         .contentType(MediaType.APPLICATION_JSON).content(BODY))
                 .andExpect(status().isBadRequest());
@@ -301,7 +302,7 @@ class ExpertProfileTests {
         Long replacement = createFile(memberId, "PUBLIC", false);
         jdbcTemplate.update("update member set image_id = ? where id = ?", original, memberId);
         doThrow(new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION))
-                .when(expertProfileMapper).toResponse(any(ExpertProfile.class), nullable(String.class));
+                .when(expertProfileMapper).toResponse(any(ExpertProfile.class), nullable(String.class), anyList());
         mockMvc.perform(post(URL).header("Authorization", "Bearer " + token(memberId))
                         .contentType(MediaType.APPLICATION_JSON).content(imageBody(replacement)))
                 .andExpect(status().isBadRequest());
