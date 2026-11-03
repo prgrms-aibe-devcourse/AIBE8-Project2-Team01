@@ -3,13 +3,16 @@ package com.grepp.efy.domain.estimate.quote;
 import com.grepp.efy.domain.estimate.enums.QuoteStatus;
 import com.grepp.efy.domain.estimate.servicerequest.ServiceRequest;
 import com.grepp.efy.domain.user.expertprofile.ExpertProfile;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface QuoteRepository extends JpaRepository<Quote, Long> {
@@ -55,4 +58,8 @@ public interface QuoteRepository extends JpaRepository<Quote, Long> {
               AND q.quoteStatus = :status
             """)
     int deleteByIdsAndStatus(List<Long> ids, QuoteStatus status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT q FROM Quote q WHERE q.id = :quoteId")
+    Optional<Quote> findByIdForUpdate(Long quoteId);
 }

@@ -143,7 +143,7 @@ public class ServiceRequestService {
         List<Long> sentQuoteIds = quoteRepository.findIdsByServiceRequestIdAndQuoteStatus(requestId, QuoteStatus.SENT);
         if (!sentQuoteIds.isEmpty()) {
             creditReservationService.releaseReservations(sentQuoteIds);
-            quoteRepository.deleteAllByIdInBatch(sentQuoteIds);
+            quoteRepository.deleteByIdsAndStatus(sentQuoteIds, QuoteStatus.SENT);
         }
     }
 
