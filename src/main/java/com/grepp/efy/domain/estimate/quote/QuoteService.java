@@ -47,21 +47,20 @@ public class QuoteService {
     }
 
     public QuoteResponse getQuote(Long memberId, Long quoteId) {
-        validateExpertAccess(memberId);
+        Member member = memberService.getMemberEntity(memberId);
         Quote quote = getValidQuoteEntity(quoteId);
-        Long quoteOwnerId = quote.getExpertProfile().getMember().getId();
 
-        if (!quoteOwnerId.equals(memberId)) {
-            throw new BusinessException(FORBIDDEN_EXCEPTION);
-        }
+        validateQuoteReadAccess(member, quote);
 
         return quoteMapper.toResponse(quote);
     }
 
     public List<QuoteRequestResponse> getRequestQuotes(Long memberId, Long requestId) {
+        Member member = memberService.getMemberEntity(memberId);
         ServiceRequest serviceRequest = serviceRequestService.getRequestEntity(requestId);
 
-        if (!serviceRequest.getMember().getId().equals(memberId)) {
+        boolean isAdmin = member.getRole().equals(MemberRole.ADMIN);
+        if (!isAdmin && !serviceRequest.getMember().getId().equals(memberId)) {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
         }
 
@@ -181,6 +180,18 @@ public class QuoteService {
 
     private LocalDateTime validBoundary() {
         return LocalDateTime.now().minusHours(Quote.VALID_HOURS);
+    }
+
+    private void validateQuoteReadAccess(Member member, Quote quote) {
+        if (member.getRole().equals(MemberRole.ADMIN)) {
+            return;
+        }
+        boolean isSender = quote.getExpertProfile().getMember().getId().equals(member.getId());
+        boolean isRequestOwner = quote.getServiceRequest().getMember().getId().equals(member.getId());
+
+        if (!isSender && !isRequestOwner) {
+            throw new BusinessException(FORBIDDEN_EXCEPTION);
+        }
     }
 
     private Quote getValidQuoteEntity(Long quoteId) {

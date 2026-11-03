@@ -29,6 +29,8 @@ public interface QuoteMapper {
     @Mapping(target = "serviceRequestId", source = "serviceRequest.id")
     @Mapping(target = "secondCategoryName", source = "serviceRequest.secondCategory.name")
     @Mapping(target = "secondRegionName", source = "serviceRequest.secondRegion.name")
+    @Mapping(target = "expertProfileId", source = "expertProfile.id")
+    @Mapping(target = "expertNickname", source = "expertProfile.member.nickname")
     QuoteResponse toResponse(Quote quote);
 
     List<QuoteResponse> toResponseList(List<Quote> quotes);

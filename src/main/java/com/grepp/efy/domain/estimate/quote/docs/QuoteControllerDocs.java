@@ -30,22 +30,21 @@ public interface QuoteControllerDocs {
     @Operation(
             summary = "견적서 상세 조회",
             description = """
-                    로그인한 고수가 본인이 발송한 견적서의 상세 정보를 조회한다.
+                    견적서의 상세 정보를 조회한다.
                     
-                    - EXPERT 권한이 필요하다.
-                    - 본인이 발송한 견적서만 조회할 수 있다.
-                    - 견적서 상태와 요청서 기본 정보를 함께 반환한다.
+                    - 견적서를 발송한 고수, 견적서가 도착한 요청서의 작성자, 관리자만 조회할 수 있다.
+                    - 역할(USER·EXPERT) 전환과 관계없이 소유 관계로 판단한다.
+                    - 발송 후 72시간이 지난 SENT 견적서는 찾을 수 없다(404). REQUESTED 견적서는 기간과 관계없이 조회된다.
+                    - 견적서를 보낸 고수 정보와 요청서 기본 정보를 함께 반환한다.
                     """
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "견적서 상세 조회 성공",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = QuoteResponse.class))
-            ),
+                            schema = @Schema(implementation = QuoteResponse.class))),
             @ApiResponse(responseCode = "401", description = "인증 실패"),
-            @ApiResponse(responseCode = "403", description = "고수 권한이 없거나 본인의 견적서가 아님"),
-            @ApiResponse(responseCode = "404", description = "견적서 또는 고수 프로필을 찾을 수 없음")
-    })
+            @ApiResponse(responseCode = "403", description = "견적서의 당사자 또는 관리자가 아님"),
+            @ApiResponse(responseCode = "404", description = "견적서를 찾을 수 없거나 유효기간이 지남")})
     ResponseEntity<QuoteResponse> getQuote(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(name = "quoteId", description = "조회할 견적서 ID", required = true, in = ParameterIn.PATH, example = "1")
@@ -78,10 +77,10 @@ public interface QuoteControllerDocs {
     @Operation(
             summary = "요청서별 견적 목록 조회",
             description = """
-                    고객이 본인이 작성한 요청서에 발송된 견적서 목록을 조회한다.
+                    요청서에 도착한 견적서 목록을 조회한다.
                     
-                    - 요청서 작성자 본인만 조회할 수 있다.
-                    - SENT, REQUESTED 상태의 견적서를 조회한다.
+                    - 요청서 작성자 본인과 관리자만 조회할 수 있다.
+                    - 발송 후 72시간 이내의 SENT 견적서와 REQUESTED 견적서를 조회한다.
                     - 발송 시각 최신순으로 반환한다.
                     - 견적서가 없으면 빈 배열을 반환한다.
                     """
@@ -89,7 +88,7 @@ public interface QuoteControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "요청서별 견적 목록 조회 성공",
                     content = @Content(mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = QuoteResponse.class)))
+                            array = @ArraySchema(schema = @Schema(implementation = QuoteRequestResponse.class)))
             ),
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "403", description = "요청서 작성자가 아니거나 접근 권한이 없음"),
