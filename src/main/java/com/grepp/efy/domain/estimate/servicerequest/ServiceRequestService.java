@@ -9,6 +9,7 @@ import com.grepp.efy.domain.estimate.enums.QuoteStatus;
 import com.grepp.efy.domain.estimate.enums.RequestStatus;
 import com.grepp.efy.domain.estimate.question.Question;
 import com.grepp.efy.domain.estimate.question.QuestionService;
+import com.grepp.efy.domain.estimate.quote.Quote;
 import com.grepp.efy.domain.estimate.quote.QuoteRepository;
 import com.grepp.efy.domain.estimate.requestanswer.RequestAnswer;
 import com.grepp.efy.domain.estimate.requestanswer.RequestAnswerMapper;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -51,7 +53,7 @@ public class ServiceRequestService {
     private final QuoteRepository quoteRepository;
     private final CreditReservationService creditReservationService;
 
-    public List<ServiceRequestListResponse> getMatchedRequests(Long memberId) {
+    public List<RequestMatchedResponse> getMatchedRequests(Long memberId) {
         ExpertProfile expertProfile = validateExpertAccess(memberId);
         List<Long> categoryIds = expertProfile.getServices().stream().map(SecondCategory::getId).toList();
         List<Long> regionIds = expertProfile.getRegions().stream().map(SecondRegion::getId).toList();
@@ -61,7 +63,13 @@ public class ServiceRequestService {
                         RequestStatus.CLOSED, memberId,
                         LocalDateTime.now().minusHours(ServiceRequest.VALID_HOURS));
 
-        return serviceRequestMapper.toRequestListResponse(requests);
+        if (requests.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Long> sentQuoteIds = getSentQuoteIds(expertProfile.getId(), requests);
+
+        return serviceRequestMapper.toRequestMatchedResponseList(requests, sentQuoteIds);
     }
 
     public List<ServiceRequestListResponse> getMyRequests(Long memberId) {
@@ -229,5 +237,12 @@ public class ServiceRequestService {
         }
 
         return expertProfileService.getExpertProfileByMemberId(memberId);
+    }
+
+    private Map<Long, Long> getSentQuoteIds(Long expertProfileId, List<ServiceRequest> requests) {
+        List<Long> requestIds = requests.stream().map(ServiceRequest::getId).toList();
+
+        return quoteRepository.findByExpertProfileIdAndServiceRequestIdIn(expertProfileId, requestIds).stream()
+                .collect(Collectors.toMap(quote -> quote.getServiceRequest().getId(), Quote::getId));
     }
 }

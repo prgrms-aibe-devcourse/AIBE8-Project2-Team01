@@ -62,4 +62,6 @@ public interface QuoteRepository extends JpaRepository<Quote, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT q FROM Quote q WHERE q.id = :quoteId")
     Optional<Quote> findByIdForUpdate(Long quoteId);
+
+    List<Quote> findByExpertProfileIdAndServiceRequestIdIn(Long expertProfileId, List<Long> serviceRequestIds);
 }

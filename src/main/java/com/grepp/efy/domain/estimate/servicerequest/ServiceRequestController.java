@@ -1,10 +1,7 @@
 package com.grepp.efy.domain.estimate.servicerequest;
 
 import com.grepp.efy.domain.estimate.servicerequest.docs.ServiceRequestControllerDocs;
-import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestCreateRequest;
-import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestCreateResponse;
-import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestListResponse;
-import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestResponse;
+import com.grepp.efy.domain.estimate.servicerequest.dto.*;
 import com.grepp.efy.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +21,9 @@ public class ServiceRequestController implements ServiceRequestControllerDocs {
 
     @Override
     @GetMapping("/members/me/expert-profile/requests")
-    public ResponseEntity<List<ServiceRequestListResponse>> getMatchedRequests(
+    public ResponseEntity<List<RequestMatchedResponse>> getMatchedRequests(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        List<ServiceRequestListResponse> requests = serviceRequestService.getMatchedRequests(userDetails.getMemberId());
+        List<RequestMatchedResponse> requests = serviceRequestService.getMatchedRequests(userDetails.getMemberId());
         return ResponseEntity.ok(requests);
     }
 

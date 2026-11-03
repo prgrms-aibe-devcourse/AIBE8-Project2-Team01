@@ -1,9 +1,6 @@
 package com.grepp.efy.domain.estimate.servicerequest.docs;
 
-import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestCreateRequest;
-import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestCreateResponse;
-import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestListResponse;
-import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestResponse;
+import com.grepp.efy.domain.estimate.servicerequest.dto.*;
 import com.grepp.efy.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,7 +24,9 @@ public interface ServiceRequestControllerDocs {
     @Operation(
             summary = "고수 매칭 요청서 목록 조회",
             description = "로그인한 고수의 제공 서비스와 활동 지역에 일치하는 요청서 목록을 최신순으로 조회합니다. " +
-                    "전국 활동 고수는 지역 제한 없이 조회할 수 있으며, CLOSED 상태와 본인이 작성한 요청서는 제외됩니다."
+                    "전국 활동 고수는 지역 제한 없이 조회할 수 있으며, CLOSED 상태·본인이 작성한 요청서·" +
+                    "등록 후 24시간(견적 접수 기간)이 지난 요청서는 제외됩니다. " +
+                    "이미 견적을 보낸 요청서는 sentQuoteId에 보낸 견적서 ID가, 보내지 않은 요청서는 null이 담깁니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "매칭 요청서 목록 조회 성공 (매칭 결과가 없으면 빈 목록 반환)"),
@@ -35,7 +34,7 @@ public interface ServiceRequestControllerDocs {
             @ApiResponse(responseCode = "403", description = "고수 권한이 없는 사용자", content = @Content),
             @ApiResponse(responseCode = "404", description = "고수 프로필을 찾을 수 없음", content = @Content)
     })
-    ResponseEntity<List<ServiceRequestListResponse>> getMatchedRequests(
+    ResponseEntity<List<RequestMatchedResponse>> getMatchedRequests(
             @Parameter(hidden = true) CustomUserDetails userDetails);
 
     @Operation(
