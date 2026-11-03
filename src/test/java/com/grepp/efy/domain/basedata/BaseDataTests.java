@@ -44,10 +44,10 @@ class BaseDataTests {
                 {"first-regions", "firstRegionId", "second-regions", "SecondRegionCreateRequest", "SecondRegionRequest", "secondRegionId"}
         }) {
             var operation = document.get("paths").get("/api/admin/" + c[0] + "/{" + c[1] + "}/" + c[2]).get("post");
-            assertEquals(c[1], operation.get("parameters").get(0).get("name").asText());
-            assertEquals("path", operation.get("parameters").get(0).get("in").asText());
+            assertEquals(c[1], operation.get("parameters").get(0).get("name").asString());
+            assertEquals("path", operation.get("parameters").get(0).get("in").asString());
             assertEquals("#/components/schemas/" + c[3], operation.get("requestBody").get("content")
-                    .get("application/json").get("schema").get("$ref").asText());
+                    .get("application/json").get("schema").get("$ref").asString());
             var schemas = document.get("components").get("schemas");
             assertFalse(schemas.get(c[3]).get("properties").has(c[1]));
             assertTrue(schemas.get(c[4]).get("properties").has(c[1]));
@@ -64,9 +64,9 @@ class BaseDataTests {
             assertTrue(operation.get("responses").has("404"));
             var secondDelete = document.get("paths").get("/api/admin/" + c[2] + "/{" + c[5] + "}")
                     .get("delete").get("responses").get("409");
-            assertEquals("다른 데이터에서 참조 중", secondDelete.get("description").asText());
+            assertEquals("다른 데이터에서 참조 중", secondDelete.get("description").asString());
             if (c[0].equals("first-categories")) {
-                assertEquals("이름 중복", operation.get("responses").get("409").get("description").asText());
+                assertEquals("이름 중복", operation.get("responses").get("409").get("description").asString());
             }
         }
     }
