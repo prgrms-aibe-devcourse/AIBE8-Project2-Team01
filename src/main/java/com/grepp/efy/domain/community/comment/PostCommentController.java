@@ -28,8 +28,9 @@ public class PostCommentController implements PostCommentControllerDocs {
             @RequestParam(defaultValue = "1") @Positive Integer pageNumber
     ) {
 
-        PageResponse<PostCommentResponse> response = postCommentService.getComments(
-                postId, pageNumber, userDetails == null ? null : userDetails.getRole());
+        PageResponse<PostCommentResponse> response = postCommentService.getComments(postId, pageNumber,
+                userDetails == null ? null : userDetails.getMemberId(),
+                userDetails == null ? null : userDetails.getRole());
 
         return ResponseEntity.ok(response);
     }

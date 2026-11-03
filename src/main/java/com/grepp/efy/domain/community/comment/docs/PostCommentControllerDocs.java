@@ -26,7 +26,7 @@ public interface PostCommentControllerDocs {
                     + "최신순으로 20개씩 반환하며(같은 시각이면 commentId 내림차순), 페이지 크기와 정렬은 바꿀 수 없습니다. "
                     + "삭제된 댓글은 제외하며, totalElements는 게시글의 commentCount와 같습니다. "
                     + "이미지가 없으면 images는 빈 배열, 프로필 사진이 없으면 memberProfileImageUrl은 null입니다. "
-                    + "likeCount·liked는 좋아요 기능 구현 전까지 0·false입니다.")
+                    + "liked는 로그인한 회원이 그 댓글에 좋아요했는지이며, 비로그인이면 false입니다.")
     @SecurityRequirement(name = "accessToken")
     @ApiResponse(responseCode = "200", description = "조회 성공. 댓글 목록과 페이지 정보 반환")
     @ApiResponse(responseCode = "400", description = "postId·pageNumber가 정수가 아니거나 1 미만",

@@ -10,6 +10,7 @@ import com.grepp.efy.domain.community.post.dto.*;
 import com.grepp.efy.domain.file.UploadFile;
 import com.grepp.efy.domain.file.UploadFileRepository;
 import com.grepp.efy.domain.file.UploadFileVisibility;
+import com.grepp.efy.domain.reaction.postlike.PostLikeRepository;
 import com.grepp.efy.domain.user.member.Member;
 import com.grepp.efy.domain.user.member.MemberRepository;
 import com.grepp.efy.domain.user.member.MemberRole;
@@ -45,6 +46,7 @@ public class PostService {
     private final SecondRegionRepository secondRegionRepository;
     private final UploadFileRepository uploadFileRepository;
     private final PostVisibilityHistoryRepository postVisibilityHistoryRepository;
+    private final PostLikeRepository postLikeRepository;
 
     private final PostMapper postMapper;
     private final SupabaseStorageClient storageClient;
@@ -60,8 +62,7 @@ public class PostService {
         Sort.Direction direction = "asc".equals(condition.sortOrder()) ? Sort.Direction.ASC : Sort.Direction.DESC;
 
         Sort sort = switch (condition.sortBy()) {
-            case "createdAt", "viewCount", "commentCount" -> Sort.by(direction, condition.sortBy());
-            // ponytail: likeCount는 아직 저장하지 않아 모두 0 → 값이 같을 때 규칙(postId 내림차순)만 적용. 좋아요 도메인 구현 후 정렬 추가
+            case "createdAt", "viewCount", "commentCount", "likeCount" -> Sort.by(direction, condition.sortBy());
             default -> Sort.unsorted();
         };
 
@@ -105,8 +106,9 @@ public class PostService {
         return toSummaryPage(page);
     }
 
+    // 비로그인(memberId == null)이면 liked는 false
     @Transactional
-    public PostResponse getPostById(Long postId, @Nullable MemberRole role) {
+    public PostResponse getPostById(Long postId, @Nullable Long memberId, @Nullable MemberRole role) {
 
         Post post = findPost(postId);
 
@@ -117,7 +119,7 @@ public class PostService {
 
         postRepository.increaseViewCount(postId);
 
-        return toResponse(post).toBuilder()
+        return toResponse(post, memberId).toBuilder()
                 .viewCount(post.getViewCount() + 1)
                 .build();
     }
@@ -150,7 +152,7 @@ public class PostService {
                 .images(images)
                 .build());
 
-        return toResponse(post);
+        return toResponse(post, memberId);
     }
 
     @Transactional
@@ -181,7 +183,7 @@ public class PostService {
 
         post.update(category, region, postUpdateRequest.getTitle(), postUpdateRequest.getContent(), images);
 
-        return toResponse(post);
+        return toResponse(post, memberId);
     }
 
     @Transactional
@@ -243,8 +245,8 @@ public class PostService {
         return new PostVisibilityHistoryResponse(postId, histories);
     }
 
-    // 삭제된 글은 없는 글과 동일하게 404
-    private Post findPost(Long postId) {
+    // 삭제된 글은 없는 글과 동일하게 404 (좋아요에서도 사용)
+    public Post findPost(Long postId) {
         return postRepository.findById(postId)
                 .filter(post -> post.getDeletedAt() == null)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
@@ -262,7 +264,8 @@ public class PostService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND_EXCEPTION));
     }
 
-    private PostResponse toResponse(Post post) {
+    // liked는 memberId가 이 글에 좋아요했는지 (null이면 false)
+    private PostResponse toResponse(Post post, @Nullable Long memberId) {
         // 게시글 이미지 목록
         List<PostResponse.PostImage> imageResponses = post.getImages().stream()
                 .map(file -> new PostResponse.PostImage(
@@ -274,7 +277,9 @@ public class PostService {
         String profileImageUrl = profile == null ? null
                 : storageClient.createUrl(profile.getVisibility(), profile.getStoragePath());
 
-        return postMapper.toResponse(post, imageResponses, profileImageUrl);
+        boolean liked = memberId != null && postLikeRepository.existsByMemberIdAndPostId(memberId, post.getId());
+
+        return postMapper.toResponse(post, imageResponses, profileImageUrl, liked);
     }
 
     // 사용자는 1페이지부터, Spring은 0부터 셈. 크기 20·최신순 고정

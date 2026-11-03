@@ -67,7 +67,6 @@ public interface PostControllerDocs {
                     + "isVisible로 공개·숨김 글만 골라 볼 수 있고, 생략하면 전체입니다. boardType을 생략하면 전체 게시판입니다. "
                     + "keyword·카테고리·지역 필터는 공개 게시글 목록과 같습니다. "
                     + "정렬은 sortBy·sortOrder로 지정하며, 값이 같은 글은 postId 내림차순으로 정렬합니다. "
-                    + "likeCount는 아직 집계하지 않아 모두 0이므로, 이 값으로 정렬하면 postId 내림차순과 같습니다. "
                     + "결과가 없거나 마지막 페이지를 넘으면 빈 content로 200을 반환합니다.")
     @SecurityRequirement(name = "accessToken")
     @ApiResponse(responseCode = "200", description = "조회 성공. 게시글 목록과 페이지 정보 반환")
@@ -133,6 +132,7 @@ public interface PostControllerDocs {
             description = "토큰 없이 조회할 수 있으며, 만료되었거나 유효하지 않은 토큰은 비로그인으로 취급합니다. "
                     + "숨김 처리된 글은 관리자만 조회할 수 있고, 작성자를 포함한 그 외 사용자에게는 404로 응답합니다. "
                     + "조회할 때마다 조회수가 1 증가하며(중복 방지 없음), 응답에는 증가가 반영된 값을 담습니다. "
+                    + "liked는 로그인한 회원이 이 글에 좋아요했는지이며, 비로그인이면 false입니다. "
                     + "이미지가 없으면 images는 빈 배열, 프로필 사진이 없으면 memberProfileImageUrl은 null, "
                     + "카테고리·지역을 지정하지 않은 글은 category·region이 null입니다.")
     @SecurityRequirement(name = "accessToken")

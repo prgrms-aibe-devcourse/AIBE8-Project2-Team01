@@ -78,7 +78,9 @@ public enum ErrorCode {
     CLOSED_REQUEST_QUOTE_REQUEST_NOT_ALLOWED_EXCEPTION(HttpStatus.BAD_REQUEST, "취소된 요청서의 견적서에는 의뢰 요청할 수 없습니다."),
 
     // ⑥ 리뷰·찜·좋아요
-
+    ALREADY_LIKED_POST_EXCEPTION(HttpStatus.CONFLICT, "이미 좋아요한 게시글입니다."),
+    ALREADY_LIKED_COMMENT_EXCEPTION(HttpStatus.CONFLICT, "이미 좋아요한 댓글입니다."),
+    LIKE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "좋아요한 기록이 없습니다."),
 
     // ⑦ 크레딧·결제
     INSUFFICIENT_CREDIT_EXCEPTION(HttpStatus.CONFLICT, "사용 가능한 크레딧이 부족합니다."),

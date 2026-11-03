@@ -21,10 +21,9 @@ public interface PostMapper {
     @Mapping(target = "category", source = "post.secondCategory")
     @Mapping(target = "region", source = "post.secondRegion")
     @Mapping(target = "commentCount", source = "post.commentCount")
-    @Mapping(target = "likeCount", ignore = true)
-    @Mapping(target = "liked", ignore = true)
+    @Mapping(target = "likeCount", source = "post.likeCount")
     @Mapping(target = "isVisible", source = "post.visible")
-    PostResponse toResponse(Post post, List<PostResponse.PostImage> images, String memberProfileImageUrl);
+    PostResponse toResponse(Post post, List<PostResponse.PostImage> images, String memberProfileImageUrl, boolean liked);
 
     @Mapping(target = "firstCategoryId", source = "firstCategory.id")
     @Mapping(target = "firstCategoryName", source = "firstCategory.name")
@@ -43,7 +42,7 @@ public interface PostMapper {
     @Mapping(target = "category", source = "post.secondCategory")
     @Mapping(target = "region", source = "post.secondRegion")
     @Mapping(target = "commentCount", source = "post.commentCount")
-    @Mapping(target = "likeCount", ignore = true)
+    @Mapping(target = "likeCount", source = "post.likeCount")
     @Mapping(target = "isVisible", source = "post.visible")
     PostSummaryResponse toSummary(Post post, String thumbnailUrl);
 

@@ -117,7 +117,9 @@ public class PostController implements PostControllerDocs {
             @PathVariable @Positive Long postId
     ) {
 
-        PostResponse response = postService.getPostById(postId, userDetails == null ? null : userDetails.getRole());
+        PostResponse response = postService.getPostById(postId,
+                userDetails == null ? null : userDetails.getMemberId(),
+                userDetails == null ? null : userDetails.getRole());
 
         return ResponseEntity.ok(response);
     }

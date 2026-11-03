@@ -67,6 +67,11 @@ public class Post {
     @Column(nullable = false)
     private long commentCount;
 
+    // 좋아요 수. 좋아요 등록·취소 때 DB에서 직접 증감
+    @ColumnDefault("0")
+    @Column(nullable = false)
+    private long likeCount;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
