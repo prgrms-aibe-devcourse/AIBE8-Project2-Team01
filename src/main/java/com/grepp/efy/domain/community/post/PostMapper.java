@@ -3,6 +3,7 @@ package com.grepp.efy.domain.community.post;
 import com.grepp.efy.domain.basedata.secondcategory.SecondCategory;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegion;
 import com.grepp.efy.domain.community.post.dto.PostResponse;
+import com.grepp.efy.domain.community.post.dto.PostSummaryResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -35,4 +36,12 @@ public interface PostMapper {
     @Mapping(target = "secondRegionId", source = "id")
     @Mapping(target = "secondRegionName", source = "name")
     PostResponse.PostRegion toRegion(SecondRegion secondRegion);
+
+    @Mapping(target = "postId", source = "post.id")
+    @Mapping(target = "memberNickname", source = "post.member.nickname")
+    @Mapping(target = "category", source = "post.secondCategory")
+    @Mapping(target = "region", source = "post.secondRegion")
+    @Mapping(target = "commentCount", ignore = true)
+    @Mapping(target = "likeCount", ignore = true)
+    PostSummaryResponse toSummary(Post post, String thumbnailUrl);
 }
