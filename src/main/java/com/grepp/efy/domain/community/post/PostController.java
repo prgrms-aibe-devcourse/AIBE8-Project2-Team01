@@ -55,4 +55,16 @@ public class PostController implements PostControllerDocs {
 
         return ResponseEntity.ok(response);
     }
+
+    @Override
+    @DeleteMapping("/posts/{postId}")
+    public ResponseEntity<Void> deletePost(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable @Positive Long postId
+    ) {
+
+        postService.deletePost(postId, userDetails.getMemberId(), userDetails.getRole());
+
+        return ResponseEntity.noContent().build();
+    }
 }

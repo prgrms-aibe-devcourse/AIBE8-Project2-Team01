@@ -64,6 +64,8 @@ public class Post {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    private LocalDateTime deletedAt; // 값이 있으면 삭제된 글
+
     private boolean isVisible = true;
 
     @PrePersist
@@ -121,6 +123,10 @@ public class Post {
         // 이미지만 바뀌면 post 행 UPDATE가 없어 @PreUpdate가 안 돌므로 직접 갱신
         this.updatedAt = LocalDateTime.now();
         return true;
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
     }
 }
 
