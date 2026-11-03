@@ -73,6 +73,8 @@ public enum ErrorCode {
     QUOTE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "견적서를 찾을 수 없습니다."),
     QUOTE_DELETE_NOT_ALLOWED_EXCEPTION(HttpStatus.CONFLICT, "의뢰 요청된 견적서는 삭제할 수 없습니다. 변경 사항은 채팅으로 조율해주세요."),
     EXPIRED_REQUEST_QUOTE_NOT_ALLOWED_EXCEPTION(HttpStatus.BAD_REQUEST, "견적 접수 기간(24시간)이 지난 요청서에는 견적을 발송할 수 없습니다."),
+    ALREADY_REQUESTED_QUOTE_EXCEPTION(HttpStatus.CONFLICT, "이미 의뢰 요청된 견적서입니다."),
+    CLOSED_REQUEST_QUOTE_REQUEST_NOT_ALLOWED_EXCEPTION(HttpStatus.BAD_REQUEST, "취소된 요청서의 견적서에는 의뢰 요청할 수 없습니다."),
 
     // ⑥ 리뷰·찜·좋아요
 
