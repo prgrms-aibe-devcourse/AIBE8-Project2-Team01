@@ -59,6 +59,7 @@ public enum ErrorCode {
     INVALID_POST_IMAGE_EXCEPTION(HttpStatus.BAD_REQUEST, "사용할 수 없는 이미지가 포함되어 있습니다."),
     POST_IMAGE_REQUIRED_EXCEPTION(HttpStatus.BAD_REQUEST, "팁 게시글에는 이미지를 1장 이상 첨부해 주세요."),
     POST_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "존재하지 않는 게시물입니다."),
+    COMMENT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "존재하지 않는 댓글입니다."),
 
     // ⑤ 견적 요청·매칭
     QUESTION_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "질문을 찾을 수 없습니다."),

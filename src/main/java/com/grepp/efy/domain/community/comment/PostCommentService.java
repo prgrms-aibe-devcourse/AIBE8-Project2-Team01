@@ -81,6 +81,58 @@ public class PostCommentService {
         return toResponse(comment);
     }
 
+    // 작성자 본인만 (관리자 포함 타인은 403). 부모 글이 숨김이면 작성자도 404
+    @Transactional
+    public PostCommentResponse updateComment(Long commentId, Long memberId, PostCommentRequest request) {
+
+        PostComment comment = findComment(commentId);
+
+        if (!comment.getPost().isVisible()) {
+            throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND_EXCEPTION);
+        }
+        if (!comment.getMember().getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
+        }
+
+        // 전체 교체: imageIds를 안 보내면 이미지가 비워진다
+        List<Long> imageIds = Objects.requireNonNullElse(request.getImageIds(), List.of());
+        List<UploadFile> images = postService.loadImages(memberId, imageIds);
+
+        comment.update(request.getContent(), images);
+
+        return toResponse(comment);
+    }
+
+    // 작성자와 관리자만. 관리자는 숨김 글의 댓글도 삭제 가능
+    @Transactional
+    public void deleteComment(Long commentId, Long memberId, MemberRole role) {
+
+        PostComment comment = findComment(commentId);
+
+        if (role != MemberRole.ADMIN) {
+            // 숨김 글의 댓글은 관리자만 (작성자도 404)
+            if (!comment.getPost().isVisible()) {
+                throw new BusinessException(ErrorCode.COMMENT_NOT_FOUND_EXCEPTION);
+            }
+            if (!comment.getMember().getId().equals(memberId)) {
+                throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
+            }
+        }
+
+        comment.delete();
+
+        // 댓글 삭제와 같은 트랜잭션에서 감소
+        postRepository.decreaseCommentCount(comment.getPost().getId());
+    }
+
+    // 삭제된 댓글, 또는 부모 글이 삭제된 댓글은 없는 댓글과 동일하게 404
+    private PostComment findComment(Long commentId) {
+        return postCommentRepository.findById(commentId)
+                .filter(comment -> comment.getDeletedAt() == null)
+                .filter(comment -> comment.getPost().getDeletedAt() == null)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND_EXCEPTION));
+    }
+
     // 삭제된 글은 없는 글과 동일하게 404
     private Post findPost(Long postId) {
         return postRepository.findById(postId)
