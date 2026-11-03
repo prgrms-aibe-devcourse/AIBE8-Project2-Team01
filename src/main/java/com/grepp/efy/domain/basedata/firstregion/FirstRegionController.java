@@ -3,6 +3,7 @@ package com.grepp.efy.domain.basedata.firstregion;
 import com.grepp.efy.domain.basedata.firstregion.docs.FirstRegionControllerDocs;
 import com.grepp.efy.domain.basedata.firstregion.dto.FirstRegionRequest;
 import com.grepp.efy.domain.basedata.firstregion.dto.FirstRegionResponse;
+import com.grepp.efy.domain.basedata.region.RegionLock;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import java.util.List;
 @RequestMapping("/api")
 public class FirstRegionController implements FirstRegionControllerDocs {
 
+    private final RegionLock regionLock;
     private final FirstRegionService firstRegionService;
 
     @GetMapping("/public/first-regions")
@@ -27,18 +29,24 @@ public class FirstRegionController implements FirstRegionControllerDocs {
     @PostMapping("/admin/first-regions")
     @Override
     public ResponseEntity<FirstRegionResponse> createFirstRegion(@Valid @RequestBody FirstRegionRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(firstRegionService.createFirstRegion(request));
+        synchronized (regionLock) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(firstRegionService.createFirstRegion(request));
+        }
     }
 
     @PutMapping("/admin/first-regions/{firstRegionId}")
     @Override
     public ResponseEntity<FirstRegionResponse> updateFirstRegion(@PathVariable Long firstRegionId, @Valid @RequestBody FirstRegionRequest request) {
-        return ResponseEntity.ok(firstRegionService.updateFirstRegion(firstRegionId, request));
+        synchronized (regionLock) {
+            return ResponseEntity.ok(firstRegionService.updateFirstRegion(firstRegionId, request));
+        }
     }
 
     @DeleteMapping("/admin/first-regions/{firstRegionId}")
     @Override
     public ResponseEntity<FirstRegionResponse> deleteFirstRegion(@PathVariable Long firstRegionId) {
-        return ResponseEntity.ok(firstRegionService.deleteFirstRegion(firstRegionId));
+        synchronized (regionLock) {
+            return ResponseEntity.ok(firstRegionService.deleteFirstRegion(firstRegionId));
+        }
     }
 }

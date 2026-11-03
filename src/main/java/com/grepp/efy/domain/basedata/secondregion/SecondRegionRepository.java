@@ -7,7 +7,7 @@ public interface SecondRegionRepository extends JpaRepository<SecondRegion, Long
 
     List<SecondRegion> findByFirstRegionIdOrderByIdAsc(Long firstRegionId);
 
-    boolean existsByNameIgnoreCaseAndFirstRegionId(String name, Long firstRegionId);
+    boolean existsByNameKeyAndFirstRegionId(String name, Long firstRegionId);
 
     boolean existsByCode(String code);
 }
