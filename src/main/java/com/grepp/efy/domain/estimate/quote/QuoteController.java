@@ -3,6 +3,7 @@ package com.grepp.efy.domain.estimate.quote;
 import com.grepp.efy.domain.estimate.quote.docs.QuoteControllerDocs;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateResponse;
+import com.grepp.efy.domain.estimate.quote.dto.QuoteRequestResponse;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -37,6 +38,16 @@ public class QuoteController implements QuoteControllerDocs {
             @PathVariable Long quoteId
     ) {
         QuoteResponse response = quoteService.getQuote(userDetails.getMemberId(), quoteId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @GetMapping("/requests/{requestId}/quotes")
+    public ResponseEntity<List<QuoteRequestResponse>> getRequestQuotes(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long requestId
+    ) {
+        List<QuoteRequestResponse> response = quoteService.getRequestQuotes(userDetails.getMemberId(), requestId);
         return ResponseEntity.ok(response);
     }
 

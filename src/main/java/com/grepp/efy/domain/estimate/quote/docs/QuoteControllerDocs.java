@@ -2,6 +2,7 @@ package com.grepp.efy.domain.estimate.quote.docs;
 
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateResponse;
+import com.grepp.efy.domain.estimate.quote.dto.QuoteRequestResponse;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -73,6 +74,31 @@ public interface QuoteControllerDocs {
     ResponseEntity<List<QuoteResponse>> getQuotes(
             @AuthenticationPrincipal CustomUserDetails userDetails
     );
+
+    @Operation(
+            summary = "요청서별 견적 목록 조회",
+            description = """
+                    고객이 본인이 작성한 요청서에 발송된 견적서 목록을 조회한다.
+                    
+                    - 요청서 작성자 본인만 조회할 수 있다.
+                    - SENT, REQUESTED 상태의 견적서를 조회한다.
+                    - 발송 시각 최신순으로 반환한다.
+                    - 견적서가 없으면 빈 배열을 반환한다.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "요청서별 견적 목록 조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = QuoteResponse.class)))
+            ),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "403", description = "요청서 작성자가 아니거나 접근 권한이 없음"),
+            @ApiResponse(responseCode = "404", description = "요청서를 찾을 수 없음")})
+    ResponseEntity<List<QuoteRequestResponse>> getRequestQuotes(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(name = "requestId", description = "견적 목록을 조회할 요청서 ID",
+                    required = true, in = ParameterIn.PATH, example = "1")
+            @PathVariable Long requestId);
 
     @Operation(
             summary = "견적서 작성 및 발송",

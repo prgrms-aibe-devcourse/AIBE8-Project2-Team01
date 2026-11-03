@@ -14,4 +14,7 @@ public interface QuoteRepository extends JpaRepository<Quote, Long> {
     boolean existsByExpertProfileAndServiceRequest(ExpertProfile expertProfile, ServiceRequest serviceRequest);
 
     List<Quote> findAllByExpertProfileMemberIdAndQuoteStatusInOrderBySentAtDesc(Long memberId, List<QuoteStatus> visibleStatuses);
+
+    List<Quote> findAllByServiceRequestIdAndQuoteStatusInOrderBySentAtDesc(Long requestId, List<QuoteStatus> visibleStatuses);
+
 }
