@@ -61,4 +61,13 @@ public class QuoteController implements QuoteControllerDocs {
         QuoteCreateResponse response = quoteService.createQuote(userDetails.getMemberId(), requestId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @Override
+    @DeleteMapping("/quotes/{quoteId}")
+    public ResponseEntity<Void> deleteQuote(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long quoteId) {
+        quoteService.deleteQuote(userDetails.getMemberId(), quoteId);
+        return ResponseEntity.noContent().build();
+    }
 }
