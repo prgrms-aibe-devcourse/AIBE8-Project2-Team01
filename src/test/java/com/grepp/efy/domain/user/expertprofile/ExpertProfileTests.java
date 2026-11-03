@@ -30,8 +30,10 @@ import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@SuppressWarnings("NonAsciiCharacters")
 @SpringBootTest
 @AutoConfigureMockMvc
 class ExpertProfileTests {
@@ -231,6 +233,45 @@ class ExpertProfileTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.imageId").value(fileId.intValue()))
                 .andExpect(jsonPath("$.imageUrl").value(imageUrl));
+    }
+
+    @Test
+    void 닉네임_변경은_공개조회에_반영되고_개인정보는_노출하지_않는다() throws Exception {
+        Long memberId = createMember("USER");
+        Long fileId = createFile(memberId, "PUBLIC", false);
+        String token = token(memberId);
+        String nickname = memberService.getMemberEntity(memberId).getNickname();
+        String response = mockMvc.perform(post(URL).header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON).content(imageBody(fileId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nickname").value(nickname))
+                .andReturn().getResponse().getContentAsString();
+        JsonNode profile = new ObjectMapper().readTree(response);
+        String publicUrl = "/api/public/expert-profiles/" + profile.get("id").asLong();
+        mockMvc.perform(get(publicUrl))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nickname").value(nickname))
+                .andExpect(jsonPath("$.email").doesNotExist())
+                .andExpect(jsonPath("$.phone").doesNotExist());
+
+        String changedNickname = UUID.randomUUID().toString().substring(0, 20);
+        mockMvc.perform(put("/api/members/me").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nickname\":\"" + changedNickname + "\"}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get(publicUrl))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nickname").value(changedNickname))
+                .andExpect(jsonPath("$.imageId").value(fileId.intValue()))
+                .andExpect(jsonPath("$.imageUrl").value(profile.get("imageUrl").asString()))
+                .andExpect(jsonPath("$.email").doesNotExist())
+                .andExpect(jsonPath("$.phone").doesNotExist());
+
+        jdbcTemplate.update("update member set role = 'USER' where id = ?", memberId);
+        mockMvc.perform(get(publicUrl)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.nickname").value(changedNickname));
+        jdbcTemplate.update("update member set deleted_at = CURRENT_TIMESTAMP where id = ?", memberId);
+        mockMvc.perform(get(publicUrl)).andExpect(status().isNotFound());
     }
 
     @Test

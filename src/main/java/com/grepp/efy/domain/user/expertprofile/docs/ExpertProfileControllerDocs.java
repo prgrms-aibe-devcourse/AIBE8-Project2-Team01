@@ -19,7 +19,7 @@ import org.springframework.http.ResponseEntity;
 public interface ExpertProfileControllerDocs {
 
     @Operation(summary = "고수 프로필 공개 조회",
-            description = "로그인 없이 프로필 ID로 조회합니다. 소개·경력·제공 서비스·대표 서비스·활동 지역과 회원 공통 프로필 이미지 파일 ID(imageId)와 공개 URL(imageUrl)을 반환합니다. 사진이 없으면 두 값은 null이며 삭제되거나 비공개인 사진의 URL은 반환하지 않습니다. 이메일·전화번호는 포함하지 않습니다. "
+            description = "로그인 없이 프로필 ID로 조회합니다. 회원 닉네임(nickname)·소개·경력·제공 서비스·대표 서비스·활동 지역과 회원 공통 프로필 이미지 파일 ID(imageId)와 공개 URL(imageUrl)을 반환합니다. 회원 닉네임을 변경하면 최신 닉네임을 반환합니다. 사진이 없으면 두 값은 null이며 삭제되거나 비공개인 사진의 URL은 반환하지 않습니다. 이메일·전화번호는 포함하지 않습니다. "
                     + "현재 역할이 USER여도 조회할 수 있지만 탈퇴 회원의 프로필은 조회할 수 없습니다.")
     @ApiResponse(responseCode = "200", description = "고수 프로필 조회 성공",
             content = @Content(schema = @Schema(implementation = ExpertProfileResponse.class)))
