@@ -87,8 +87,8 @@ public interface ServiceRequestControllerDocs {
     @Operation(
             summary = "서비스 요청서 취소",
             description = "로그인한 일반 회원이 본인의 요청서를 취소합니다. "
-                    + "OPEN 또는 MATCHED 상태에서 취소할 수 있으며, "
-                    + "취소 시 요청서 상태가 CLOSED로 변경됩니다."
+                    + "OPEN 상태에서만 취소할 수 있으며, 취소 시 요청서 상태가 CLOSED로 변경됩니다. "
+                    + "의뢰 요청되지 않은(SENT) 견적서는 크레딧 예약이 해제되고 즉시 삭제됩니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "요청서 취소 성공"),
