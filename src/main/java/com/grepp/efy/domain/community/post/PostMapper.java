@@ -20,7 +20,7 @@ public interface PostMapper {
     @Mapping(target = "images", source = "images")
     @Mapping(target = "category", source = "post.secondCategory")
     @Mapping(target = "region", source = "post.secondRegion")
-    @Mapping(target = "commentCount", ignore = true)
+    @Mapping(target = "commentCount", source = "post.commentCount")
     @Mapping(target = "likeCount", ignore = true)
     @Mapping(target = "liked", ignore = true)
     @Mapping(target = "isVisible", source = "post.visible")
@@ -42,7 +42,7 @@ public interface PostMapper {
     @Mapping(target = "memberNickname", source = "post.member.nickname")
     @Mapping(target = "category", source = "post.secondCategory")
     @Mapping(target = "region", source = "post.secondRegion")
-    @Mapping(target = "commentCount", ignore = true)
+    @Mapping(target = "commentCount", source = "post.commentCount")
     @Mapping(target = "likeCount", ignore = true)
     @Mapping(target = "isVisible", source = "post.visible")
     PostSummaryResponse toSummary(Post post, String thumbnailUrl);

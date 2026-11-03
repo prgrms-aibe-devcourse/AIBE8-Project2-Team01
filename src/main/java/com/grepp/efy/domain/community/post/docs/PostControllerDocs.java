@@ -67,7 +67,7 @@ public interface PostControllerDocs {
                     + "isVisible로 공개·숨김 글만 골라 볼 수 있고, 생략하면 전체입니다. boardType을 생략하면 전체 게시판입니다. "
                     + "keyword·카테고리·지역 필터는 공개 게시글 목록과 같습니다. "
                     + "정렬은 sortBy·sortOrder로 지정하며, 값이 같은 글은 postId 내림차순으로 정렬합니다. "
-                    + "commentCount·likeCount는 아직 집계하지 않아 모두 0이므로, 이 값으로 정렬하면 postId 내림차순과 같습니다. "
+                    + "likeCount는 아직 집계하지 않아 모두 0이므로, 이 값으로 정렬하면 postId 내림차순과 같습니다. "
                     + "결과가 없거나 마지막 페이지를 넘으면 빈 content로 200을 반환합니다.")
     @SecurityRequirement(name = "accessToken")
     @ApiResponse(responseCode = "200", description = "조회 성공. 게시글 목록과 페이지 정보 반환")
