@@ -48,9 +48,31 @@ public class PostService {
     private final PostMapper postMapper;
     private final SupabaseStorageClient storageClient;
 
-    public PageResponse<PostSummaryResponse> getPublicPosts(
-            PostSearchCondition condition
-    ) {
+    // 공개 글만, 최신순 20개 고정
+    public PageResponse<PostSummaryResponse> getPublicPosts(PostSearchCondition condition) {
+        return searchPosts(condition, true, latestFirst(condition.pageNumber()));
+    }
+
+    // 숨김 글 포함(isVisible로 선택 가능), 페이지 크기·정렬 지정 가능
+    public PageResponse<PostSummaryResponse> getAdminPosts(PostSearchCondition condition) {
+
+        Sort.Direction direction = "asc".equals(condition.sortOrder()) ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+        Sort sort = switch (condition.sortBy()) {
+            case "createdAt", "viewCount" -> Sort.by(direction, condition.sortBy());
+            // ponytail: commentCount·likeCount는 아직 저장하지 않아 모두 0 → 값이 같을 때 규칙(postId 내림차순)만 적용. 댓글·좋아요 도메인 구현 후 정렬 추가
+            default -> Sort.unsorted();
+        };
+
+        // 값이 같은 글은 postId 내림차순
+        Pageable pageable = PageRequest.of(condition.pageNumber() - 1, condition.pageSize(),
+                sort.and(Sort.by(Sort.Direction.DESC, "id")));
+
+        return searchPosts(condition, condition.isVisible(), pageable);
+    }
+
+    private PageResponse<PostSummaryResponse> searchPosts(
+            PostSearchCondition condition, @Nullable Boolean isVisible, Pageable pageable) {
 
         // 소분류가 있다면 대분류는 무시 (지역도 동일)
         Long firstCategoryId = condition.secondCategoryId() != null ? null : condition.firstCategoryId();
@@ -61,12 +83,9 @@ public class PostService {
         validateExists(firstRegionRepository, firstRegionId);
         validateExists(secondRegionRepository, condition.secondRegionId());
 
-        // 1. 몇 페이지를 몇 개씩, 어떤 순서로 가져올지
-        Pageable pageable = latestFirst(condition.pageNumber());
-
-        // 2. DB 조회
-        Page<Post> page = postRepository.findPublicPosts(
+        Page<Post> page = postRepository.findPosts(
                 condition.boardType(),
+                isVisible,
                 condition.keyword(),
                 firstCategoryId,
                 condition.secondCategoryId(),
@@ -74,7 +93,6 @@ public class PostService {
                 condition.secondRegionId(),
                 pageable);
 
-        // 3. 엔티티 → 응답 DTO 변환 후 페이지 정보와 함께 포장
         return toSummaryPage(page);
     }
 

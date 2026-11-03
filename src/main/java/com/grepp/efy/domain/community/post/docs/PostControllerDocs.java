@@ -17,6 +17,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -56,6 +58,45 @@ public interface PostControllerDocs {
             @Parameter(description = "2차 카테고리 ID (1차보다 우선)") Long secondCategoryId,
             @Parameter(description = "1차 지역(시/도) ID") Long firstRegionId,
             @Parameter(description = "2차 지역(시/군/구) ID (1차보다 우선)") Long secondRegionId);
+
+    @Operation(summary = "관리자 게시글 목록 조회",
+            description = "관리자만 조회할 수 있습니다. 숨김 처리된 글을 포함한 모든 글을 반환하며, 삭제된 글은 제외합니다. "
+                    + "isVisible로 공개·숨김 글만 골라 볼 수 있고, 생략하면 전체입니다. boardType을 생략하면 전체 게시판입니다. "
+                    + "keyword·카테고리·지역 필터는 공개 게시글 목록과 같습니다. "
+                    + "정렬은 sortBy·sortOrder로 지정하며, 값이 같은 글은 postId 내림차순으로 정렬합니다. "
+                    + "commentCount·likeCount는 아직 집계하지 않아 모두 0이므로, 이 값으로 정렬하면 postId 내림차순과 같습니다. "
+                    + "결과가 없거나 마지막 페이지를 넘으면 빈 content로 200을 반환합니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "200", description = "조회 성공. 게시글 목록과 페이지 정보 반환")
+    @ApiResponse(responseCode = "400", description = "파라미터 값 오류, 존재하지 않는 카테고리·지역 ID",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "타입 오류 (잘못된 boardType·isVisible, 정수가 아닌 pageNumber·pageSize·ID)", value = """
+                            {
+                              "message": "경로 또는 쿼리 값의 타입이 올바르지 않습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "입력값 오류 (pageNumber 1 미만, pageSize 1~100 밖, sortBy·sortOrder 오류, keyword 공백·길이, 없는 카테고리·지역)", value = """
+                            {
+                              "message": "입력값이 올바르지 않습니다."
+                            }
+                            """)
+            }))
+    @ApiResponse(responseCode = "401", description = "토큰이 없거나 만료·유효하지 않음",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "403", description = "관리자가 아님",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    ResponseEntity<PageResponse<PostSummaryResponse>> getAdminPosts(
+            @Parameter(description = "페이지 번호 (1부터, 기본값 1)") @Positive Integer pageNumber,
+            @Parameter(description = "페이지 크기 (1~100, 기본값 20)") @Min(1) @Max(100) Integer pageSize,
+            @Parameter(description = "게시판 종류 (생략하면 전체)") BoardType boardType,
+            @Parameter(description = "제목·본문 검색어 (1~50자)") @Size(min = 1, max = 50) @Pattern(regexp = ".*\\S.*") String keyword,
+            @Parameter(description = "1차 카테고리 ID") Long firstCategoryId,
+            @Parameter(description = "2차 카테고리 ID (1차보다 우선)") Long secondCategoryId,
+            @Parameter(description = "1차 지역(시/도) ID") Long firstRegionId,
+            @Parameter(description = "2차 지역(시/군/구) ID (1차보다 우선)") Long secondRegionId,
+            @Parameter(description = "정렬 기준: createdAt(기본값), commentCount, likeCount, viewCount") @Pattern(regexp = "createdAt|commentCount|likeCount|viewCount") String sortBy,
+            @Parameter(description = "정렬 방향: asc, desc(기본값)") @Pattern(regexp = "asc|desc") String sortOrder,
+            @Parameter(description = "공개 여부 (생략하면 전체)") Boolean isVisible);
 
     @Operation(summary = "내 게시글 목록 조회",
             description = "토큰으로 식별한 본인이 쓴 글을 최신순으로 20개씩 반환하며, 페이지 크기와 정렬은 바꿀 수 없습니다. "

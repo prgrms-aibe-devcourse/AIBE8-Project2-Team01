@@ -18,7 +18,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         join fetch p.member
         left join fetch p.secondCategory sc left join fetch sc.firstCategory
         left join fetch p.secondRegion sr left join fetch sr.firstRegion
-        where p.boardType = :boardType and p.isVisible = true and p.deletedAt is null
+        where p.deletedAt is null
+          and (:boardType is null or p.boardType = :boardType)
+          and (:isVisible is null or p.isVisible = :isVisible)
           and (:keyword is null or p.title like concat('%', :keyword, '%')
                                 or p.content like concat('%', :keyword, '%'))
           and (:secondCategoryId is null or sc.id = :secondCategoryId)
@@ -29,7 +31,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             countQuery = """
         select count(p) from Post p
         left join p.secondCategory sc left join p.secondRegion sr
-        where p.boardType = :boardType and p.isVisible = true and p.deletedAt is null
+        where p.deletedAt is null
+          and (:boardType is null or p.boardType = :boardType)
+          and (:isVisible is null or p.isVisible = :isVisible)
           and (:keyword is null or p.title like concat('%', :keyword, '%')
                                 or p.content like concat('%', :keyword, '%'))
           and (:secondCategoryId is null or sc.id = :secondCategoryId)
@@ -37,7 +41,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
           and (:secondRegionId is null or sr.id = :secondRegionId)
           and (:firstRegionId is null or sr.firstRegion.id = :firstRegionId)
         """)
-    Page<Post> findPublicPosts(@Param("boardType") BoardType boardType,
+    // 공개 목록(isVisible = true)과 관리자 목록에서 함께 사용. boardType·isVisible이 null이면 조건 없음
+    Page<Post> findPosts(@Param("boardType") BoardType boardType,
+                               @Param("isVisible") Boolean isVisible,
                                @Param("keyword") String keyword,
                                @Param("firstCategoryId") Long firstCategoryId,
                                @Param("secondCategoryId") Long secondCategoryId,
