@@ -1,5 +1,6 @@
 package com.grepp.efy.domain.estimate.quote;
 
+import com.grepp.efy.domain.credit.reservation.CreditReservationService;
 import com.grepp.efy.domain.estimate.enums.QuoteStatus;
 import com.grepp.efy.domain.estimate.enums.RequestStatus;
 import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
@@ -19,6 +20,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.grepp.efy.global.exception.ErrorCode.*;
@@ -32,20 +34,21 @@ public class QuoteService {
     private final MemberService memberService;
     private final ServiceRequestService serviceRequestService;
     private final ExpertProfileService expertProfileService;
+    private final CreditReservationService creditReservationService;
     private final QuoteMapper quoteMapper;
 
     public List<QuoteResponse> getQuotes(Long memberId) {
         validateExpertAccess(memberId);
-        List<QuoteStatus> visibleStatuses = List.of(QuoteStatus.SENT, QuoteStatus.REQUESTED);
 
         List<Quote> quoteList = quoteRepository
-                .findAllByExpertProfileMemberIdAndQuoteStatusInOrderBySentAtDesc(memberId, visibleStatuses);
+                .findValidQuotesByExpertMemberId(memberId, QuoteStatus.REQUESTED, validBoundary());
+
         return quoteMapper.toResponseList(quoteList);
     }
 
     public QuoteResponse getQuote(Long memberId, Long quoteId) {
         validateExpertAccess(memberId);
-        Quote quote = getQuoteEntity(quoteId);
+        Quote quote = getValidQuoteEntity(quoteId);
         Long quoteOwnerId = quote.getExpertProfile().getMember().getId();
 
         if (!quoteOwnerId.equals(memberId)) {
@@ -62,8 +65,7 @@ public class QuoteService {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
         }
 
-        List<QuoteStatus> visibleStatuses = List.of(QuoteStatus.SENT, QuoteStatus.REQUESTED);
-        List<Quote> quotes = quoteRepository.findAllByServiceRequestIdAndQuoteStatusInOrderBySentAtDesc(requestId, visibleStatuses);
+        List<Quote> quotes = quoteRepository.findValidQuotesByRequestId(requestId, QuoteStatus.REQUESTED, validBoundary());
 
         return quoteMapper.toRequestResponseList(quotes);
     }
@@ -79,6 +81,10 @@ public class QuoteService {
 
         if (serviceRequest.getRequestStatus().equals(RequestStatus.CLOSED)) {
             throw new BusinessException(CLOSED_REQUEST_QUOTE_NOT_ALLOWED_EXCEPTION);
+        }
+
+        if (!serviceRequest.getCreatedAt().isAfter(LocalDateTime.now().minusHours(ServiceRequest.VALID_HOURS))) {
+            throw new BusinessException(EXPIRED_REQUEST_QUOTE_NOT_ALLOWED_EXCEPTION);
         }
 
         if (!serviceRequestService.isMatchedExpert(expertProfile, serviceRequest)) {
@@ -97,6 +103,8 @@ public class QuoteService {
             throw new BusinessException(DUPLICATE_QUOTE_NOT_ALLOWED_EXCEPTION);
         }
 
+        creditReservationService.reserveForQuote(memberId, quote.getId());
+
         return quoteMapper.toCreateResponse(quote);
     }
 
@@ -104,18 +112,31 @@ public class QuoteService {
     public void deleteQuote(Long memberId, Long quoteId) {
         validateExpertAccess(memberId);
 
-        Quote quote = getQuoteEntity(quoteId);
+        Quote quote = getValidQuoteEntity(quoteId);
 
         if (!quote.getExpertProfile().getMember().getId().equals(memberId)) {
             throw new BusinessException(FORBIDDEN_EXCEPTION);
         }
 
-        if (quote.getQuoteStatus().equals(QuoteStatus.REQUESTED) ||
-                quote.getServiceRequest().getRequestStatus().equals(RequestStatus.MATCHED)) {
+        if (quote.getQuoteStatus().equals(QuoteStatus.REQUESTED)) {
             throw new BusinessException(QUOTE_DELETE_NOT_ALLOWED_EXCEPTION);
         }
 
+        creditReservationService.releaseReservation(quoteId);
         quoteRepository.delete(quote);
+    }
+
+    // 유효기간(72시간)이 지난 SENT 견적의 크레딧 예약을 해제하고 삭제한다. 삭제한 건수를 반환한다
+    @Transactional
+    public int deleteExpiredQuotes() {
+        List<Long> expiredIds = quoteRepository.findExpiredQuoteIds(QuoteStatus.SENT, validBoundary());
+
+        if (expiredIds.isEmpty()) {
+            return 0;
+        }
+
+        creditReservationService.releaseReservations(expiredIds);
+        return quoteRepository.deleteByIdsAndStatus(expiredIds, QuoteStatus.SENT);
     }
 
     private ExpertProfile validateExpertAccess(Long memberId) {
@@ -126,6 +147,20 @@ public class QuoteService {
         }
 
         return expertProfileService.getExpertProfileByMemberId(memberId);
+    }
+
+    private LocalDateTime validBoundary() {
+        return LocalDateTime.now().minusHours(Quote.VALID_HOURS);
+    }
+
+    private Quote getValidQuoteEntity(Long quoteId) {
+        Quote quote = getQuoteEntity(quoteId);
+
+        if (quote.getQuoteStatus().equals(QuoteStatus.SENT) && !quote.getSentAt().isAfter(validBoundary())) {
+            throw new BusinessException(QUOTE_NOT_FOUND_EXCEPTION);
+        }
+
+        return quote;
     }
 
     public Quote getQuoteEntity(Long quoteId) {

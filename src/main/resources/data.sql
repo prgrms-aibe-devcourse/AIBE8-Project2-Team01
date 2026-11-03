@@ -661,6 +661,16 @@ VALUES ((SELECT id FROM member WHERE email = 'expert1@example.com'),
         101, 39, 'OPEN',
         DATEADD('MINUTE', -50, CURRENT_TIMESTAMP));
 
+-- 9. 이사 / 강남구: 등록 25시간 경과 → 견적 접수 기간 만료 테스트
+INSERT INTO service_request (member_id, second_category_id, second_region_id, request_status, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'customer2@example.com'),
+        101, 39, 'OPEN', DATEADD('HOUR', -25, CURRENT_TIMESTAMP));
+
+-- 10. 이사 / 강남구: 등록 80시간 경과 → 만료 견적 테스트용 요청서
+INSERT INTO service_request (member_id, second_category_id, second_region_id, request_status, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'customer2@example.com'),
+        101, 39, 'OPEN', DATEADD('HOUR', -80, CURRENT_TIMESTAMP));
+
 -- 견적서 시드 데이터
 -- expert1 → requestId 1
 INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
@@ -681,6 +691,19 @@ WHERE m.email = 'expert1@example.com'
                   WHERE q.expert_id = ep.id
                     AND q.service_request_id = sr.id);
 
+-- expert1 → requestId 10: 발송 73시간 경과 (72시간 만료 테스트)
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id,
+       10,
+       '만료 테스트용 견적입니다.',
+       200000,
+       'SENT',
+       DATEADD('HOUR', -73,
+               CURRENT_TIMESTAMP)
+FROM expert_profile ep
+         JOIN member m ON ep.member_id = m.id
+WHERE m.email = 'expert1@example.com';
+
 -- expert2 → requestId 4
 INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
 SELECT ep.id,
@@ -700,11 +723,22 @@ WHERE m.email = 'expert2@example.com'
                   WHERE q.expert_id = ep.id
                     AND q.service_request_id = sr.id);
 
--- 견적이 존재하는 요청서는 MATCHED 상태로 설정
-UPDATE service_request
-SET request_status = 'MATCHED'
-WHERE id IN (1, 4);
+-- 고수 크레딧 지갑: expert1 10크레딧(견적 5건), expert2 2크레딧(시드 견적 1건 예약으로 추가 발송 불가 테스트)
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'expert1@example.com';
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'expert2@example.com';
 
+-- 시드 견적의 크레딧 예약 (견적 발송 시 예약되는 규칙과 맞춤)
+INSERT INTO credit_reservation (credit_wallet_id, quote_id, amount, reservation_status, created_at)
+SELECT w.id, q.id, 2, 'RESERVED', q.sent_at
+FROM quote q
+         JOIN expert_profile ep ON q.expert_id = ep.id
+         JOIN credit_wallet w ON w.member_id = ep.member_id;
 
 -- H2 로컬: 고정 ID 시드 다음 번호부터 새 항목을 등록합니다.
 ALTER TABLE first_category

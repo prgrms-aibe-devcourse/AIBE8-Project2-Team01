@@ -21,6 +21,8 @@ import java.time.LocalDateTime;
 )
 public class Quote {
 
+    public static final int VALID_HOURS = 72;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
