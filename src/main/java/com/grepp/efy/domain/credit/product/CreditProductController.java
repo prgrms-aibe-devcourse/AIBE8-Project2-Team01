@@ -19,7 +19,7 @@ public class CreditProductController implements CreditProductControllerDocs {
 
     private final CreditProductService creditProductService;
 
-    @GetMapping("credit-products")
+    @GetMapping("/credit-products")
     @Override
     public ResponseEntity<List<CreditProductResponse>> getCreditProducts(@AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(creditProductService.getCreditProducts(userDetails.getMemberId()));

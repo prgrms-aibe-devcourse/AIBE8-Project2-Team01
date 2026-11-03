@@ -7,8 +7,8 @@ import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestMapping;
 
+// 크레딧·결제 API는 고수(EXPERT)만 이용한다
 @Component
 @RequiredArgsConstructor
 public class CreditAccessValidator {

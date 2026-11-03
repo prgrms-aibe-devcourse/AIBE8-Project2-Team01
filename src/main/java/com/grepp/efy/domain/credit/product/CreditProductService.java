@@ -2,7 +2,6 @@ package com.grepp.efy.domain.credit.product;
 
 import com.grepp.efy.domain.credit.CreditAccessValidator;
 import com.grepp.efy.domain.credit.product.dto.CreditProductResponse;
-import com.grepp.efy.domain.user.member.MemberService;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import java.util.List;
 public class CreditProductService {
 
     private final CreditProductRepository creditProductRepository;
-    private final MemberService memberService;
     private final CreditAccessValidator creditAccessValidator;
 
     // 고수가 충전할 수 있는 판매 중 상품을 가격 오름차순으로 조회한다.
