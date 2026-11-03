@@ -57,8 +57,8 @@ public class FirstCategoryService {
     }
 
     private void checkDuplicateName(FirstCategoryRequest request) {
-        if (firstCategoryRepository.existsByNameIgnoreCase(
-                request.getName())) {
+        if (firstCategoryRepository.existsByNameKey(
+                request.getName().toLowerCase())) {
             throw new BusinessException(ErrorCode.DUPLICATE_CATEGORY_EXCEPTION);
         }
     }

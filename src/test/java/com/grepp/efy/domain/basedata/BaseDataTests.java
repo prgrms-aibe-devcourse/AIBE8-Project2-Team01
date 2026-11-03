@@ -222,7 +222,7 @@ class BaseDataTests {
     @Test
     void DB에서도_하위_항목의_필수_FK를_보장한다() {
         assertThrows(DataIntegrityViolationException.class, () -> jdbcTemplate.update(
-                "insert into second_category(name, first_category_id) values ('테스트',null)"));
+                "insert into second_category(name, name_key, first_category_id) values ('테스트','테스트',null)"));
     }
 
     @Test
@@ -235,8 +235,8 @@ class BaseDataTests {
     @Test
     @WithMockUser(roles = "ADMIN")
     void 서비스에서_이름의_대소문자를_구분하지_않고_중복을_검사한다() throws Exception {
-        jdbcTemplate.update("insert into first_category(name) values ('Test')");
-        jdbcTemplate.update("insert into second_category(name,first_category_id) values ('Test',1)");
+        jdbcTemplate.update("insert into first_category(name,name_key) values ('Test','test')");
+        jdbcTemplate.update("insert into second_category(name,name_key,first_category_id) values ('Test','test',1)");
         jdbcTemplate.update("insert into first_region(code,name) values ('9900000000','Test')");
         jdbcTemplate.update("insert into second_region(code,name,first_region_id) values ('9911000000','Test',1)");
 
@@ -281,7 +281,7 @@ class BaseDataTests {
     @Test
     @WithMockUser(roles = "ADMIN")
     void 이름이_같아도_소속을_옮기면_새_상위_항목에서_중복을_검사한다() throws Exception {
-        jdbcTemplate.update("insert into second_category(name,first_category_id) values ('이사',2)");
+        jdbcTemplate.update("insert into second_category(name,name_key,first_category_id) values ('이사','이사',2)");
         jdbcTemplate.update("insert into second_region(code,name,first_region_id) values ('9911000000','종로구',3)");
 
         mockMvc.perform(put("/api/admin/second-categories/101").contentType(MediaType.APPLICATION_JSON)

@@ -1,10 +1,10 @@
 package com.grepp.efy.domain.basedata.secondcategory;
 
-import com.grepp.efy.domain.basedata.secondcategory.dto.SecondCategoryRequest;
-import com.grepp.efy.domain.basedata.secondcategory.dto.SecondCategoryCreateRequest;
-import com.grepp.efy.domain.basedata.secondcategory.dto.SecondCategoryResponse;
-import com.grepp.efy.domain.basedata.firstcategory.FirstCategoryService;
 import com.grepp.efy.domain.basedata.firstcategory.FirstCategory;
+import com.grepp.efy.domain.basedata.firstcategory.FirstCategoryService;
+import com.grepp.efy.domain.basedata.secondcategory.dto.SecondCategoryCreateRequest;
+import com.grepp.efy.domain.basedata.secondcategory.dto.SecondCategoryRequest;
+import com.grepp.efy.domain.basedata.secondcategory.dto.SecondCategoryResponse;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -67,8 +67,7 @@ public class SecondCategoryService {
     }
 
     private void checkDuplicateName(String name, Long firstCategoryId) {
-        if (secondCategoryRepository.existsByNameIgnoreCaseAndFirstCategoryId(
-                name, firstCategoryId)) {
+        if (secondCategoryRepository.existsByNameKeyAndFirstCategoryId(name.toLowerCase(), firstCategoryId)) {
             throw new BusinessException(ErrorCode.DUPLICATE_CATEGORY_EXCEPTION);
         }
     }
