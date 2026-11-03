@@ -3,6 +3,7 @@ package com.grepp.efy.domain.community.post;
 import com.grepp.efy.domain.community.post.docs.PostControllerDocs;
 import com.grepp.efy.domain.community.post.dto.PostRequest;
 import com.grepp.efy.domain.community.post.dto.PostResponse;
+import com.grepp.efy.domain.community.post.dto.PostUpdateRequest;
 import com.grepp.efy.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -40,5 +41,18 @@ public class PostController implements PostControllerDocs {
         PostResponse response = postService.createPost(userDetails.getMemberId(), postRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @Override
+    @PutMapping("/posts/{postId}")
+    public ResponseEntity<PostResponse> updatePost(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable @Positive Long postId,
+            @Valid @RequestBody PostUpdateRequest postUpdateRequest
+    ) {
+
+        PostResponse response = postService.updatePost(postId ,userDetails.getMemberId(), postUpdateRequest);
+
+        return ResponseEntity.ok(response);
     }
 }

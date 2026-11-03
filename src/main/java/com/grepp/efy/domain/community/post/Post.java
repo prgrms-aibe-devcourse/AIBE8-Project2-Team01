@@ -95,7 +95,32 @@ public class Post {
         if (images != null) {
             this.images.addAll(images);
         }
+    }
 
+    public boolean update(SecondCategory secondCategory,
+                          SecondRegion secondRegion,
+                          String title,
+                          String content,
+                          List<UploadFile> images) {
+        boolean changed = this.secondCategory != secondCategory
+                || this.secondRegion != secondRegion
+                || !this.title.equals(title)
+                || !this.content.equals(content)
+                || !this.images.equals(images);
+
+        if (!changed) {
+            return false;
+        }
+
+        this.secondCategory = secondCategory;
+        this.secondRegion = secondRegion;
+        this.title = title;
+        this.content = content;
+        this.images.clear();
+        this.images.addAll(images);
+        // 이미지만 바뀌면 post 행 UPDATE가 없어 @PreUpdate가 안 돌므로 직접 갱신
+        this.updatedAt = LocalDateTime.now();
+        return true;
     }
 }
 

@@ -6,6 +6,7 @@ import com.grepp.efy.domain.basedata.secondregion.SecondRegion;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegionRepository;
 import com.grepp.efy.domain.community.post.dto.PostRequest;
 import com.grepp.efy.domain.community.post.dto.PostResponse;
+import com.grepp.efy.domain.community.post.dto.PostUpdateRequest;
 import com.grepp.efy.domain.file.UploadFile;
 import com.grepp.efy.domain.file.UploadFileRepository;
 import com.grepp.efy.domain.file.UploadFileVisibility;
@@ -69,15 +70,9 @@ public class PostService {
 
         validateBoardPolicy(postRequest.getBoardType(), member, imageIds);
 
-        Long categoryId = postRequest.getSecondCategoryId();
-        SecondCategory category = categoryId == null ? null
-                : categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND_EXCEPTION));
+        SecondCategory category = findCategory(postRequest.getSecondCategoryId());
 
-        Long regionId = postRequest.getSecondRegionId();
-        SecondRegion region = regionId == null ? null
-                : regionRepository.findById(regionId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND_EXCEPTION));
+        SecondRegion region = findRegion(postRequest.getSecondRegionId());
 
         List<UploadFile> images = loadImages(memberId, imageIds);
 
@@ -93,6 +88,50 @@ public class PostService {
                 .build());
 
         return toResponse(post);
+    }
+
+    @Transactional
+    public PostResponse updatePost(Long postId, Long memberId, PostUpdateRequest postUpdateRequest) {
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+
+        // 숨김 글은 작성자도 수정 불가
+        if (!post.isVisible()) {
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND_EXCEPTION);
+        }
+
+        // 작성자 본인만 수정 가능 (관리자 포함 타인은 403)
+        if (!post.getMember().getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
+        }
+
+        List<Long> imageIds = Objects.requireNonNullElse(postUpdateRequest.getImageIds(), List.of());
+
+        // 게시판 정책 (TIP/PROMOTION 은 EXPERT 만, TIP 은 이미지 필수)
+        validateBoardPolicy(post.getBoardType(), post.getMember(), imageIds);
+
+        SecondCategory category = findCategory(postUpdateRequest.getSecondCategoryId());
+
+        SecondRegion region = findRegion(postUpdateRequest.getSecondRegionId());
+
+        List<UploadFile> images = loadImages(memberId, imageIds);
+
+        post.update(category, region, postUpdateRequest.getTitle(), postUpdateRequest.getContent(), images);
+
+        return toResponse(post);
+    }
+
+    private @Nullable SecondRegion findRegion(@Nullable Long regionId) {
+        return regionId == null ? null
+                : regionRepository.findById(regionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND_EXCEPTION));
+    }
+
+    private @Nullable SecondCategory findCategory(@Nullable Long categoryId) {
+        return categoryId == null ? null
+                : categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND_EXCEPTION));
     }
 
     private PostResponse toResponse(Post post) {
