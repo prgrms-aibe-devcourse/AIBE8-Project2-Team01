@@ -18,6 +18,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("update Post p set p.isVisible = :isVisible where p.id = :id")
     void updateVisibility(@Param("id") Long id, @Param("isVisible") boolean isVisible);
 
+    // 동시에 여러 댓글이 달려도 개수가 어긋나지 않도록 DB에서 직접 증가
+    @Modifying
+    @Query("update Post p set p.commentCount = p.commentCount + 1 where p.id = :id")
+    void increaseCommentCount(@Param("id") Long id);
+
     @Query(value = """
         select p from Post p
         join fetch p.member

@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -59,6 +60,12 @@ public class Post {
 
     @Column(nullable = false)
     private long viewCount;
+
+    // 삭제되지 않은 댓글 수. 댓글 작성·삭제 때 DB에서 직접 증감
+    // 기존 행이 있는 테이블에 컬럼을 추가해도 실패하지 않도록 DB 기본값 0
+    @ColumnDefault("0")
+    @Column(nullable = false)
+    private long commentCount;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

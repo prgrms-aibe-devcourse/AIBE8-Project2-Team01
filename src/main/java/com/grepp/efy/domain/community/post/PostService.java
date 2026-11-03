@@ -60,8 +60,8 @@ public class PostService {
         Sort.Direction direction = "asc".equals(condition.sortOrder()) ? Sort.Direction.ASC : Sort.Direction.DESC;
 
         Sort sort = switch (condition.sortBy()) {
-            case "createdAt", "viewCount" -> Sort.by(direction, condition.sortBy());
-            // ponytail: commentCount·likeCount는 아직 저장하지 않아 모두 0 → 값이 같을 때 규칙(postId 내림차순)만 적용. 댓글·좋아요 도메인 구현 후 정렬 추가
+            case "createdAt", "viewCount", "commentCount" -> Sort.by(direction, condition.sortBy());
+            // ponytail: likeCount는 아직 저장하지 않아 모두 0 → 값이 같을 때 규칙(postId 내림차순)만 적용. 좋아요 도메인 구현 후 정렬 추가
             default -> Sort.unsorted();
         };
 
@@ -315,7 +315,8 @@ public class PostService {
         }
     }
 
-    private List<UploadFile> loadImages(Long memberId, List<Long> imageIds) {
+    // 내가 올린 공개 파일만, 요청한 순서대로 (댓글 이미지에서도 사용)
+    public List<UploadFile> loadImages(Long memberId, List<Long> imageIds) {
         List<UploadFile> found = uploadFileRepository.findAllById(imageIds);
 
         if (found.size() != imageIds.size()) {
