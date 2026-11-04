@@ -182,6 +182,23 @@ class ChatMessageSendTests {
     }
 
     @Test
+    void 상대방이_나간_방에는_텍스트와_이미지_모두_보낼_수_없고_연결은_유지된다() throws Exception {
+        Long fileId = file(customerId, "chat/after-left.png", false);
+        jdbcTemplate.update("update chat_participant set left_at = current_timestamp where chat_room_id = ? and member_id = ?",
+                roomId, expertMemberId);
+        StompSession customer = connect(customerId);
+        BlockingQueue<Map<String, Object>> errors = subscribe(customer, ERROR_QUEUE);
+
+        assertEquals("상대방이 나간 채팅방에는 메시지를 보낼 수 없습니다.",
+                sendUntilError(customer, Map.of("type", "TEXT", "content", "계세요?"), errors).get("message"));
+        assertEquals("상대방이 나간 채팅방에는 메시지를 보낼 수 없습니다.",
+                sendUntilError(customer, Map.of("type", "IMAGE", "fileId", fileId), errors).get("message"));
+
+        assertTrue(customer.isConnected());
+        assertEquals(0, messageCount(roomId));
+    }
+
+    @Test
     void 전송_경로_형식이_아니면_거절된다() throws Exception {
         assertSendRejected(customerId, "/pub/chat-rooms/" + roomId);
         assertSendRejected(customerId, "/pub/chat-rooms/abc/messages");

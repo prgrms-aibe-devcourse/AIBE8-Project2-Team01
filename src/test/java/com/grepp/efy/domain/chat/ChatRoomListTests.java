@@ -65,6 +65,7 @@ class ChatRoomListTests {
                 .andExpect(jsonPath("$.content[0].roomId").value(roomId.intValue()))
                 .andExpect(jsonPath("$.content[0].quoteId").value(quoteIdOf(roomId).intValue()))
                 .andExpect(jsonPath("$.content[0].partner.memberId").value(expertMemberId.intValue()))
+                .andExpect(jsonPath("$.content[0].partnerLeft").value(false))
                 .andExpect(jsonPath("$.content[0].partner.nickname").value("매칭고수"))
                 .andExpect(jsonPath("$.content[0].partner.profileImageUrl").isEmpty())
                 .andExpect(jsonPath("$.content[0].lastMessagePreview").value("테스트 메시지"))
@@ -107,8 +108,11 @@ class ChatRoomListTests {
                 .andExpect(jsonPath("$.content").isEmpty())
                 .andExpect(jsonPath("$.totalElements").value(0));
 
+        // 상대방 목록에는 남고, 상대방이 나갔다고 표시된다
         getChatRooms(expertMemberId, 1)
-                .andExpect(jsonPath("$.content[*].roomId").value(contains(roomId.intValue())));
+                .andExpect(jsonPath("$.content[*].roomId").value(contains(roomId.intValue())))
+                .andExpect(jsonPath("$.content[0].partner.memberId").value(customerId.intValue()))
+                .andExpect(jsonPath("$.content[0].partnerLeft").value(true));
     }
 
     @Test
