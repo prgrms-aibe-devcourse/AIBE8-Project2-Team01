@@ -76,7 +76,8 @@ public interface ChatRoomControllerDocs {
                     + "마지막 메시지 시각 최신순으로 정렬하고, 메시지가 없는 방은 생성 시각을 기준으로 합니다. "
                     + "메시지가 없으면 lastMessagePreview·lastMessageAt은 null, "
                     + "상대방 프로필 사진이 없으면 partner.profileImageUrl은 null입니다. "
-                    + "unreadCount는 내 읽음 위치 이후 상대방이 보낸 메시지 수입니다(내 메시지·삭제된 메시지 제외).")
+                    + "unreadCount는 내 읽음 위치 이후 상대방이 보낸 메시지 수입니다(내 메시지·삭제된 메시지 제외). "
+                    + "partnerLeft가 true면 상대방이 나간 방으로, 메시지를 보낼 수 없습니다.")
     @SecurityRequirement(name = "accessToken")
     @ApiResponse(responseCode = "200", description = "조회 성공. 채팅방 목록과 페이지 정보 반환")
     @ApiResponse(responseCode = "400", description = "pageNumber가 정수가 아니거나 1 미만",

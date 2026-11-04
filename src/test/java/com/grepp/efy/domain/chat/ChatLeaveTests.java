@@ -76,6 +76,20 @@ class ChatLeaveTests {
     }
 
     @Test
+    void 상대방이_나가도_남은_사람은_메시지_조회와_읽음_처리와_나가기를_할_수_있다() throws Exception {
+        message(expertMemberId);
+        leave(customerId, roomId).andExpect(status().isNoContent());
+
+        String token = token(expertMemberId);
+        mockMvc.perform(get("/api/chat-rooms/" + roomId + "/messages").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.messages.length()").value(1));
+        mockMvc.perform(patch("/api/chat-rooms/" + roomId + "/read").header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+        leave(expertMemberId, roomId).andExpect(status().isNoContent());
+    }
+
+    @Test
     void 나간_뒤에는_메시지_조회와_읽음_처리와_다시_나가기가_403() throws Exception {
         message(expertMemberId);
         leave(customerId, roomId).andExpect(status().isNoContent());

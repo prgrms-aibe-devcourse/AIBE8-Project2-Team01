@@ -39,6 +39,11 @@ public class ChatMessageService {
         ChatParticipant participant = chatParticipantRepository.findActiveParticipant(roomId, memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION));
 
+        // 받을 사람이 없는 방에는 보낼 수 없다
+        if (chatParticipantRepository.existsByChatRoomIdAndMemberIdNotAndLeftAtIsNotNull(roomId, memberId)) {
+            throw new BusinessException(ErrorCode.CHAT_PARTNER_LEFT_EXCEPTION);
+        }
+
         ChatRoom room = participant.getChatRoom();
         Member sender = participant.getMember();
 
