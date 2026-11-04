@@ -8,6 +8,7 @@ public record ChatRoomSummaryResponse(
         Partner partner,
         String lastMessagePreview,
         LocalDateTime lastMessageAt,
+        long unreadCount,
         LocalDateTime createdAt
 ) {
     public record Partner(Long memberId, String nickname, String profileImageUrl){ }
