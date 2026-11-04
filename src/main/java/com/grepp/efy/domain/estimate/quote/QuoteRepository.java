@@ -4,10 +4,7 @@ import com.grepp.efy.domain.estimate.enums.QuoteStatus;
 import com.grepp.efy.domain.estimate.servicerequest.ServiceRequest;
 import com.grepp.efy.domain.user.expertprofile.ExpertProfile;
 import jakarta.persistence.LockModeType;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -19,6 +16,7 @@ public interface QuoteRepository extends JpaRepository<Quote, Long> {
 
     boolean existsByExpertProfileAndServiceRequest(ExpertProfile expertProfile, ServiceRequest serviceRequest);
 
+    @EntityGraph(attributePaths = {"serviceRequest", "serviceRequest.secondCategory", "serviceRequest.secondRegion"})
     @Query("""
             SELECT q FROM Quote q
             WHERE q.expertProfile.member.id = :memberId
@@ -27,6 +25,7 @@ public interface QuoteRepository extends JpaRepository<Quote, Long> {
             """)
     List<Quote> findValidQuotesByExpertMemberId(Long memberId, QuoteStatus requested, LocalDateTime boundary);
 
+    @EntityGraph(attributePaths = {"expertProfile", "expertProfile.member"})
     @Query("""
             SELECT q FROM Quote q
             WHERE q.serviceRequest.id = :requestId
