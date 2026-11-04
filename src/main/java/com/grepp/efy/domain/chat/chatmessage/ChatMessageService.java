@@ -6,9 +6,12 @@ import com.grepp.efy.domain.chat.chatmessage.dto.ChatMessageResponse;
 import com.grepp.efy.domain.chat.chatparticipant.ChatParticipant;
 import com.grepp.efy.domain.chat.chatparticipant.ChatParticipantRepository;
 import com.grepp.efy.domain.chat.chatroom.ChatRoom;
+import com.grepp.efy.domain.file.UploadFile;
+import com.grepp.efy.domain.file.UploadFileService;
 import com.grepp.efy.domain.user.member.Member;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
+import com.grepp.efy.global.storage.SupabaseStorageClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -25,15 +28,12 @@ public class ChatMessageService {
 
     private final ChatMessageRepository chatMessageRepository;
     private final ChatParticipantRepository chatParticipantRepository;
+    private final UploadFileService uploadFileService;
+    private final SupabaseStorageClient storageClient;
 
     // 참여 중인 회원만 보낼 수 있다. 저장과 채팅방 마지막 메시지 갱신은 한 트랜잭션
     @Transactional
     public ChatMessageResponse send(Long roomId, Long memberId, ChatMessageRequest request) {
-        // 이미지 메시지는 후속 이슈
-        if (request.type() != MessageType.TEXT) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION);
-        }
-
         // 인터셉터에서도 검사하지만, 다른 곳에서 호출될 때를 위해 한 번 더 확인
         ChatParticipant participant = chatParticipantRepository.findActiveParticipant(roomId, memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION));
@@ -41,9 +41,13 @@ public class ChatMessageService {
         ChatRoom room = participant.getChatRoom();
         Member sender = participant.getMember();
 
-        ChatMessage message = chatMessageRepository.save(
-                new ChatMessage(room, sender, request.type(), request.content()));
-        room.updateLastMessage(message.getContent(), message.getCreatedAt());
+        ChatMessage message = chatMessageRepository.save(switch (request.type()) {
+            case TEXT -> ChatMessage.text(room, sender, request.content());
+            // 본인이 올린, 삭제되지 않은 파일만 (아니면 FILE_NOT_FOUND / FILE_FORBIDDEN)
+            case IMAGE -> ChatMessage.image(room, sender,
+                    uploadFileService.getMyUploadFileEntity(request.fileId(), memberId));
+        });
+        room.updateLastMessage(message.preview(), message.getCreatedAt());
 
         return toResponse(message, room.getId());
     }
@@ -76,6 +80,11 @@ public class ChatMessageService {
                 sender.getNickname(),
                 message.getType(),
                 message.getContent(),
+                imageUrl(message.getImage()),
                 message.getCreatedAt());
+    }
+
+    private String imageUrl(UploadFile image) {
+        return image == null ? null : storageClient.createUrl(image.getVisibility(), image.getStoragePath());
     }
 }

@@ -10,7 +10,8 @@ public record ChatMessageResponse(
         Long senderId,
         String senderNickname,
         MessageType type,
-        String content,
+        String content,     // IMAGE면 null
+        String imageUrl,    // TEXT면 null
         LocalDateTime createdAt
 ) {
 }

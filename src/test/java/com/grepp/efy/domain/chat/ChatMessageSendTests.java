@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +53,7 @@ class ChatMessageSendTests {
 
     private final List<StompSession> sessions = new ArrayList<>();
     private final List<Long> requestIds = new ArrayList<>();
+    private final List<Long> fileIds = new ArrayList<>();
     private WebSocketStompClient stompClient;
 
     private Long customerId;
@@ -83,6 +85,9 @@ class ChatMessageSendTests {
             jdbcTemplate.update("delete from quote where service_request_id = ?", requestId);
             jdbcTemplate.update("delete from service_request where id = ?", requestId);
         }
+        for (Long fileId : fileIds) {
+            jdbcTemplate.update("delete from file where id = ?", fileId);
+        }
     }
 
     @Test
@@ -105,6 +110,7 @@ class ChatMessageSendTests {
         assertEquals("고객하나", toExpert.get("senderNickname"));
         assertEquals("TEXT", toExpert.get("type"));
         assertEquals("내일 오전 가능할까요?", toExpert.get("content"));
+        assertNull(toExpert.get("imageUrl"));
         assertNotNull(toExpert.get("messageId"));
         assertNotNull(toExpert.get("createdAt"));
 
@@ -166,7 +172,7 @@ class ChatMessageSendTests {
     }
 
     @Test
-    void type이_없거나_잘못되었거나_IMAGE면_에러가_간다() throws Exception {
+    void type이_없거나_잘못되면_에러가_간다() throws Exception {
         StompSession customer = connect(customerId);
         BlockingQueue<Map<String, Object>> errors = subscribe(customer, ERROR_QUEUE);
 
@@ -174,8 +180,6 @@ class ChatMessageSendTests {
                 sendUntilError(customer, Map.of("content", "안녕하세요"), errors).get("message"));
         assertEquals("입력값이 올바르지 않습니다.",
                 sendUntilError(customer, Map.of("type", "VIDEO", "content", "안녕하세요"), errors).get("message"));
-        assertEquals("입력값이 올바르지 않습니다.",
-                sendUntilError(customer, Map.of("type", "IMAGE", "content", "안녕하세요"), errors).get("message"));
 
         assertTrue(customer.isConnected());
         assertEquals(0, messageCount(roomId));
@@ -190,6 +194,73 @@ class ChatMessageSendTests {
             Thread.sleep(100);
         }
         assertFalse(customer.isConnected());
+    }
+
+    // ── 이미지 메시지 ──
+
+    @Test
+    void 본인이_올린_파일로_이미지_메시지를_보내면_저장되고_imageUrl과_함께_전달된다() throws Exception {
+        Long fileId = file(customerId, "chat/room-photo.png", false);
+        StompSession customer = connect(customerId);
+        StompSession expert = connect(expertMemberId);
+        BlockingQueue<Map<String, Object>> customerInbox = subscribe(customer, roomPath(roomId));
+        BlockingQueue<Map<String, Object>> expertInbox = subscribe(expert, roomPath(roomId));
+        awaitSubscribed(customerInbox, expertInbox);
+
+        customer.send(messagePath(roomId), Map.of("type", "IMAGE", "fileId", fileId));
+
+        Map<String, Object> toExpert = expertInbox.poll(5, TimeUnit.SECONDS);
+        assertNotNull(toExpert);
+        assertEquals(toExpert, customerInbox.poll(5, TimeUnit.SECONDS));
+        assertEquals("IMAGE", toExpert.get("type"));
+        assertNull(toExpert.get("content"));
+        assertTrue(((String) toExpert.get("imageUrl")).endsWith("/chat/room-photo.png"));
+
+        assertEquals(fileId, jdbcTemplate.queryForObject(
+                "select image_id from chat_message where chat_room_id = ?", Long.class, roomId));
+        assertEquals("사진", jdbcTemplate.queryForObject(
+                "select last_message_preview from chat_room where id = ?", String.class, roomId));
+    }
+
+    @Test
+    void IMAGE인데_fileId가_없으면_에러가_간다() throws Exception {
+        StompSession customer = connect(customerId);
+        BlockingQueue<Map<String, Object>> errors = subscribe(customer, ERROR_QUEUE);
+
+        Map<String, Object> error = sendUntilError(customer, Map.of("type", "IMAGE"), errors);
+        assertEquals("입력값이 올바르지 않습니다.", error.get("message"));
+        assertTrue(((Map<String, Object>) error.get("errors")).containsKey("fileId"));
+
+        assertTrue(customer.isConnected());
+        assertEquals(0, messageCount(roomId));
+    }
+
+    @Test
+    void 없거나_삭제된_파일이면_에러가_간다() throws Exception {
+        Long deletedFileId = file(customerId, "chat/deleted.png", true);
+        StompSession customer = connect(customerId);
+        BlockingQueue<Map<String, Object>> errors = subscribe(customer, ERROR_QUEUE);
+
+        assertEquals("파일을 찾을 수 없습니다.",
+                sendUntilError(customer, Map.of("type", "IMAGE", "fileId", Long.MAX_VALUE), errors).get("message"));
+        assertEquals("파일을 찾을 수 없습니다.",
+                sendUntilError(customer, Map.of("type", "IMAGE", "fileId", deletedFileId), errors).get("message"));
+
+        assertTrue(customer.isConnected());
+        assertEquals(0, messageCount(roomId));
+    }
+
+    @Test
+    void 다른_사람이_올린_파일이면_에러가_간다() throws Exception {
+        Long expertFileId = file(expertMemberId, "chat/expert-photo.png", false);
+        StompSession customer = connect(customerId);
+        BlockingQueue<Map<String, Object>> errors = subscribe(customer, ERROR_QUEUE);
+
+        assertEquals("본인이 업로드한 파일만 사용할 수 있습니다.",
+                sendUntilError(customer, Map.of("type", "IMAGE", "fileId", expertFileId), errors).get("message"));
+
+        assertTrue(customer.isConnected());
+        assertEquals(0, messageCount(roomId));
     }
 
     // ── 헬퍼 ──
@@ -265,6 +336,17 @@ class ChatMessageSendTests {
         }
         assertFalse(session.isConnected());
         assertEquals(0, messageCount(roomId));
+    }
+
+    // PUBLIC 파일. URL은 Supabase 호출 없이 경로로 만들어진다
+    private Long file(Long uploaderId, String storagePath, boolean deleted) {
+        jdbcTemplate.update("""
+                insert into file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at, deleted_at)
+                values (?, ?, 'photo.png', 'image/png', 100, 'PUBLIC', current_timestamp, case when ? then current_timestamp end)
+                """, uploaderId, UUID.randomUUID() + "/" + storagePath, deleted); // storage_path는 unique
+        Long id = jdbcTemplate.queryForObject("select max(id) from file", Long.class);
+        fileIds.add(id);
+        return id;
     }
 
     private int messageCount(Long roomId) {

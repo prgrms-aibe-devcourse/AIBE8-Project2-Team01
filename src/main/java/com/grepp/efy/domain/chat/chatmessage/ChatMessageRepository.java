@@ -13,6 +13,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Query("""
         select m from ChatMessage m
         join fetch m.sender
+        left join fetch m.image
         where m.chatRoom.id = :roomId
           and m.deletedAt is null
           and (:cursor is null or m.id < :cursor)
