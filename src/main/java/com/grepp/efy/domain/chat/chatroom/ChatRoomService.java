@@ -76,6 +76,15 @@ public class ChatRoomService {
         }
     }
 
+    // 나간 뒤에는 목록·구독·전송·메시지 조회·읽음이 모두 leftAt으로 막힌다. 이미 나간 방은 참여자가 아닌 것으로 본다
+    @Transactional
+    public void leave(Long roomId, Long memberId) {
+        ChatParticipant participant = chatParticipantRepository.findActiveParticipant(roomId, memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION));
+
+        participant.leave();
+    }
+
 
     public PageResponse<ChatRoomSummaryResponse> getMyRooms(Long memberId, Integer pageNumber) {
         // ① 내 참여 기록 + 채팅방 (정렬은 쿼리에 있음)
