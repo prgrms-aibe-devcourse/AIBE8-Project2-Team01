@@ -123,6 +123,25 @@ class ChatMessageSendTests {
     }
 
     @Test
+    void _500자_메시지도_저장되고_미리보기는_앞_50자다() throws Exception {
+        // 미리보기 컬럼(255자)보다 긴 메시지를 보내면 저장이 실패하던 문제 (#180)
+        String content = "가".repeat(300) + "나".repeat(200);
+        StompSession customer = connect(customerId);
+        BlockingQueue<Map<String, Object>> inbox = subscribe(customer, roomPath(roomId));
+        awaitSubscribed(inbox);
+
+        customer.send(messagePath(roomId), Map.of("type", "TEXT", "content", content));
+
+        Map<String, Object> received = inbox.poll(5, TimeUnit.SECONDS);
+        assertNotNull(received);
+        assertEquals(content, received.get("content"));
+        assertEquals(content, jdbcTemplate.queryForObject(
+                "select content from chat_message where chat_room_id = ?", String.class, roomId));
+        assertEquals("가".repeat(50), jdbcTemplate.queryForObject(
+                "select last_message_preview from chat_room where id = ?", String.class, roomId));
+    }
+
+    @Test
     void 보낸_사람은_payload가_아니라_세션_사용자로_정해진다() throws Exception {
         StompSession expert = connect(expertMemberId);
         BlockingQueue<Map<String, Object>> inbox = subscribe(expert, roomPath(roomId));

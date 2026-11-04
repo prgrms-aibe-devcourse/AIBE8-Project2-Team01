@@ -16,6 +16,9 @@ import java.time.LocalDateTime;
 @Table(name = "chat_message")
 public class ChatMessage {
 
+    // 채팅방 목록 미리보기 길이 (chat_room.last_message_preview는 255자 컬럼)
+    private static final int PREVIEW_LENGTH = 50;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -60,9 +63,16 @@ public class ChatMessage {
         this.image = image;
     }
 
-    // 채팅방 목록의 마지막 메시지 미리보기
+    // 채팅방 목록의 마지막 메시지 미리보기. 한 줄로 바꾸고 50자까지 (이모지가 깨지지 않게 글자 단위로 자른다)
     public String preview() {
-        return type == MessageType.IMAGE ? "사진" : content;
+        if (type == MessageType.IMAGE) {
+            return "사진";
+        }
+        String oneLine = content.replaceAll("\\R", " ");
+        if (oneLine.codePointCount(0, oneLine.length()) <= PREVIEW_LENGTH) {
+            return oneLine;
+        }
+        return oneLine.substring(0, oneLine.offsetByCodePoints(0, PREVIEW_LENGTH));
     }
 
     @PrePersist
