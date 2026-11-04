@@ -1,5 +1,6 @@
 package com.grepp.efy.domain.estimate.servicerequest;
 
+import com.grepp.efy.domain.basedata.firstregion.FirstRegion;
 import com.grepp.efy.domain.basedata.secondcategory.SecondCategory;
 import com.grepp.efy.domain.basedata.secondcategory.SecondCategoryService;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegion;
@@ -56,11 +57,12 @@ public class ServiceRequestService {
     public List<RequestMatchedResponse> getMatchedRequests(Long memberId) {
         ExpertProfile expertProfile = validateExpertAccess(memberId);
         List<Long> categoryIds = expertProfile.getServices().stream().map(SecondCategory::getId).toList();
-        List<Long> regionIds = expertProfile.getRegions().stream().map(SecondRegion::getId).toList();
+        List<Long> secondRegionIds = expertProfile.getRegions().stream().map(SecondRegion::getId).toList();
+        List<Long> firstRegionIds = expertProfile.getWholeRegions().stream().map(FirstRegion::getId).toList();
 
         List<ServiceRequest> requests = serviceRequestRepository
-                .findMatchedRequests(categoryIds, regionIds, expertProfile.isNationwide(),
-                        RequestStatus.CLOSED, memberId,
+                .findMatchedRequests(categoryIds, secondRegionIds, firstRegionIds,
+                        expertProfile.isNationwide(), RequestStatus.CLOSED, memberId,
                         LocalDateTime.now().minusHours(ServiceRequest.VALID_HOURS));
 
         if (requests.isEmpty()) {
@@ -207,14 +209,17 @@ public class ServiceRequestService {
 
     public boolean isMatchedExpert(ExpertProfile expertProfile, ServiceRequest request) {
         Long categoryId = request.getSecondCategory().getId();
-        Long regionId = request.getSecondRegion().getId();
+        Long secondRegionId = request.getSecondRegion().getId();
+        Long firstRegionId = request.getSecondRegion().getFirstRegion().getId();
 
         boolean categoryMatched = expertProfile.getServices().stream()
                 .anyMatch(category -> category.getId().equals(categoryId));
 
         boolean regionMatched = expertProfile.isNationwide()
                 || expertProfile.getRegions().stream()
-                .anyMatch(region -> region.getId().equals(regionId));
+                .anyMatch(region -> region.getId().equals(secondRegionId))
+                || expertProfile.getWholeRegions().stream()
+                .anyMatch(region -> region.getId().equals(firstRegionId));
 
         return categoryMatched && regionMatched;
     }
