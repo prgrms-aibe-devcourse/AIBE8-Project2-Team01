@@ -20,13 +20,15 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, 
             SELECT r
             FROM ServiceRequest r
             WHERE r.secondCategory.id IN :categoryIds
-              AND (:nationwide = true OR r.secondRegion.id IN :regionIds)
+              AND (:nationwide = true
+                   OR r.secondRegion.id IN :secondRegionIds
+                   OR r.secondRegion.firstRegion.id IN :firstRegionIds)
               AND r.requestStatus <> :requestStatus
               AND r.member.id <> :id
               AND r.createdAt > :boundary
             ORDER BY r.createdAt DESC
             """)
     List<ServiceRequest> findMatchedRequests(
-            List<Long> categoryIds, List<Long> regionIds, boolean nationwide,
-            RequestStatus requestStatus, Long id, LocalDateTime boundary);
+            List<Long> categoryIds, List<Long> secondRegionIds, List<Long> firstRegionIds,
+            boolean nationwide, RequestStatus requestStatus, Long id, LocalDateTime boundary);
 }
