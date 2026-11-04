@@ -129,4 +129,37 @@ public interface ChatRoomControllerDocs {
     ResponseEntity<Void> readChatRoom(
             @Parameter(hidden = true) CustomUserDetails userDetails,
             @Positive Long roomId);
+
+    @Operation(summary = "채팅방 나가기",
+            description = "내 참여 기록에 나간 시각(leftAt)을 기록합니다. 참여 기록과 메시지는 지우지 않습니다. "
+                    + "나간 방은 내 채팅방 목록에서 빠지고, 메시지 조회·읽음 처리·STOMP 구독·전송이 막힙니다. "
+                    + "상대방은 채팅방에 그대로 남으며, 나간 뒤 다시 들어오는 기능은 없습니다. "
+                    + "나가기 전에 맺은 STOMP 구독은 서버가 끊지 않으므로 클라이언트가 UNSUBSCRIBE합니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "204", description = "나가기 성공")
+    @ApiResponse(responseCode = "400", description = "roomId가 정수가 아니거나 1 미만",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "정수가 아님", value = """
+                            {
+                              "message": "경로 또는 쿼리 값의 타입이 올바르지 않습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "1 미만", value = """
+                            {
+                              "message": "입력값이 올바르지 않습니다."
+                            }
+                            """)
+            }))
+    @ApiResponse(responseCode = "401", description = "인증 실패")
+    @ApiResponse(responseCode = "403", description = "참여하지 않았거나 이미 나간 채팅방, 존재하지 않는 채팅방",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "권한 없음", value = """
+                            {
+                              "message": "접근 권한이 없습니다."
+                            }
+                            """)
+            }))
+    ResponseEntity<Void> leaveChatRoom(
+            @Parameter(hidden = true) CustomUserDetails userDetails,
+            @Positive Long roomId);
 }

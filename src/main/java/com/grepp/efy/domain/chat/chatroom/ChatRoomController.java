@@ -53,4 +53,14 @@ public class ChatRoomController implements ChatRoomControllerDocs {
         return ResponseEntity.noContent().build();
     }
 
+    @Override
+    @PatchMapping("/chat-rooms/{roomId}/leave")
+    public ResponseEntity<Void> leaveChatRoom(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable @Positive Long roomId
+    ) {
+        chatRoomService.leave(roomId, userDetails.getMemberId());
+        return ResponseEntity.noContent().build();
+    }
+
 }

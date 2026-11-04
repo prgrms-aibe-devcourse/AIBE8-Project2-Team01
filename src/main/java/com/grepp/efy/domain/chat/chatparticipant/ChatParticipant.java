@@ -35,4 +35,9 @@ public class ChatParticipant {
         this.chatRoom = chatRoom;
         this.member = member;
     }
+
+    // 나간 시각만 기록한다. 참여 기록과 메시지는 지우지 않는다
+    public void leave() {
+        this.leftAt = LocalDateTime.now();
+    }
 }
