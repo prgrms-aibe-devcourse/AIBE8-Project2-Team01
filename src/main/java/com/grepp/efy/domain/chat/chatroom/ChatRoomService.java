@@ -57,6 +57,11 @@ public class ChatRoomService {
         return new ChatRoomCreateResponse(room.getId(), quote.getId(), room.getCreatedAt());
     }
 
+    // STOMP 구독 권한 검사용. 없는 채팅방도 false라 존재 여부가 드러나지 않는다
+    public boolean isActiveParticipant(Long roomId, Long memberId) {
+        return chatParticipantRepository.existsByChatRoomIdAndMemberIdAndLeftAtIsNull(roomId, memberId);
+    }
+
 
     public PageResponse<ChatRoomSummaryResponse> getMyRooms(Long memberId, Integer pageNumber) {
         // ① 내 참여 기록 + 채팅방 (정렬은 쿼리에 있음)

@@ -10,6 +10,9 @@ import java.util.List;
 
 public interface ChatParticipantRepository extends JpaRepository<ChatParticipant, Long> {
 
+    // 채팅방에 참여 중(나가지 않음)인지 확인
+    boolean existsByChatRoomIdAndMemberIdAndLeftAtIsNull(Long chatRoomId, Long memberId);
+
     // 내가 나가지 않은 방. 메시지가 없는 방은 생성 시각으로 정렬
     @Query(value = """
         select p from ChatParticipant p
