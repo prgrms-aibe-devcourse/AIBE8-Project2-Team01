@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.hamcrest.Matchers.endsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -105,12 +106,31 @@ class ChatMessageListTests {
                 .andExpect(jsonPath("$.messages[0].senderNickname").value("매칭고수"))
                 .andExpect(jsonPath("$.messages[0].type").value("TEXT"))
                 .andExpect(jsonPath("$.messages[0].content").value("견적 관련 문의 주세요"))
+                .andExpect(jsonPath("$.messages[0].imageUrl").isEmpty())
                 .andExpect(jsonPath("$.messages[0].createdAt").isNotEmpty());
 
         // 고수도 같은 방의 메시지를 조회할 수 있다
         getMessages(expertMemberId, roomId, null)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.messages[0].messageId").value(messageId.intValue()));
+    }
+
+    @Test
+    void 이미지_메시지는_imageUrl과_함께_내려오고_content는_null이다() throws Exception {
+        jdbcTemplate.update("""
+                insert into file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+                values (?, 'chat/list-photo.png', 'photo.png', 'image/png', 100, 'PUBLIC', current_timestamp)
+                """, customerId);
+        Long fileId = jdbcTemplate.queryForObject("select id from file where storage_path = 'chat/list-photo.png'", Long.class);
+        jdbcTemplate.update("""
+                insert into chat_message (chat_room_id, sender_id, type, image_id, created_at)
+                values (?, ?, 'IMAGE', ?, current_timestamp)
+                """, roomId, customerId, fileId);
+
+        getMessages(expertMemberId, roomId, null)
+                .andExpect(jsonPath("$.messages[0].type").value("IMAGE"))
+                .andExpect(jsonPath("$.messages[0].content").isEmpty())
+                .andExpect(jsonPath("$.messages[0].imageUrl").value(endsWith("/chat/list-photo.png")));
     }
 
     @Test
