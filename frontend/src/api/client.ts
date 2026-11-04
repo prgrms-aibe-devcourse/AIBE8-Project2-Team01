@@ -3,6 +3,7 @@
 // - Refresh 토큰: 서버가 HttpOnly 쿠키(경로 /api/public/auth/refresh)로 관리한다. 화면에서 읽지 않는다.
 // - 재발급: 만료된 Access 토큰을 Authorization에 담고 쿠키와 함께 POST /api/public/auth/refresh
 //   (백엔드 AuthService.refresh 동작에 맞춤)
+import { neutralByStatus, SERVER_MESSAGES } from './serverMessages';
 import type { ErrorBody, LoginResponse } from './types';
 
 const BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? '';
@@ -113,12 +114,20 @@ export async function request<T>(path: string, opt: RequestOptions = {}): Promis
   return (text ? JSON.parse(text) : undefined) as T;
 }
 
-// 화면에 보여 줄 오류 문구 (서버 message가 있으면 우선)
+// 화면에 보여 줄 오류 문구
+// - 서버 message는 사용자용으로 정리한 문구(SERVER_MESSAGES)에 있을 때만 바꿔서 보여 준다
+// - 그 밖의 서버 문구(데이터 무결성 위반 등 내부 오류)는 그대로 노출하지 않고 상태 코드별 중립 안내를 쓴다
 export function errorText(e: unknown, fallback = '잠시 후 다시 시도해 주세요.'): string {
   if (e instanceof ApiError) {
     if (e.isNetwork) return '서버에 연결하지 못했어요.\n네트워크 상태를 확인해 주세요.';
+    if (e.message && SERVER_MESSAGES[e.message]) return SERVER_MESSAGES[e.message];
     if (e.status >= 500) return '일시적인 오류가 생겼어요.\n잠시 후 다시 시도해 주세요.';
-    if (e.message) return e.message;
+    return neutralByStatus(e.status) ?? fallback;
   }
   return fallback;
+}
+
+// 서버가 원인을 알려 주지 않은 409 (예: 데이터 무결성 위반) · 화면에서 원인을 확인할 수 있을 때만 구체적으로 안내한다
+export function isUnexplainedConflict(e: unknown): boolean {
+  return e instanceof ApiError && e.status === 409 && !SERVER_MESSAGES[e.message];
 }

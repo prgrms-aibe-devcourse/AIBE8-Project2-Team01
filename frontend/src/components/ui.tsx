@@ -35,15 +35,17 @@ export function ErrorView({ title, message, onRetry }: { title: string; message?
   );
 }
 
-export function Modal({ title, children, actions, onClose }: { title: string; children?: ReactNode; actions: ReactNode; onClose?: () => void }) {
+// full: 모바일에서 모달 대신 전체 화면으로 보여 준다 (와이어프레임 "모바일은 모달 대신 전체 화면") · 웹은 그대로 모달
+export function Modal({ title, children, actions, onClose, full = false }: { title: string; children?: ReactNode; actions: ReactNode; onClose?: () => void; full?: boolean }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose?.(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
   return (
-    <div className="dim" onClick={(e) => { if (e.target === e.currentTarget) onClose?.(); }}>
+    <div className={`dim${full ? ' full-m' : ''}`} onClick={(e) => { if (e.target === e.currentTarget) onClose?.(); }}>
       <div className="modal" role="dialog" aria-modal="true" aria-label={title}>
+        {full && onClose && <button type="button" className="m-close show-m" aria-label="닫기" onClick={onClose}>‹</button>}
         <h2>{title}</h2>
         {children && <div className="modal-body">{children}</div>}
         <div className="modal-actions">{actions}</div>

@@ -43,7 +43,7 @@ export function MyInfoPage() {
       toast('프로필 사진을 바꿨어요.');
     } catch (e) {
       if (e instanceof ApiError && e.status === 413) setPhotoMsg({ text: '5MB를 넘는 사진은 올릴 수 없어요.\n기존 사진을 그대로 써요.' });
-      else if (e instanceof ApiError && e.status === 400 && e.message) setPhotoMsg({ text: `${e.message}\n기존 사진을 그대로 써요.` });
+      else if (e instanceof ApiError && e.status === 400) setPhotoMsg({ text: `${errorText(e)}\n기존 사진을 그대로 써요.` });
       else setPhotoMsg({ text: '사진을 올리지 못했어요.\n기존 사진은 그대로예요.\n다시 시도해 주세요.', retry: file });
       // 서버 상태와 화면을 맞춘다
       reloadMe().catch(() => undefined);
