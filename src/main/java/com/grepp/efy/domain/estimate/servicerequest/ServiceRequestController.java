@@ -1,7 +1,9 @@
 package com.grepp.efy.domain.estimate.servicerequest;
 
+import com.grepp.efy.domain.estimate.enums.RequestStatus;
 import com.grepp.efy.domain.estimate.servicerequest.docs.ServiceRequestControllerDocs;
 import com.grepp.efy.domain.estimate.servicerequest.dto.*;
+import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,20 @@ import java.util.List;
 public class ServiceRequestController implements ServiceRequestControllerDocs {
 
     private final ServiceRequestService serviceRequestService;
+
+    @Override
+    @GetMapping("/admin/requests")
+    public ResponseEntity<PageResponse<AdminRequestResponse>> getAdminRequests(
+            @RequestParam(required = false) RequestStatus status,
+            @RequestParam(defaultValue = "1") Integer pageNumber,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortOrder
+    ) {
+        PageResponse<AdminRequestResponse> response =
+                serviceRequestService.getAdminRequests(status, pageNumber, pageSize, sortBy, sortOrder);
+        return ResponseEntity.ok(response);
+    }
 
     @Override
     @GetMapping("/members/me/expert-profile/requests")
