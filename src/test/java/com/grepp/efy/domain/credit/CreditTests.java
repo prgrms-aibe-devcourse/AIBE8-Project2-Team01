@@ -20,6 +20,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.client.HttpClientErrorException;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -379,6 +380,55 @@ class CreditTests {
                 "select payment_status from payment where order_id = ?", String.class, orderId));
     }
 
+    @Test
+    void 내역을_최신순으로_조회하고_유형으로_필터() throws Exception {
+        Long memberId = createMember("EXPERT");
+        createWallet(memberId, 26);
+        Long walletId = jdbcTemplate.queryForObject("select id from credit_wallet where member_id = ?", Long.class, memberId);
+        LocalDateTime base = LocalDateTime.of(2026, 11, 1, 10, 0);
+        String sql = "insert into credit_history(credit_wallet_id, history_type, amount, balance_after, created_at) values (?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql, walletId, "CHARGE", 30, 30, base);
+        jdbcTemplate.update(sql, walletId, "USE", -2, 28, base.plusMinutes(1));
+        jdbcTemplate.update(sql, walletId, "USE", -2, 26, base.plusMinutes(2));
+
+        mockMvc.perform(get("/api/members/me/credit-histories?pageNumber=1&pageSize=2")
+                        .header("Authorization", "Bearer " + token(memberId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].balanceAfter").value(26))
+                .andExpect(jsonPath("$.content[1].balanceAfter").value(28))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.lastPage").value(false));
+
+        mockMvc.perform(get("/api/members/me/credit-histories?type=CHARGE")
+                        .header("Authorization", "Bearer " + token(memberId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].historyType").value("CHARGE"))
+                .andExpect(jsonPath("$.content[0].amount").value(30));
+
+        Long noWalletId = createMember("EXPERT"); // 지갑이 없으면 빈 목록
+        mockMvc.perform(get("/api/members/me/credit-histories")
+                        .header("Authorization", "Bearer " + token(noWalletId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(0))
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    void 잘못된_내역조회_조건과_권한_거절() throws Exception {
+        Long memberId = createMember("EXPERT");
+        for (String query : List.of("pageNumber=0", "pageSize=51", "type=UNKNOWN")) {
+            mockMvc.perform(get("/api/members/me/credit-histories?" + query)
+                            .header("Authorization", "Bearer " + token(memberId)))
+                    .andExpect(status().isBadRequest());
+        }
+        Long userId = createMember("USER");
+        mockMvc.perform(get("/api/members/me/credit-histories")
+                        .header("Authorization", "Bearer " + token(userId)))
+                .andExpect(status().isForbidden());
+    }
     // ===== 도우미 메서드 =====
 
     private void assertError(ErrorCode expected, Executable executable) {
