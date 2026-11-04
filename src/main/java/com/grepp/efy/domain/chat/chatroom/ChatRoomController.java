@@ -33,6 +33,7 @@ public class ChatRoomController implements ChatRoomControllerDocs {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Override
     @GetMapping("/chat-rooms")
     public ResponseEntity<PageResponse<ChatRoomSummaryResponse>> getMyRooms(
             @AuthenticationPrincipal CustomUserDetails userDetails,
