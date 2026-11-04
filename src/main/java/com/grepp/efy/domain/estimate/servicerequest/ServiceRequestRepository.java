@@ -1,6 +1,7 @@
 package com.grepp.efy.domain.estimate.servicerequest;
 
 import com.grepp.efy.domain.estimate.enums.RequestStatus;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -14,8 +15,10 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, 
     boolean existsByMemberIdAndSecondCategoryIdAndRequestStatusNotAndCreatedAtAfter
             (Long memberId, Long secondCategoryId, RequestStatus requestStatus, LocalDateTime expirationBoundary);
 
+    @EntityGraph(attributePaths = {"secondCategory", "secondRegion"})
     List<ServiceRequest> findByMemberIdAndRequestStatusNotOrderByCreatedAtDesc(Long member_id, RequestStatus requestStatus);
 
+    @EntityGraph(attributePaths = {"secondCategory", "secondRegion"})
     @Query("""
             SELECT r
             FROM ServiceRequest r
