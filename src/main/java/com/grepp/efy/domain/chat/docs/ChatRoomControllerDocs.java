@@ -1,7 +1,7 @@
 package com.grepp.efy.domain.chat.docs;
 
-import com.grepp.efy.domain.chat.dto.ChatRoomCreateRequest;
-import com.grepp.efy.domain.chat.dto.ChatRoomCreateResponse;
+import com.grepp.efy.domain.chat.chatroom.dto.ChatRoomCreateRequest;
+import com.grepp.efy.domain.chat.chatroom.dto.ChatRoomCreateResponse;
 import com.grepp.efy.global.exception.ErrorResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;

@@ -1,8 +1,8 @@
 package com.grepp.efy.domain.chat.chatroom;
 
 import com.grepp.efy.domain.chat.docs.ChatRoomControllerDocs;
-import com.grepp.efy.domain.chat.dto.ChatRoomCreateRequest;
-import com.grepp.efy.domain.chat.dto.ChatRoomCreateResponse;
+import com.grepp.efy.domain.chat.chatroom.dto.ChatRoomCreateRequest;
+import com.grepp.efy.domain.chat.chatroom.dto.ChatRoomCreateResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

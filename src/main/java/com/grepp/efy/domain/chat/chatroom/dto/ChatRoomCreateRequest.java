@@ -1,4 +1,4 @@
-package com.grepp.efy.domain.chat.dto;
+package com.grepp.efy.domain.chat.chatroom.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

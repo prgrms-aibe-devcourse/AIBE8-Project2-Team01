@@ -2,8 +2,8 @@ package com.grepp.efy.domain.chat.chatroom;
 
 import com.grepp.efy.domain.chat.chatparticipant.ChatParticipant;
 import com.grepp.efy.domain.chat.chatparticipant.ChatParticipantRepository;
-import com.grepp.efy.domain.chat.dto.ChatRoomCreateRequest;
-import com.grepp.efy.domain.chat.dto.ChatRoomCreateResponse;
+import com.grepp.efy.domain.chat.chatroom.dto.ChatRoomCreateRequest;
+import com.grepp.efy.domain.chat.chatroom.dto.ChatRoomCreateResponse;
 import com.grepp.efy.domain.estimate.quote.Quote;
 import com.grepp.efy.domain.estimate.quote.QuoteService;
 import com.grepp.efy.domain.user.member.Member;
