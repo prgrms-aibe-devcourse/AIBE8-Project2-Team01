@@ -96,9 +96,10 @@ public class ChatRoomService {
                 .toList();
 
         // ② 상대방을 방 개수와 상관없이 쿼리 한 번으로 조회 (roomId → 상대방)
-        Map<Long, Member> partners = roomIds.isEmpty() ? Map.of()
+        // 상대방 참여 기록 그대로 담아 나갔는지(leftAt)도 함께 쓴다
+        Map<Long, ChatParticipant> partners = roomIds.isEmpty() ? Map.of()
                 : chatParticipantRepository.findPartners(roomIds, memberId).stream()
-                .collect(Collectors.toMap(p -> p.getChatRoom().getId(), ChatParticipant::getMember));
+                .collect(Collectors.toMap(p -> p.getChatRoom().getId(), p -> p));
 
         // ③ 안 읽은 메시지 수도 쿼리 한 번으로 집계 (roomId → 수, 없으면 0)
         Map<Long, Long> unreadCounts = roomIds.isEmpty() ? Map.of()
@@ -117,11 +118,12 @@ public class ChatRoomService {
         return PageResponse.of(myRooms, content);
     }
 
-    private ChatRoomSummaryResponse toSummary(ChatRoom room, Member partner, long unreadCount) {
+    private ChatRoomSummaryResponse toSummary(ChatRoom room, ChatParticipant partner, long unreadCount) {
         return new ChatRoomSummaryResponse(
                 room.getId(),
                 room.getQuote().getId(),
-                partner == null ? null : toPartner(partner),
+                partner == null ? null : toPartner(partner.getMember()),
+                partner != null && partner.getLeftAt() != null,
                 room.getLastMessagePreview(),
                 room.getLastMessageAt(),
                 unreadCount,

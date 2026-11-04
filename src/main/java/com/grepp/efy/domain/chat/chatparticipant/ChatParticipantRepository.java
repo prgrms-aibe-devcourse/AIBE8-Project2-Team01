@@ -15,6 +15,9 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
     // 채팅방에 참여 중(나가지 않음)인지 확인
     boolean existsByChatRoomIdAndMemberIdAndLeftAtIsNull(Long chatRoomId, Long memberId);
 
+    // 나(memberId)를 뺀 참여자 중 나간 사람이 있는지 (상대방이 나갔는지)
+    boolean existsByChatRoomIdAndMemberIdNotAndLeftAtIsNotNull(Long chatRoomId, Long memberId);
+
     // 메시지 전송용. 참여 중인 참여 기록과 채팅방·보낸 사람을 한 번에 조회
     @Query("""
         select p from ChatParticipant p
