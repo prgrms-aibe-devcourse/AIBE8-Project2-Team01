@@ -3,10 +3,7 @@ package com.grepp.efy.domain.estimate.servicerequest;
 import com.grepp.efy.domain.basedata.secondcategory.SecondCategory;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegion;
 import com.grepp.efy.domain.estimate.requestanswer.dto.AnswerResponse;
-import com.grepp.efy.domain.estimate.servicerequest.dto.RequestMatchedResponse;
-import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestCreateResponse;
-import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestListResponse;
-import com.grepp.efy.domain.estimate.servicerequest.dto.ServiceRequestResponse;
+import com.grepp.efy.domain.estimate.servicerequest.dto.*;
 import com.grepp.efy.domain.user.member.Member;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
@@ -49,4 +46,13 @@ public interface ServiceRequestMapper {
 
     List<RequestMatchedResponse> toRequestMatchedResponseList(List<ServiceRequest> serviceRequests,
                                                               @Context Map<Long, Long> sentQuoteIds);
+
+    @Mapping(target = "requestId", source = "id")
+    @Mapping(target = "customerId", source = "member.id")
+    @Mapping(target = "customerNickname", source = "member.nickname")
+    @Mapping(target = "secondCategoryName", source = "secondCategory.name")
+    @Mapping(target = "secondRegionName", source = "secondRegion.name")
+    AdminRequestResponse toAdminRequestResponse(ServiceRequest serviceRequest);
+
+    List<AdminRequestResponse> toAdminRequestResponseList(List<ServiceRequest> serviceRequests);
 }

@@ -23,8 +23,12 @@ import com.grepp.efy.domain.user.expertprofile.ExpertProfileService;
 import com.grepp.efy.domain.user.member.Member;
 import com.grepp.efy.domain.user.member.MemberRole;
 import com.grepp.efy.domain.user.member.MemberService;
+import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.exception.BusinessException;
+import com.grepp.efy.global.util.PageableFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +45,7 @@ import static com.grepp.efy.global.exception.ErrorCode.*;
 @Transactional(readOnly = true)
 public class ServiceRequestService {
 
+    private static final List<String> ADMIN_SORTABLE_FIELDS = List.of("id", "createdAt", "requestStatus");
     private final ServiceRequestRepository serviceRequestRepository;
     private final RequestAnswerRepository requestAnswerRepository;
     private final RequestAnswerService requestAnswerService;
@@ -53,6 +58,17 @@ public class ServiceRequestService {
     private final ExpertProfileService expertProfileService;
     private final QuoteRepository quoteRepository;
     private final CreditReservationService creditReservationService;
+
+    public PageResponse<AdminRequestResponse> getAdminRequests(
+            RequestStatus status, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        Pageable pageable = PageableFactory.create(pageNumber, pageSize, sortBy, sortOrder, ADMIN_SORTABLE_FIELDS);
+
+        Page<ServiceRequest> page = (status == null)
+                ? serviceRequestRepository.findAllBy(pageable)
+                : serviceRequestRepository.findByRequestStatus(status, pageable);
+
+        return PageResponse.of(page, serviceRequestMapper.toAdminRequestResponseList(page.getContent()));
+    }
 
     public List<RequestMatchedResponse> getMatchedRequests(Long memberId) {
         ExpertProfile expertProfile = validateExpertAccess(memberId);

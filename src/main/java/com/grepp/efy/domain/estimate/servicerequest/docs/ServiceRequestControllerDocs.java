@@ -1,6 +1,8 @@
 package com.grepp.efy.domain.estimate.servicerequest.docs;
 
+import com.grepp.efy.domain.estimate.enums.RequestStatus;
 import com.grepp.efy.domain.estimate.servicerequest.dto.*;
+import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,6 +22,22 @@ import java.util.List;
         description = "서비스 요청서 작성 및 관리 API"
 )
 public interface ServiceRequestControllerDocs {
+
+    @Operation(
+            summary = "관리자 요청서 전체 목록 조회",
+            description = "관리자가 모든 요청서를 페이지 단위로 조회합니다. " +
+                    "취소(CLOSED)·접수 기간 만료·탈퇴 회원의 요청서를 모두 포함합니다. " +
+                    "status로 상태를 필터링할 수 있으며, sortBy는 id·createdAt·requestStatus를 지원합니다. " +
+                    "요청서 상세와 받은 견적은 기존 요청서 상세·요청서별 견적 목록 API로 조회합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공 (결과가 없으면 빈 목록)"),
+            @ApiResponse(responseCode = "400", description = "잘못된 페이지·정렬·상태 값", content = @Content),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content),
+            @ApiResponse(responseCode = "403", description = "관리자가 아닌 사용자", content = @Content)
+    })
+    ResponseEntity<PageResponse<AdminRequestResponse>> getAdminRequests(
+            RequestStatus status, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
     @Operation(
             summary = "고수 매칭 요청서 목록 조회",

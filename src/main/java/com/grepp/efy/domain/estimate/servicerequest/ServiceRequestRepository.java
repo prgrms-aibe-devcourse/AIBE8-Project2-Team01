@@ -1,6 +1,8 @@
 package com.grepp.efy.domain.estimate.servicerequest;
 
 import com.grepp.efy.domain.estimate.enums.RequestStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -35,4 +37,10 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, 
     List<ServiceRequest> findMatchedRequests(
             List<Long> categoryIds, List<Long> secondRegionIds, List<Long> firstRegionIds,
             boolean nationwide, RequestStatus requestStatus, Long id, LocalDateTime boundary);
+
+    @EntityGraph(attributePaths = {"member", "secondCategory", "secondRegion"})
+    Page<ServiceRequest> findAllBy(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"member", "secondCategory", "secondRegion"})
+    Page<ServiceRequest> findByRequestStatus(RequestStatus requestStatus, Pageable pageable);
 }
