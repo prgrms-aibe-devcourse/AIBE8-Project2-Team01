@@ -4,6 +4,8 @@ import com.grepp.efy.domain.estimate.enums.QuoteStatus;
 import com.grepp.efy.domain.estimate.servicerequest.ServiceRequest;
 import com.grepp.efy.domain.user.expertprofile.ExpertProfile;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.stereotype.Repository;
 
@@ -63,4 +65,12 @@ public interface QuoteRepository extends JpaRepository<Quote, Long> {
     Optional<Quote> findByIdForUpdate(Long quoteId);
 
     List<Quote> findByExpertProfileIdAndServiceRequestIdIn(Long expertProfileId, List<Long> serviceRequestIds);
+
+    @EntityGraph(attributePaths = {"expertProfile", "expertProfile.member", "serviceRequest",
+            "serviceRequest.member", "serviceRequest.secondCategory", "serviceRequest.secondRegion"})
+    Page<Quote> findAllBy(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"expertProfile", "expertProfile.member", "serviceRequest",
+            "serviceRequest.member", "serviceRequest.secondCategory", "serviceRequest.secondRegion"})
+    Page<Quote> findByQuoteStatus(QuoteStatus quoteStatus, Pageable pageable);
 }

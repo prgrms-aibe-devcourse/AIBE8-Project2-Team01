@@ -3,10 +3,7 @@ package com.grepp.efy.domain.estimate.quote;
 import com.grepp.efy.domain.credit.reservation.CreditReservationService;
 import com.grepp.efy.domain.estimate.enums.QuoteStatus;
 import com.grepp.efy.domain.estimate.enums.RequestStatus;
-import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
-import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateResponse;
-import com.grepp.efy.domain.estimate.quote.dto.QuoteRequestResponse;
-import com.grepp.efy.domain.estimate.quote.dto.QuoteResponse;
+import com.grepp.efy.domain.estimate.quote.dto.*;
 import com.grepp.efy.domain.estimate.servicerequest.ServiceRequest;
 import com.grepp.efy.domain.estimate.servicerequest.ServiceRequestService;
 import com.grepp.efy.domain.user.expertprofile.ExpertProfile;
@@ -14,9 +11,13 @@ import com.grepp.efy.domain.user.expertprofile.ExpertProfileService;
 import com.grepp.efy.domain.user.member.Member;
 import com.grepp.efy.domain.user.member.MemberRole;
 import com.grepp.efy.domain.user.member.MemberService;
+import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.exception.BusinessException;
+import com.grepp.efy.global.util.PageableFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ import static com.grepp.efy.global.exception.ErrorCode.*;
 @Transactional(readOnly = true)
 public class QuoteService {
 
+    private static final List<String> ADMIN_SORTABLE_FIELDS = List.of("id", "sentAt", "price", "quoteStatus");
     private final QuoteRepository quoteRepository;
     private final MemberService memberService;
     private final ServiceRequestService serviceRequestService;
@@ -37,6 +39,17 @@ public class QuoteService {
     private final CreditReservationService creditReservationService;
     private final QuoteMapper quoteMapper;
 
+    public PageResponse<AdminQuoteResponse> getAdminQuotes(
+            QuoteStatus status, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        Pageable pageable = PageableFactory.create(pageNumber, pageSize, sortBy, sortOrder, ADMIN_SORTABLE_FIELDS);
+
+        Page<Quote> page = (status == null)
+                ? quoteRepository.findAllBy(pageable)
+                : quoteRepository.findByQuoteStatus(status, pageable);
+
+        return PageResponse.of(page, quoteMapper.toAdminQuoteResponseList(page.getContent()));
+    }
+    
     public List<QuoteResponse> getQuotes(Long memberId) {
         validateExpertAccess(memberId);
 

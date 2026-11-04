@@ -1,9 +1,6 @@
 package com.grepp.efy.domain.estimate.quote;
 
-import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
-import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateResponse;
-import com.grepp.efy.domain.estimate.quote.dto.QuoteRequestResponse;
-import com.grepp.efy.domain.estimate.quote.dto.QuoteResponse;
+import com.grepp.efy.domain.estimate.quote.dto.*;
 import com.grepp.efy.domain.estimate.servicerequest.ServiceRequest;
 import com.grepp.efy.domain.user.expertprofile.ExpertProfile;
 import org.mapstruct.Mapper;
@@ -41,4 +38,16 @@ public interface QuoteMapper {
     QuoteRequestResponse toRequestResponse(Quote quote);
 
     List<QuoteRequestResponse> toRequestResponseList(List<Quote> quotes);
+
+    @Mapping(target = "quoteId", source = "id")
+    @Mapping(target = "serviceRequestId", source = "serviceRequest.id")
+    @Mapping(target = "expertProfileId", source = "expertProfile.id")
+    @Mapping(target = "expertNickname", source = "expertProfile.member.nickname")
+    @Mapping(target = "customerId", source = "serviceRequest.member.id")
+    @Mapping(target = "customerNickname", source = "serviceRequest.member.nickname")
+    @Mapping(target = "secondCategoryName", source = "serviceRequest.secondCategory.name")
+    @Mapping(target = "secondRegionName", source = "serviceRequest.secondRegion.name")
+    AdminQuoteResponse toAdminQuoteResponse(Quote quote);
+
+    List<AdminQuoteResponse> toAdminQuoteResponseList(List<Quote> quotes);
 }
