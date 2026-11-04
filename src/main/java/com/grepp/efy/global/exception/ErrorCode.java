@@ -81,6 +81,8 @@ public enum ErrorCode {
     ALREADY_LIKED_POST_EXCEPTION(HttpStatus.CONFLICT, "이미 좋아요한 게시글입니다."),
     ALREADY_LIKED_COMMENT_EXCEPTION(HttpStatus.CONFLICT, "이미 좋아요한 댓글입니다."),
     LIKE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "좋아요한 기록이 없습니다."),
+    ALREADY_BOOKMARKED_EXCEPTION(HttpStatus.CONFLICT, "이미 북마크한 고수입니다."),
+    BOOKMARK_LIMIT_EXCEEDED_EXCEPTION(HttpStatus.CONFLICT, "북마크는 최대 500개까지 등록할 수 있습니다."),
 
     // ⑦ 크레딧·결제
     INSUFFICIENT_CREDIT_EXCEPTION(HttpStatus.CONFLICT, "사용 가능한 크레딧이 부족합니다."),
