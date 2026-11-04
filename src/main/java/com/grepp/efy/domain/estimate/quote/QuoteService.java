@@ -49,7 +49,7 @@ public class QuoteService {
 
         return PageResponse.of(page, quoteMapper.toAdminQuoteResponseList(page.getContent()));
     }
-    
+
     public List<QuoteResponse> getQuotes(Long memberId) {
         validateExpertAccess(memberId);
 
@@ -171,6 +171,8 @@ public class QuoteService {
         if (serviceRequest.getRequestStatus().equals(RequestStatus.CLOSED)) {
             throw new BusinessException(CLOSED_REQUEST_QUOTE_REQUEST_NOT_ALLOWED_EXCEPTION);
         }
+
+        creditReservationService.chargeForConnection(quoteId);
 
         quote.setQuoteStatus(QuoteStatus.REQUESTED);
 

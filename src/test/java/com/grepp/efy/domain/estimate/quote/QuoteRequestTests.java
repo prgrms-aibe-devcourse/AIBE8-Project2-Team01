@@ -51,6 +51,8 @@ class QuoteRequestTests {
         assertEquals(QuoteStatus.REQUESTED, quote.getQuoteStatus());
         assertEquals("REQUESTED", quoteStatus(quoteId));
         assertEquals("MATCHED", requestStatus(requestId));
+        assertEquals("USED", reservationStatus(quoteId));
+        assertEquals(1, useHistoryCount(quoteId));
     }
 
     @Test
@@ -84,6 +86,7 @@ class QuoteRequestTests {
 
         assertError(ErrorCode.FORBIDDEN_EXCEPTION, () -> quoteService.requestQuote(otherCustomerId, quoteId));
         assertEquals("SENT", quoteStatus(quoteId));
+        assertEquals("RESERVED", reservationStatus(quoteId));
     }
 
     @Test
@@ -137,7 +140,15 @@ class QuoteRequestTests {
                 insert into quote (expert_id, service_request_id, description, price, quote_status, sent_at)
                 values (?, ?, '테스트 견적', 100000, ?, dateadd('HOUR', ?, current_timestamp))
                 """, expertProfileId, requestId, status, -hoursAgo);
-        return jdbcTemplate.queryForObject("select max(id) from quote", Long.class);
+        Long quoteId = jdbcTemplate.queryForObject("select max(id) from quote", Long.class);
+
+        // 견적 발송 시 2크레딧 예약 (expert1 지갑)
+        jdbcTemplate.update("""
+                insert into credit_reservation (credit_wallet_id, quote_id, amount, reservation_status, created_at)
+                values ((select cw.id from credit_wallet cw join expert_profile ep on ep.member_id = cw.member_id
+                         where ep.id = ?), ?, 2, 'RESERVED', current_timestamp)
+                """, expertProfileId, quoteId);
+        return quoteId;
     }
 
     private String quoteStatus(Long quoteId) {
@@ -146,6 +157,16 @@ class QuoteRequestTests {
 
     private String requestStatus(Long requestId) {
         return jdbcTemplate.queryForObject("select request_status from service_request where id = ?", String.class, requestId);
+    }
+
+    private String reservationStatus(Long quoteId) {
+        return jdbcTemplate.queryForObject(
+                "select reservation_status from credit_reservation where quote_id = ?", String.class, quoteId);
+    }
+
+    private int useHistoryCount(Long quoteId) {
+        return jdbcTemplate.queryForObject(
+                "select count(*) from credit_history where quote_id = ? and history_type = 'USE'", Integer.class, quoteId);
     }
 
     private void assertError(ErrorCode expected, Executable executable) {

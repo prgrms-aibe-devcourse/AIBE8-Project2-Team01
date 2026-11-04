@@ -132,9 +132,9 @@ class StompConnectTests {
     }
 
     @Test
-    void CONNECT_SUBSCRIBE가_아닌_프레임은_검사_없이_통과한다() {
-        StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.SEND);
-        accessor.setDestination("/pub/test");
+    void CONNECT_SUBSCRIBE_SEND가_아닌_프레임은_검사_없이_통과한다() {
+        StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.UNSUBSCRIBE);
+        accessor.setSubscriptionId("sub-0");
         accessor.setLeaveMutable(true);
         Message<byte[]> message = MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
 

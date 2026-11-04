@@ -1,5 +1,6 @@
 package com.grepp.efy.domain.chat.chatroom;
 
+import com.grepp.efy.domain.chat.chatmessage.ChatMessageRepository;
 import com.grepp.efy.domain.chat.chatparticipant.ChatParticipant;
 import com.grepp.efy.domain.chat.chatparticipant.ChatParticipantRepository;
 import com.grepp.efy.domain.chat.chatroom.dto.ChatRoomCreateRequest;
@@ -33,6 +34,7 @@ public class ChatRoomService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatParticipantRepository chatParticipantRepository;
+    private final ChatMessageRepository chatMessageRepository;
     private final QuoteService quoteService;
     private final SupabaseStorageClient storageClient;
 
@@ -62,6 +64,27 @@ public class ChatRoomService {
         return chatParticipantRepository.existsByChatRoomIdAndMemberIdAndLeftAtIsNull(roomId, memberId);
     }
 
+    // 내 읽음 위치를 채팅방의 최신 메시지로 옮긴다. 메시지가 없으면 그대로, 뒤로는 가지 않는다
+    @Transactional
+    public void read(Long roomId, Long memberId) {
+        ChatParticipant participant = chatParticipantRepository.findActiveParticipant(roomId, memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION));
+
+        Long latestMessageId = chatMessageRepository.findLatestMessageId(roomId);
+        if (latestMessageId != null) {
+            chatParticipantRepository.updateLastRead(participant.getId(), latestMessageId);
+        }
+    }
+
+    // 나간 뒤에는 목록·구독·전송·메시지 조회·읽음이 모두 leftAt으로 막힌다. 이미 나간 방은 참여자가 아닌 것으로 본다
+    @Transactional
+    public void leave(Long roomId, Long memberId) {
+        ChatParticipant participant = chatParticipantRepository.findActiveParticipant(roomId, memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION));
+
+        participant.leave();
+    }
+
 
     public PageResponse<ChatRoomSummaryResponse> getMyRooms(Long memberId, Integer pageNumber) {
         // ① 내 참여 기록 + 채팅방 (정렬은 쿼리에 있음)
@@ -77,21 +100,31 @@ public class ChatRoomService {
                 : chatParticipantRepository.findPartners(roomIds, memberId).stream()
                 .collect(Collectors.toMap(p -> p.getChatRoom().getId(), ChatParticipant::getMember));
 
-        // ③ 합쳐서 DTO로 변환
+        // ③ 안 읽은 메시지 수도 쿼리 한 번으로 집계 (roomId → 수, 없으면 0)
+        Map<Long, Long> unreadCounts = roomIds.isEmpty() ? Map.of()
+                : chatMessageRepository.countUnread(memberId, roomIds).stream()
+                .collect(Collectors.toMap(ChatMessageRepository.UnreadCount::getRoomId,
+                        ChatMessageRepository.UnreadCount::getUnreadCount));
+
+        // ④ 합쳐서 DTO로 변환
         List<ChatRoomSummaryResponse> content = myRooms.getContent().stream()
-                .map(p -> toSummary(p.getChatRoom(), partners.get(p.getChatRoom().getId())))
+                .map(p -> {
+                    Long roomId = p.getChatRoom().getId();
+                    return toSummary(p.getChatRoom(), partners.get(roomId), unreadCounts.getOrDefault(roomId, 0L));
+                })
                 .toList();
 
         return PageResponse.of(myRooms, content);
     }
 
-    private ChatRoomSummaryResponse toSummary(ChatRoom room, Member partner) {
+    private ChatRoomSummaryResponse toSummary(ChatRoom room, Member partner, long unreadCount) {
         return new ChatRoomSummaryResponse(
                 room.getId(),
                 room.getQuote().getId(),
                 partner == null ? null : toPartner(partner),
                 room.getLastMessagePreview(),
                 room.getLastMessageAt(),
+                unreadCount,
                 room.getCreatedAt());
     }
 
