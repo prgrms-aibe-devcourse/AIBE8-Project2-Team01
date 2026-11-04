@@ -98,6 +98,7 @@ public enum ErrorCode {
 
     // ⑧ 채팅
     CHAT_ROOM_ALREADY_EXISTS_EXCEPTION(HttpStatus.CONFLICT, "이미 채팅방이 존재합니다."),
+    CHAT_IMAGE_NOT_PRIVATE_EXCEPTION(HttpStatus.BAD_REQUEST, "채팅 이미지는 비공개로 업로드한 파일만 사용할 수 있습니다."),
 
     // ⑨ 파일 (공통)
     FILE_EMPTY_EXCEPTION(HttpStatus.BAD_REQUEST, "빈 파일은 업로드할 수 없습니다."),

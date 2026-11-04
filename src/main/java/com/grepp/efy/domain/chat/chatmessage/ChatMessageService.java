@@ -8,6 +8,7 @@ import com.grepp.efy.domain.chat.chatparticipant.ChatParticipantRepository;
 import com.grepp.efy.domain.chat.chatroom.ChatRoom;
 import com.grepp.efy.domain.file.UploadFile;
 import com.grepp.efy.domain.file.UploadFileService;
+import com.grepp.efy.domain.file.UploadFileVisibility;
 import com.grepp.efy.domain.user.member.Member;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
@@ -43,9 +44,7 @@ public class ChatMessageService {
 
         ChatMessage message = chatMessageRepository.save(switch (request.type()) {
             case TEXT -> ChatMessage.text(room, sender, request.content());
-            // 본인이 올린, 삭제되지 않은 파일만 (아니면 FILE_NOT_FOUND / FILE_FORBIDDEN)
-            case IMAGE -> ChatMessage.image(room, sender,
-                    uploadFileService.getMyUploadFileEntity(request.fileId(), memberId));
+            case IMAGE -> ChatMessage.image(room, sender, privateImage(request.fileId(), memberId));
         });
         room.updateLastMessage(message.preview(), message.getCreatedAt());
 
@@ -82,6 +81,16 @@ public class ChatMessageService {
                 message.getContent(),
                 imageUrl(message.getImage()),
                 message.getCreatedAt());
+    }
+
+    // 본인이 올린, 삭제되지 않은 PRIVATE 파일만 (아니면 FILE_NOT_FOUND / FILE_FORBIDDEN / CHAT_IMAGE_NOT_PRIVATE)
+    // 채팅 사진은 개인정보가 담기기 쉬워 서명 URL로만 볼 수 있게 한다
+    private UploadFile privateImage(Long fileId, Long memberId) {
+        UploadFile file = uploadFileService.getMyUploadFileEntity(fileId, memberId);
+        if (file.getVisibility() != UploadFileVisibility.PRIVATE) {
+            throw new BusinessException(ErrorCode.CHAT_IMAGE_NOT_PRIVATE_EXCEPTION);
+        }
+        return file;
     }
 
     private String imageUrl(UploadFile image) {
