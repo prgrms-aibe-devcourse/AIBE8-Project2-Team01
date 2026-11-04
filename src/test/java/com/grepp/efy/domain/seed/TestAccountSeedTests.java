@@ -37,6 +37,42 @@ class TestAccountSeedTests {
     @Autowired ObjectMapper objectMapper;
 
     @Test
+    void 커뮤니티와_찜과_채팅이_기존_팀원_계정에_연결된다() throws Exception {
+        assertEquals(20, count("select count(*) from post"));
+        assertEquals(40, count("select count(*) from post_comment"));
+        assertEquals(15, count("select count(*) from bookmark where is_active=true"));
+        assertEquals(6, count("select count(*) from chat_message"));
+        assertEquals(0, count("select count(*) from post p where p.comment_count <> (select count(*) from post_comment c where c.post_id=p.id and c.deleted_at is null)"));
+        assertEquals(0, count("select count(*) from chat_message cm where not exists (select 1 from chat_participant cp where cp.chat_room_id=cm.chat_room_id and cp.member_id=cm.sender_id)"));
+        for (int team = 1; team <= 5; team++) {
+            String token = login("customer" + (team * 10 + 1) + "@example.com");
+            mockMvc.perform(get("/api/members/me/bookmarks").header("Authorization", "Bearer " + token))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(2));
+        }
+        for (String type : new String[]{"QUESTION", "TIP", "RECRUIT", "PROMOTION"}) {
+            mockMvc.perform(get("/api/public/posts").param("boardType", type))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(5));
+        }
+        for (Long postId : jdbcTemplate.queryForList("select id from post", Long.class)) {
+            mockMvc.perform(get("/api/public/posts/" + postId)).andExpect(status().isOk());
+            mockMvc.perform(get("/api/public/posts/" + postId + "/comments"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(2));
+        }
+        for (Map<String, Object> room : jdbcTemplate.queryForList("select cr.id, m.email from chat_room cr join quote q on cr.quote_id=q.id join service_request sr on q.service_request_id=sr.id join member m on sr.member_id=m.id")) {
+            mockMvc.perform(get("/api/chat-rooms/" + room.get("id") + "/messages")
+                            .header("Authorization", "Bearer " + login(room.get("email").toString())))
+                    .andExpect(status().isOk());
+        }
+    }
+
+    @Test
+    void 신규_크레딧_상품은_기존_시드_ID와_겹치지_않는다() {
+        jdbcTemplate.update("insert into credit_product (name, price, credit_amount, bonus_credit, is_active, created_at) values (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+                "신규 상품 검증", 1000, 1, 0, true);
+        assertEquals(5L, jdbcTemplate.queryForObject("select id from credit_product where name = ?", Long.class, "신규 상품 검증"));
+    }
+
+    @Test
     void 기존_6개와_팀원별_30개_탈퇴용_5개가_중복없이_생성된다() {
         assertEquals(41, count("select count(*) from member"));
         for (String role : new String[]{"USER", "EXPERT", "ADMIN"}) {

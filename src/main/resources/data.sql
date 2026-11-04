@@ -1,5 +1,6 @@
 -- 카테고리 초기 데이터: 대분류 11개, 소분류 108개
--- 로컬의 새 테이블에 최초 입력하는 용도입니다.
+-- 로컬 H2의 새 테이블에 한 번 입력하는 테스트 전용 시드입니다. 전체 스크립트 재실행은 지원하지 않습니다.
+-- 기존 6개 회원·요청서 1~10·견적 1~3의 ID와 예외 검증 조건을 유지합니다.
 
 -- 대분류
 INSERT INTO first_category (id, name, name_key)
@@ -183,8 +184,7 @@ VALUES ('customer1@example.com',
         '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C',
         '프로필없는고수', '01067890123', 'EXPERT', CURRENT_TIMESTAMP, 0);
 
-
--- 고수 1: 이사(101), 강남구(39)
+-- 기존 고수 프로필: expert1 이사·청소 / expert2 개발 외주·이사. expert3는 프로필 없음.
 INSERT INTO expert_profile (member_id,
                             short_intro,
                             description,
@@ -198,17 +198,8 @@ VALUES ((SELECT id FROM member WHERE email = 'expert1@example.com'),
         5,
         '이사 서비스 경력 5년',
         101,
-        FALSE);
-
--- 고수 2: 개발 외주(139), 서초구(38)
-INSERT INTO expert_profile (member_id,
-                            short_intro,
-                            description,
-                            career_years,
-                            career_description,
-                            primary_category_id,
-                            is_nationwide)
-VALUES ((SELECT id FROM member WHERE email = 'expert2@example.com'),
+        FALSE),
+       ((SELECT id FROM member WHERE email = 'expert2@example.com'),
         '백엔드 개발 전문 고수입니다.',
         '서초구에서 Spring Boot 기반 개발 외주 서비스를 제공합니다.',
         3,
@@ -216,7 +207,7 @@ VALUES ((SELECT id FROM member WHERE email = 'expert2@example.com'),
         139,
         FALSE);
 
--- 고수 제공 서비스: 고수 1 이사(101), 고수 2 개발 외주(139)
+-- 기존 고수 제공 서비스: expert1 이사(101)·입주 청소(102), expert2 개발 외주(139)·이사(101)
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
 VALUES ((SELECT ep.id
          FROM expert_profile ep
@@ -229,8 +220,9 @@ VALUES ((SELECT ep.id
        ((SELECT ep.id
          FROM expert_profile ep
                   JOIN member m ON ep.member_id = m.id
-         WHERE m.email = 'expert2@example.com'), 139);
-
+         WHERE m.email = 'expert2@example.com'), 139),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert2@example.com'), 101);
 
 -- 지역 초기 데이터
 -- 출처: https://www.code.go.kr/stdcode/regCodeL.do
@@ -526,7 +518,7 @@ VALUES (17, '1111000000', '종로구', '종로구', 1),
        (283, '5279000000', '고창군', '고창군', 16),
        (284, '5280000000', '부안군', '부안군', 16);
 
--- 고수 활동 지역: 고수 1 강남구(39), 고수 2 서초구(38)
+-- 기존 고수 활동 지역: expert1 강남구(39)·서초구(38), expert2 서초구(38)
 INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
 VALUES ((SELECT ep.id
          FROM expert_profile ep
@@ -540,17 +532,6 @@ VALUES ((SELECT ep.id
          FROM expert_profile ep
                   JOIN member m ON ep.member_id = m.id
          WHERE m.email = 'expert2@example.com'), 38);
-
--- expert2를 이사 서비스 매칭 테스트 대상으로 추가
-INSERT INTO expert_profile_services (expert_profile_id, services_id)
-SELECT ep.id, 101
-FROM expert_profile ep
-         JOIN member m ON ep.member_id = m.id
-WHERE m.email = 'expert2@example.com'
-  AND NOT EXISTS (SELECT 1
-                  FROM expert_profile_services eps
-                  WHERE eps.expert_profile_id = ep.id
-                    AND eps.services_id = 101);
 
 -- 요청서 고정 질문 모든 서비스 카테고리에서 동일하게 사용
 INSERT INTO question (content, is_required, display_order)
@@ -626,112 +607,64 @@ WHERE m.email = 'customer1@example.com'
   AND sr.second_category_id = 139
   AND sr.second_region_id = 30;
 
--- 1. 이사 / 서초구: 전국 활동 매칭 테스트
+-- 요청서 4: 이사 / 서초구. 지역 매칭과 견적 발송 테스트
 INSERT INTO service_request
 (member_id, second_category_id, second_region_id, request_status, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'customer1@example.com'),
         101, 38, 'OPEN',
         DATEADD('MINUTE', -10, CURRENT_TIMESTAMP));
 
--- 2. 이사 / 강남구: MATCHED 상태 포함 테스트
+-- 요청서 5: 이사 / 강남구. MATCHED 상태도 받은 요청에 포함
 INSERT INTO service_request
 (member_id, second_category_id, second_region_id, request_status, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'customer1@example.com'),
         101, 39, 'MATCHED',
         DATEADD('MINUTE', -20, CURRENT_TIMESTAMP));
 
--- 3. 이사 / 마포구: CLOSED 상태 제외 테스트
+-- 요청서 6: 이사 / 마포구. CLOSED 상태는 받은 요청에서 제외
 INSERT INTO service_request
 (member_id, second_category_id, second_region_id, request_status, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'customer1@example.com'),
         101, 30, 'CLOSED',
         DATEADD('MINUTE', -30, CURRENT_TIMESTAMP));
 
--- 4. 입주 청소 / 강남구: 다중 서비스 매칭 테스트
+-- 요청서 7: 입주 청소 / 강남구. 다중 서비스 매칭 테스트
 INSERT INTO service_request
 (member_id, second_category_id, second_region_id, request_status, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'customer1@example.com'),
         102, 39, 'OPEN',
         DATEADD('MINUTE', -40, CURRENT_TIMESTAMP));
 
--- 5. 고수1이 USER였을 때 작성한 요청서: 본인 요청서 제외 테스트
+-- 요청서 8: expert1이 USER였을 때 작성한 요청. 본인 요청 제외 테스트
 INSERT INTO service_request
 (member_id, second_category_id, second_region_id, request_status, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'expert1@example.com'),
         101, 39, 'OPEN',
         DATEADD('MINUTE', -50, CURRENT_TIMESTAMP));
 
--- 9. 이사 / 강남구: 등록 25시간 경과 → 견적 접수 기간 만료 테스트
+-- 요청서 9: 이사 / 강남구. 등록 25시간 경과로 견적 접수 기간 만료
 INSERT INTO service_request (member_id, second_category_id, second_region_id, request_status, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'customer2@example.com'),
         101, 39, 'OPEN', DATEADD('HOUR', -25, CURRENT_TIMESTAMP));
 
--- 10. 이사 / 강남구: 등록 80시간 경과 → 만료 견적 테스트용 요청서
+-- 요청서 10: 이사 / 강남구. 등록 80시간 경과로 만료 견적 테스트
 INSERT INTO service_request (member_id, second_category_id, second_region_id, request_status, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'customer2@example.com'),
         101, 39, 'OPEN', DATEADD('HOUR', -80, CURRENT_TIMESTAMP));
 
--- 견적서 시드 데이터
--- expert1 → requestId 1
+-- 기존 견적 1~3: 발송 중·73시간 만료·크레딧 부족 조건을 유지합니다.
 INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-SELECT ep.id,
-       sr.id,
-       '이사 작업 전체 진행 가능합니다.',
-       300000,
-       'SENT',
-       DATEADD('HOUR', -1, CURRENT_TIMESTAMP)
-FROM expert_profile ep
-         JOIN member m
-              ON ep.member_id = m.id
-         JOIN service_request sr
-              ON sr.id = 1
-WHERE m.email = 'expert1@example.com'
-  AND NOT EXISTS (SELECT 1
-                  FROM quote q
-                  WHERE q.expert_id = ep.id
-                    AND q.service_request_id = sr.id);
+VALUES ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id
+         WHERE m.email='expert1@example.com'), 1, '이사 작업 전체 진행 가능합니다.', 300000, 'SENT', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id
+         WHERE m.email='expert1@example.com'), 10, '만료 테스트용 견적입니다.', 200000, 'SENT', DATEADD('HOUR', -73, CURRENT_TIMESTAMP)),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id
+         WHERE m.email='expert2@example.com'), 4, '서초구 이사 작업 가능합니다.', 280000, 'SENT', DATEADD('HOUR', -2, CURRENT_TIMESTAMP));
 
--- expert1 → requestId 10: 발송 73시간 경과 (72시간 만료 테스트)
-INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-SELECT ep.id,
-       10,
-       '만료 테스트용 견적입니다.',
-       200000,
-       'SENT',
-       DATEADD('HOUR', -73,
-               CURRENT_TIMESTAMP)
-FROM expert_profile ep
-         JOIN member m ON ep.member_id = m.id
-WHERE m.email = 'expert1@example.com';
-
--- expert2 → requestId 4
-INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-SELECT ep.id,
-       sr.id,
-       '서초구 이사 작업 가능합니다.',
-       280000,
-       'SENT',
-       DATEADD('HOUR', -2, CURRENT_TIMESTAMP)
-FROM expert_profile ep
-         JOIN member m
-              ON ep.member_id = m.id
-         JOIN service_request sr
-              ON sr.id = 4
-WHERE m.email = 'expert2@example.com'
-  AND NOT EXISTS (SELECT 1
-                  FROM quote q
-                  WHERE q.expert_id = ep.id
-                    AND q.service_request_id = sr.id);
-
--- 고수 크레딧 지갑: expert1 10크레딧(견적 5건), expert2 2크레딧(시드 견적 1건 예약으로 추가 발송 불가 테스트)
+-- 기존 지갑: expert1 보유 10·예약 4, expert2 보유 2·예약 2. 만료 처리 전 초기값입니다.
 INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
-SELECT id, 10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-FROM member
-WHERE email = 'expert1@example.com';
-INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
-SELECT id, 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-FROM member
-WHERE email = 'expert2@example.com';
+VALUES ((SELECT id FROM member WHERE email='expert1@example.com'), 10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='expert2@example.com'), 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- 시드 견적의 크레딧 예약 (견적 발송 시 예약되는 규칙과 맞춤)
 INSERT INTO credit_reservation (credit_wallet_id, quote_id, amount, reservation_status, created_at)
@@ -883,82 +816,52 @@ SELECT sr.id, q.id, q.content,
 FROM service_request sr JOIN member m ON sr.member_id=m.id CROSS JOIN question q
 WHERE m.email IN ('customer11@example.com', 'customer12@example.com', 'customer21@example.com', 'customer22@example.com', 'customer31@example.com', 'customer32@example.com', 'customer41@example.com', 'customer42@example.com', 'customer51@example.com', 'customer52@example.com');
 
+-- 팀원별 견적: 반복 INSERT를 하나로 묶고 기존 입력 순서를 유지합니다.
 INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-SELECT ep.id, sr.id, 'expert12의 팀원별 SENT 견적입니다.', 112000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
-FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
-CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
-WHERE expert.email='expert12@example.com' AND customer.email='customer11@example.com'
-  AND sr.second_category_id=101 AND sr.request_status<>'CLOSED';
-
-INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-SELECT ep.id, sr.id, 'expert21의 팀원별 SENT 견적입니다.', 121000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
-FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
-CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
-WHERE expert.email='expert21@example.com' AND customer.email='customer22@example.com'
-  AND sr.second_category_id=102 AND sr.request_status<>'CLOSED';
-
-INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-SELECT ep.id, sr.id, 'expert22의 팀원별 REQUESTED 견적입니다.', 122000, 'REQUESTED', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
-FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
-CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
-WHERE expert.email='expert22@example.com' AND customer.email='customer22@example.com'
-  AND sr.second_category_id=139 AND sr.request_status<>'CLOSED';
-
-INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-SELECT ep.id, sr.id, 'expert31의 팀원별 SENT 견적입니다.', 131000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
-FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
-CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
-WHERE expert.email='expert31@example.com' AND customer.email='customer31@example.com'
-  AND sr.second_category_id=101 AND sr.request_status<>'CLOSED';
-
-INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-SELECT ep.id, sr.id, 'expert31의 팀원별 SENT 견적입니다.', 131000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
-FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
-CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
-WHERE expert.email='expert31@example.com' AND customer.email='customer32@example.com'
-  AND sr.second_category_id=102 AND sr.request_status<>'CLOSED';
-
-INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-SELECT ep.id, sr.id, 'expert32의 팀원별 REQUESTED 견적입니다.', 132000, 'REQUESTED', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
-FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
-CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
-WHERE expert.email='expert32@example.com' AND customer.email='customer32@example.com'
-  AND sr.second_category_id=139 AND sr.request_status<>'CLOSED';
-
-INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-SELECT ep.id, sr.id, 'expert32의 팀원별 SENT 견적입니다.', 132000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
-FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
-CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
-WHERE expert.email='expert32@example.com' AND customer.email='customer31@example.com'
-  AND sr.second_category_id=101 AND sr.request_status<>'CLOSED';
-
-INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-SELECT ep.id, sr.id, 'expert41의 팀원별 SENT 견적입니다.', 141000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
-FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
-CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
-WHERE expert.email='expert41@example.com' AND customer.email='customer42@example.com'
-  AND sr.second_category_id=102 AND sr.request_status<>'CLOSED';
-
-INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-SELECT ep.id, sr.id, 'expert51의 팀원별 SENT 견적입니다.', 151000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
-FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
-CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
-WHERE expert.email='expert51@example.com' AND customer.email='customer51@example.com'
-  AND sr.second_category_id=101 AND sr.request_status<>'CLOSED';
-
-INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-SELECT ep.id, sr.id, 'expert51의 팀원별 SENT 견적입니다.', 151000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
-FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
-CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
-WHERE expert.email='expert51@example.com' AND customer.email='customer52@example.com'
-  AND sr.second_category_id=102 AND sr.request_status<>'CLOSED';
-
-INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-SELECT ep.id, sr.id, 'expert52의 팀원별 REQUESTED 견적입니다.', 152000, 'REQUESTED', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
-FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
-CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
-WHERE expert.email='expert52@example.com' AND customer.email='customer52@example.com'
-  AND sr.second_category_id=139 AND sr.request_status<>'CLOSED';
+VALUES ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert12@example.com'),
+        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
+         WHERE m.email='customer11@example.com' AND sr.second_category_id=101 AND sr.request_status<>'CLOSED'),
+        'expert12의 팀원별 SENT 견적입니다.', 112000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert21@example.com'),
+        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
+         WHERE m.email='customer22@example.com' AND sr.second_category_id=102 AND sr.request_status<>'CLOSED'),
+        'expert21의 팀원별 SENT 견적입니다.', 121000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert22@example.com'),
+        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
+         WHERE m.email='customer22@example.com' AND sr.second_category_id=139 AND sr.request_status<>'CLOSED'),
+        'expert22의 팀원별 REQUESTED 견적입니다.', 122000, 'REQUESTED', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert31@example.com'),
+        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
+         WHERE m.email='customer31@example.com' AND sr.second_category_id=101 AND sr.request_status<>'CLOSED'),
+        'expert31의 팀원별 SENT 견적입니다.', 131000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert31@example.com'),
+        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
+         WHERE m.email='customer32@example.com' AND sr.second_category_id=102 AND sr.request_status<>'CLOSED'),
+        'expert31의 팀원별 SENT 견적입니다.', 131000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert32@example.com'),
+        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
+         WHERE m.email='customer32@example.com' AND sr.second_category_id=139 AND sr.request_status<>'CLOSED'),
+        'expert32의 팀원별 REQUESTED 견적입니다.', 132000, 'REQUESTED', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert32@example.com'),
+        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
+         WHERE m.email='customer31@example.com' AND sr.second_category_id=101 AND sr.request_status<>'CLOSED'),
+        'expert32의 팀원별 SENT 견적입니다.', 132000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert41@example.com'),
+        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
+         WHERE m.email='customer42@example.com' AND sr.second_category_id=102 AND sr.request_status<>'CLOSED'),
+        'expert41의 팀원별 SENT 견적입니다.', 141000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert51@example.com'),
+        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
+         WHERE m.email='customer51@example.com' AND sr.second_category_id=101 AND sr.request_status<>'CLOSED'),
+        'expert51의 팀원별 SENT 견적입니다.', 151000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert51@example.com'),
+        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
+         WHERE m.email='customer52@example.com' AND sr.second_category_id=102 AND sr.request_status<>'CLOSED'),
+        'expert51의 팀원별 SENT 견적입니다.', 151000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert52@example.com'),
+        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
+         WHERE m.email='customer52@example.com' AND sr.second_category_id=139 AND sr.request_status<>'CLOSED'),
+        'expert52의 팀원별 REQUESTED 견적입니다.', 152000, 'REQUESTED', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP));
 
 -- SENT는 예약만 반영하고 REQUESTED는 실제 의뢰 요청처럼 사용 처리·잔액·내역·채팅방을 맞춥니다.
 INSERT INTO credit_reservation (credit_wallet_id, quote_id, amount, reservation_status, created_at)
@@ -989,3 +892,70 @@ UNION ALL
 SELECT cr.id, sr.member_id FROM chat_room cr JOIN quote q ON cr.quote_id=q.id
 JOIN service_request sr ON q.service_request_id=sr.id JOIN expert_profile ep ON q.expert_id=ep.id
 JOIN member m ON ep.member_id=m.id WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com', 'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com', 'expert51@example.com', 'expert52@example.com');
+
+-- H2의 고정 ID 상품 1~4 다음부터 신규 상품을 등록합니다.
+ALTER TABLE credit_product ALTER COLUMN id RESTART WITH 5;
+
+-- 팀원별 커뮤니티: 게시판별 1개씩. 탈퇴 전용 계정은 연결하지 않습니다.
+
+INSERT INTO post (member_id, second_category_id, second_region_id, board_type, title, content, view_count, comment_count, like_count, is_visible, created_at, updated_at)
+VALUES ((SELECT id FROM member WHERE email='customer11@example.com'), 101, 39, 'QUESTION', '팀원1 이사 준비 질문', '이사 전에 미리 준비할 사항을 알려 주세요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='expert11@example.com'), 102, 39, 'TIP', '팀원1 입주 청소 준비 팁', '청소 전에는 작은 짐을 정리하고 작업 공간을 확보해 주세요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer12@example.com'), 139, 39, 'RECRUIT', '팀원1 개발 작업 고수 구해요', '작은 웹 서비스 개발 일정과 비용을 상담하고 싶습니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='expert12@example.com'), 139, 39, 'PROMOTION', '팀원1 개발 상담 안내', '개발 외주 작업 범위와 일정을 함께 상담해 드립니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer21@example.com'), 101, 69, 'QUESTION', '팀원2 이사 준비 질문', '이사 전에 미리 준비할 사항을 알려 주세요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='expert21@example.com'), 102, 69, 'TIP', '팀원2 입주 청소 준비 팁', '청소 전에는 작은 짐을 정리하고 작업 공간을 확보해 주세요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer22@example.com'), 139, 69, 'RECRUIT', '팀원2 개발 작업 고수 구해요', '작은 웹 서비스 개발 일정과 비용을 상담하고 싶습니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='expert22@example.com'), 139, 69, 'PROMOTION', '팀원2 개발 상담 안내', '개발 외주 작업 범위와 일정을 함께 상담해 드립니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer31@example.com'), 101, 85, 'QUESTION', '팀원3 이사 준비 질문', '이사 전에 미리 준비할 사항을 알려 주세요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='expert31@example.com'), 102, 85, 'TIP', '팀원3 입주 청소 준비 팁', '청소 전에는 작은 짐을 정리하고 작업 공간을 확보해 주세요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer32@example.com'), 139, 85, 'RECRUIT', '팀원3 개발 작업 고수 구해요', '작은 웹 서비스 개발 일정과 비용을 상담하고 싶습니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='expert32@example.com'), 139, 85, 'PROMOTION', '팀원3 개발 상담 안내', '개발 외주 작업 범위와 일정을 함께 상담해 드립니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer41@example.com'), 101, 94, 'QUESTION', '팀원4 이사 준비 질문', '이사 전에 미리 준비할 사항을 알려 주세요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='expert41@example.com'), 102, 94, 'TIP', '팀원4 입주 청소 준비 팁', '청소 전에는 작은 짐을 정리하고 작업 공간을 확보해 주세요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer42@example.com'), 139, 94, 'RECRUIT', '팀원4 개발 작업 고수 구해요', '작은 웹 서비스 개발 일정과 비용을 상담하고 싶습니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='expert42@example.com'), 139, 94, 'PROMOTION', '팀원4 개발 상담 안내', '개발 외주 작업 범위와 일정을 함께 상담해 드립니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer51@example.com'), 101, 105, 'QUESTION', '팀원5 이사 준비 질문', '이사 전에 미리 준비할 사항을 알려 주세요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='expert51@example.com'), 102, 105, 'TIP', '팀원5 입주 청소 준비 팁', '청소 전에는 작은 짐을 정리하고 작업 공간을 확보해 주세요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer52@example.com'), 139, 105, 'RECRUIT', '팀원5 개발 작업 고수 구해요', '작은 웹 서비스 개발 일정과 비용을 상담하고 싶습니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='expert52@example.com'), 139, 105, 'PROMOTION', '팀원5 개발 상담 안내', '개발 외주 작업 범위와 일정을 함께 상담해 드립니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- 게시글마다 같은 팀의 고객·고수가 댓글을 하나씩 작성합니다.
+INSERT INTO post_comment (post_id, member_id, content, like_count, created_at, updated_at)
+SELECT p.id, commenter.id, '궁금한 점은 댓글로 함께 이야기해 주세요.', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM post p JOIN member author ON p.member_id=author.id
+JOIN member commenter ON commenter.email=CONCAT('expert', SUBSTRING(author.email, LOCATE('@', author.email)-2, 1), '1@example.com');
+
+INSERT INTO post_comment (post_id, member_id, content, like_count, created_at, updated_at)
+SELECT p.id, commenter.id, '안내 감사합니다. 일정과 작업 범위를 확인해 보겠습니다.', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM post p JOIN member author ON p.member_id=author.id
+JOIN member commenter ON commenter.email=CONCAT('customer', SUBSTRING(author.email, LOCATE('@', author.email)-2, 1), '2@example.com');
+
+INSERT INTO bookmark (member_id, expert_profile_id, is_active, bookmarked_at)
+VALUES ((SELECT id FROM member WHERE email='customer11@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert11@example.com'), TRUE, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer11@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert12@example.com'), TRUE, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer12@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert12@example.com'), TRUE, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer21@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert21@example.com'), TRUE, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer21@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert22@example.com'), TRUE, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer22@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert22@example.com'), TRUE, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer31@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert31@example.com'), TRUE, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer31@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert32@example.com'), TRUE, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer32@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert32@example.com'), TRUE, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer41@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert41@example.com'), TRUE, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer41@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert42@example.com'), TRUE, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer42@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert42@example.com'), TRUE, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer51@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert51@example.com'), TRUE, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer51@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert52@example.com'), TRUE, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email='customer52@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert52@example.com'), TRUE, CURRENT_TIMESTAMP);
+
+-- 기존 채팅방 3개의 참여자가 대화합니다. 목록 미리보기도 마지막 메시지와 맞춥니다.
+INSERT INTO chat_message (chat_room_id, sender_id, type, content, created_at)
+SELECT cr.id, sr.member_id, 'TEXT', '안녕하세요. 작업 일정 상담을 부탁드립니다.', DATEADD('MINUTE', -10, CURRENT_TIMESTAMP)
+FROM chat_room cr JOIN quote q ON cr.quote_id=q.id JOIN service_request sr ON q.service_request_id=sr.id;
+
+INSERT INTO chat_message (chat_room_id, sender_id, type, content, created_at)
+SELECT cr.id, ep.member_id, 'TEXT', '안녕하세요. 가능한 일정과 작업 범위를 알려 주세요.', DATEADD('MINUTE', -9, CURRENT_TIMESTAMP)
+FROM chat_room cr JOIN quote q ON cr.quote_id=q.id JOIN expert_profile ep ON q.expert_id=ep.id;
+
+UPDATE chat_room SET last_message_preview='안녕하세요. 가능한 일정과 작업 범위를 알려 주세요.',
+                     last_message_at=DATEADD('MINUTE', -9, CURRENT_TIMESTAMP);
