@@ -1,7 +1,9 @@
 package com.grepp.efy.domain.chat.docs;
 
-import com.grepp.efy.domain.chat.dto.ChatRoomCreateRequest;
-import com.grepp.efy.domain.chat.dto.ChatRoomCreateResponse;
+import com.grepp.efy.domain.chat.chatroom.dto.ChatRoomCreateRequest;
+import com.grepp.efy.domain.chat.chatroom.dto.ChatRoomCreateResponse;
+import com.grepp.efy.domain.chat.chatroom.dto.ChatRoomSummaryResponse;
+import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.exception.ErrorResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
 
 @Tag(name = "채팅방", description = "채팅방 API")
@@ -60,4 +63,29 @@ public interface ChatRoomControllerDocs {
     ResponseEntity<ChatRoomCreateResponse> createChatRoom(
             @Parameter(hidden = true) CustomUserDetails userDetails,
             @Valid ChatRoomCreateRequest request);
+
+    @Operation(summary = "내 채팅방 목록 조회",
+            description = "내가 참여 중인 채팅방을 20개씩 반환하며, 나간 채팅방은 제외합니다. "
+                    + "마지막 메시지 시각 최신순으로 정렬하고, 메시지가 없는 방은 생성 시각을 기준으로 합니다. "
+                    + "메시지가 없으면 lastMessagePreview·lastMessageAt은 null, "
+                    + "상대방 프로필 사진이 없으면 partner.profileImageUrl은 null입니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "200", description = "조회 성공. 채팅방 목록과 페이지 정보 반환")
+    @ApiResponse(responseCode = "400", description = "pageNumber가 정수가 아니거나 1 미만",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "정수가 아님", value = """
+                            {
+                              "message": "경로 또는 쿼리 값의 타입이 올바르지 않습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "1 미만", value = """
+                            {
+                              "message": "입력값이 올바르지 않습니다."
+                            }
+                            """)
+            }))
+    @ApiResponse(responseCode = "401", description = "인증 실패")
+    ResponseEntity<PageResponse<ChatRoomSummaryResponse>> getMyRooms(
+            @Parameter(hidden = true) CustomUserDetails userDetails,
+            @Parameter(description = "페이지 번호 (1부터, 기본값 1)") @Positive Integer pageNumber);
 }

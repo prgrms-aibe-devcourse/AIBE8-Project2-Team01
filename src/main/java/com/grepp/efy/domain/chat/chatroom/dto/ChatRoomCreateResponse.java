@@ -1,4 +1,4 @@
-package com.grepp.efy.domain.chat.dto;
+package com.grepp.efy.domain.chat.chatroom.dto;
 
 import java.time.LocalDateTime;
 
