@@ -30,14 +30,14 @@ public class CreditWalletService {
         creditAccessValidator.getExpert(memberId);
         return creditWalletRepository.findByMemberId(memberId)
                 .map(this::toBalanceResponse)
-                .orElseGet(() -> new CreditBalanceResponse(0, 0, CREDIT_PER_QUOTE, 0));
+                .orElseGet(() -> new CreditBalanceResponse(0, 0, 0, CREDIT_PER_QUOTE, 0));
     }
 
     private CreditBalanceResponse toBalanceResponse(CreditWallet wallet) {
         long reserved = creditReservationRepository.sumAmountByWalletIdAndStatus(
                 wallet.getId(), CreditReservationStatus.RESERVED);
         long available = Math.max(wallet.getBalance() - reserved, 0);
-        return new CreditBalanceResponse(wallet.getBalance(), reserved, CREDIT_PER_QUOTE, available / CREDIT_PER_QUOTE);
+        return new CreditBalanceResponse(wallet.getBalance(), reserved, available, CREDIT_PER_QUOTE, available / CREDIT_PER_QUOTE);
     }
 
     // 결제 승인 시 호출한다. 지갑이 없으면 만들고, 크레딧을 지급한 뒤 CHARGE 내역을 남긴다
