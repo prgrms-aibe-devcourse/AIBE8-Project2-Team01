@@ -3,6 +3,7 @@ package com.grepp.efy.domain.chat;
 import com.grepp.efy.domain.user.member.MemberService;
 import com.grepp.efy.global.security.CustomUserDetails;
 import com.grepp.efy.global.security.JwtProvider;
+import com.grepp.efy.global.storage.SupabaseStorageClient;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,8 +20,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.Matchers.endsWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -35,6 +39,8 @@ class ChatMessageListTests {
     @Autowired JdbcTemplate jdbcTemplate;
     @Autowired MemberService memberService;
     @Autowired JwtProvider jwtProvider;
+    // PRIVATE 파일의 서명 URL 발급은 실제 Supabase를 호출하므로 가짜 객체로 대체
+    @MockitoBean SupabaseStorageClient storageClient;
 
     Long customerId;
     Long expertMemberId;
@@ -47,6 +53,9 @@ class ChatMessageListTests {
         expertMemberId = memberId("expert1@example.com");
         otherCustomerId = memberId("customer2@example.com");
         roomId = room(customerId, expertMemberId);
+
+        when(storageClient.createUrl(any(), anyString()))
+                .thenAnswer(invocation -> "https://signed.test/" + invocation.getArgument(1) + "?token=test");
     }
 
     @Test
@@ -116,10 +125,10 @@ class ChatMessageListTests {
     }
 
     @Test
-    void 이미지_메시지는_imageUrl과_함께_내려오고_content는_null이다() throws Exception {
+    void 이미지_메시지는_서명_URL과_함께_내려오고_content는_null이다() throws Exception {
         jdbcTemplate.update("""
                 insert into file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
-                values (?, 'chat/list-photo.png', 'photo.png', 'image/png', 100, 'PUBLIC', current_timestamp)
+                values (?, 'chat/list-photo.png', 'photo.png', 'image/png', 100, 'PRIVATE', current_timestamp)
                 """, customerId);
         Long fileId = jdbcTemplate.queryForObject("select id from file where storage_path = 'chat/list-photo.png'", Long.class);
         jdbcTemplate.update("""
@@ -130,7 +139,7 @@ class ChatMessageListTests {
         getMessages(expertMemberId, roomId, null)
                 .andExpect(jsonPath("$.messages[0].type").value("IMAGE"))
                 .andExpect(jsonPath("$.messages[0].content").isEmpty())
-                .andExpect(jsonPath("$.messages[0].imageUrl").value(endsWith("/chat/list-photo.png")));
+                .andExpect(jsonPath("$.messages[0].imageUrl").value("https://signed.test/chat/list-photo.png?token=test"));
     }
 
     @Test

@@ -2,7 +2,9 @@ package com.grepp.efy.domain.chat;
 
 import com.grepp.efy.domain.user.member.MemberService;
 import com.grepp.efy.global.security.CustomUserDetails;
+import com.grepp.efy.domain.file.UploadFileVisibility;
 import com.grepp.efy.global.security.JwtProvider;
+import com.grepp.efy.global.storage.SupabaseStorageClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,7 @@ import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
@@ -32,6 +35,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -50,6 +58,8 @@ class ChatMessageSendTests {
     @Autowired JwtProvider jwtProvider;
     @Autowired SimpMessagingTemplate messagingTemplate;
     @Value("${app.frontend-url}") String frontendUrl;
+    // PRIVATE 파일의 서명 URL 발급은 실제 Supabase를 호출하므로 가짜 객체로 대체
+    @MockitoBean SupabaseStorageClient storageClient;
 
     private final List<StompSession> sessions = new ArrayList<>();
     private final List<Long> requestIds = new ArrayList<>();
@@ -70,6 +80,9 @@ class ChatMessageSendTests {
         expertMemberId = memberId("expert1@example.com");
         otherCustomerId = memberId("customer2@example.com");
         roomId = room(customerId, expertMemberId);
+
+        when(storageClient.createUrl(any(), anyString()))
+                .thenAnswer(invocation -> "https://signed.test/" + invocation.getArgument(1) + "?token=test");
     }
 
     // 서버를 띄운 테스트는 롤백되지 않으므로 만든 데이터를 직접 지운다
@@ -218,7 +231,7 @@ class ChatMessageSendTests {
     // ── 이미지 메시지 ──
 
     @Test
-    void 본인이_올린_파일로_이미지_메시지를_보내면_저장되고_imageUrl과_함께_전달된다() throws Exception {
+    void 본인이_올린_비공개_파일로_이미지_메시지를_보내면_저장되고_서명_URL과_함께_전달된다() throws Exception {
         Long fileId = file(customerId, "chat/room-photo.png", false);
         StompSession customer = connect(customerId);
         StompSession expert = connect(expertMemberId);
@@ -233,7 +246,9 @@ class ChatMessageSendTests {
         assertEquals(toExpert, customerInbox.poll(5, TimeUnit.SECONDS));
         assertEquals("IMAGE", toExpert.get("type"));
         assertNull(toExpert.get("content"));
-        assertTrue(((String) toExpert.get("imageUrl")).endsWith("/chat/room-photo.png"));
+        String imageUrl = (String) toExpert.get("imageUrl");
+        assertTrue(imageUrl.startsWith("https://signed.test/") && imageUrl.contains("/chat/room-photo.png?token="));
+        verify(storageClient).createUrl(eq(UploadFileVisibility.PRIVATE), anyString());
 
         assertEquals(fileId, jdbcTemplate.queryForObject(
                 "select image_id from chat_message where chat_room_id = ?", Long.class, roomId));
@@ -264,6 +279,19 @@ class ChatMessageSendTests {
                 sendUntilError(customer, Map.of("type", "IMAGE", "fileId", Long.MAX_VALUE), errors).get("message"));
         assertEquals("파일을 찾을 수 없습니다.",
                 sendUntilError(customer, Map.of("type", "IMAGE", "fileId", deletedFileId), errors).get("message"));
+
+        assertTrue(customer.isConnected());
+        assertEquals(0, messageCount(roomId));
+    }
+
+    @Test
+    void 공개_파일로_보내면_에러가_가고_저장되지_않는다() throws Exception {
+        Long publicFileId = file(customerId, "chat/public-photo.png", false, UploadFileVisibility.PUBLIC);
+        StompSession customer = connect(customerId);
+        BlockingQueue<Map<String, Object>> errors = subscribe(customer, ERROR_QUEUE);
+
+        assertEquals("채팅 이미지는 비공개로 업로드한 파일만 사용할 수 있습니다.",
+                sendUntilError(customer, Map.of("type", "IMAGE", "fileId", publicFileId), errors).get("message"));
 
         assertTrue(customer.isConnected());
         assertEquals(0, messageCount(roomId));
@@ -357,12 +385,16 @@ class ChatMessageSendTests {
         assertEquals(0, messageCount(roomId));
     }
 
-    // PUBLIC 파일. URL은 Supabase 호출 없이 경로로 만들어진다
+    // 채팅 이미지는 PRIVATE 파일만 허용
     private Long file(Long uploaderId, String storagePath, boolean deleted) {
+        return file(uploaderId, storagePath, deleted, UploadFileVisibility.PRIVATE);
+    }
+
+    private Long file(Long uploaderId, String storagePath, boolean deleted, UploadFileVisibility visibility) {
         jdbcTemplate.update("""
                 insert into file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at, deleted_at)
-                values (?, ?, 'photo.png', 'image/png', 100, 'PUBLIC', current_timestamp, case when ? then current_timestamp end)
-                """, uploaderId, UUID.randomUUID() + "/" + storagePath, deleted); // storage_path는 unique
+                values (?, ?, 'photo.png', 'image/png', 100, ?, current_timestamp, case when ? then current_timestamp end)
+                """, uploaderId, UUID.randomUUID() + "/" + storagePath, visibility.name(), deleted); // storage_path는 unique
         Long id = jdbcTemplate.queryForObject("select max(id) from file", Long.class);
         fileIds.add(id);
         return id;
