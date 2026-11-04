@@ -46,6 +46,12 @@ public class ExpertProfileService {
         return expertProfileMapper.toResponse(expertProfile, getImageUrl(expertProfile), getWorkImages(expertProfile));
     }
 
+    public ExpertProfileResponse getMyExpertProfile(Long memberId) {
+        memberService.getMemberEntity(memberId);
+        ExpertProfile expertProfile = getExpertProfileByMemberId(memberId);
+        return expertProfileMapper.toResponse(expertProfile, getImageUrl(expertProfile), getWorkImages(expertProfile));
+    }
+
     @Transactional
     public ExpertProfileResponse createExpertProfile(Long memberId, ExpertProfileCreateRequest createRequest) {
         Member member = memberService.getMemberEntity(memberId);

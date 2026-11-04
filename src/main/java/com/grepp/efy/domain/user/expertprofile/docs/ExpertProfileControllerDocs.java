@@ -48,6 +48,21 @@ public interface ExpertProfileControllerDocs {
             @Parameter(description = "고수 프로필 ID", required = true, example = "1")
             Long expertProfileId);
 
+    @Operation(summary = "본인 고수 프로필 조회",
+            description = "로그인한 회원 ID로 본인 고수 프로필을 조회합니다. 회원 ID나 프로필 ID를 요청으로 받지 않습니다. "
+                    + "프로필을 보유한 USER·EXPERT 모두 조회할 수 있습니다. 공개 조회와 동일한 응답 형식으로 프로필 ID·등록 정보·최신 닉네임·회원 사진과 작업 사진을 반환합니다. "
+                    + "회원 사진이 없으면 imageId·imageUrl은 null이며 작업 사진이 없으면 workImages는 빈 배열입니다. 삭제되거나 비공개인 사진의 URL은 반환하지 않습니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "200", description = "본인 고수 프로필 조회 성공",
+            content = @Content(schema = @Schema(implementation = ExpertProfileResponse.class)))
+    @ApiResponse(responseCode = "401", description = "인증 정보가 없거나 유효하지 않음 또는 탈퇴 회원",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "본인 고수 프로필이 등록되지 않음",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"message\":\"고수 프로필을 찾을 수 없습니다.\"}")))
+    ResponseEntity<ExpertProfileResponse> getMyExpertProfile(
+            @Parameter(hidden = true) CustomUserDetails userDetails);
+
     @Operation(summary = "첫 고수 프로필 등록",
             description = "인증된 USER의 본인 프로필을 등록하고 EXPERT로 전환합니다. 실패하면 전체 작업을 취소합니다. "
                     + "대표 서비스는 제공 서비스에 포함해야 합니다. 전국과 개별 지역은 함께 선택할 수 없으며 "

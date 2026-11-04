@@ -31,6 +31,14 @@ public class ExpertProfileController implements ExpertProfileControllerDocs {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/members/me/expert-profile")
+    @Override
+    public ResponseEntity<ExpertProfileResponse> getMyExpertProfile(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        ExpertProfileResponse response = expertProfileService.getMyExpertProfile(userDetails.getMemberId());
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/members/me/expert-profile")
     @Override
     public ResponseEntity<ExpertProfileResponse> createExpertProfile(
