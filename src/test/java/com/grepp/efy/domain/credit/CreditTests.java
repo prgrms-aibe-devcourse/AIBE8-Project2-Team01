@@ -76,6 +76,7 @@ class CreditTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.balance").value(0))
                 .andExpect(jsonPath("$.reservedCredit").value(0))
+                .andExpect(jsonPath("$.availableCredit").value(0))
                 .andExpect(jsonPath("$.creditPerQuote").value(2))
                 .andExpect(jsonPath("$.availableQuoteCount").value(0));
     }
@@ -89,6 +90,7 @@ class CreditTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.balance").value(10))
                 .andExpect(jsonPath("$.reservedCredit").value(2))
+                .andExpect(jsonPath("$.availableCredit").value(8))
                 .andExpect(jsonPath("$.availableQuoteCount").value(4));
     }
 
