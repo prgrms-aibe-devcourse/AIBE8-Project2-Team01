@@ -29,10 +29,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ChatRoomCreateTests {
     private static final String URL = "/api/chat-rooms";
 
-    @Autowired MockMvc mockMvc;
-    @Autowired JdbcTemplate jdbcTemplate;
-    @Autowired MemberService memberService;
-    @Autowired JwtProvider jwtProvider;
+    @Autowired
+    MockMvc mockMvc;
+    @Autowired
+    JdbcTemplate jdbcTemplate;
+    @Autowired
+    MemberService memberService;
+    @Autowired
+    JwtProvider jwtProvider;
 
     Long customerId;
     Long otherCustomerId;
@@ -190,7 +194,14 @@ class ChatRoomCreateTests {
                 insert into quote (expert_id, service_request_id, description, price, quote_status, sent_at)
                 values (?, ?, '테스트 견적', 100000, 'SENT', dateadd('HOUR', ?, current_timestamp))
                 """, expertProfileId, requestId, -sentHoursAgo);
-        return jdbcTemplate.queryForObject("select max(id) from quote", Long.class);
+        Long quoteId = jdbcTemplate.queryForObject("select max(id) from quote", Long.class);
+
+        // 의뢰 요청 시 차감할 2크레딧 예약 (expert1 지갑)
+        jdbcTemplate.update("""
+                insert into credit_reservation (credit_wallet_id, quote_id, amount, reservation_status, created_at)
+                values ((select id from credit_wallet where member_id = ?), ?, 2, 'RESERVED', current_timestamp)
+                """, expertMemberId, quoteId);
+        return quoteId;
     }
 
     // ── 조회 ──
