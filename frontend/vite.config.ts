@@ -11,7 +11,9 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': { target: 'http://localhost:8080' }
+      '/api': { target: 'http://localhost:8080' },
+      // 채팅 웹소켓(STOMP)도 같은 출처로 연결한다
+      '/ws': { target: 'ws://localhost:8080', ws: true }
     }
   }
 });

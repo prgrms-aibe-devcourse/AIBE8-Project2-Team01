@@ -29,7 +29,7 @@ export function LoginPage({ redirect }: { redirect?: string | null }) {
     run(async () => {
       try {
         await login(em, password);
-        navigate(redirect && redirect.startsWith('/') ? redirect : '/mypage', undefined, true);
+        navigate(redirect && redirect.startsWith('/') ? redirect : '/', undefined, true);
       } catch (err) {
         if (err instanceof AfterLoginError) {
           const r = err.reason;
@@ -60,6 +60,7 @@ export function LoginPage({ redirect }: { redirect?: string | null }) {
         <button className="btn primary block" type="submit" disabled={busy}>
           {busy ? <><Spinner light />로그인하는 중</> : '로그인'}
         </button>
+        <p className="sub center">처음이신가요? <a href={`#/signup${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="strong-link">회원가입</a></p>
       </form>
     </main>
   );

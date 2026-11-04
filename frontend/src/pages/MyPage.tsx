@@ -92,13 +92,38 @@ export function MyPage() {
         </section>
         {expertCard()}
       </div>
+      {!isAdmin && (
+        <section className="card">
+          <b className="card-title">바로 가기</b>
+          <div className="quick-grid">
+            {isExpert ? <>
+              <a className="quick" href="#/received">받은 요청서</a>
+              <a className="quick" href="#/quotes">보낸 견적</a>
+              <a className="quick" href="#/credit">크레딧</a>
+            </> : <a className="quick" href="#/requests">내 요청서</a>}
+            <a className="quick" href="#/chats">채팅</a>
+            <a className="quick" href="#/community/mine">내 글</a>
+            <a className="quick" href="#/bookmarks">찜한 고수</a>
+          </div>
+        </section>
+      )}
+      {isAdmin && (
+        <section className="card">
+          <b className="card-title">관리</b>
+          <div className="quick-grid">
+            <a className="quick" href="#/admin/members">회원 관리</a>
+            <a className="quick" href="#/admin/categories">카테고리 관리</a>
+            <a className="quick" href="#/admin/regions">지역 관리</a>
+          </div>
+        </section>
+      )}
       <button className="link-btn" onClick={() => setAskLogout(true)}>로그아웃</button>
 
       {askLogout && (
         <Modal title="로그아웃할까요?" onClose={() => !out.busy && setAskLogout(false)}
           actions={<>
             <button className="btn" disabled={out.busy} onClick={() => setAskLogout(false)}>취소</button>
-            <button className="btn primary" disabled={out.busy} onClick={() => out.run(async () => { await logout().catch(() => undefined); navigate('/login', undefined, true); })}>
+            <button className="btn primary" disabled={out.busy} onClick={() => out.run(async () => { await logout().catch(() => undefined); navigate('/', undefined, true); })}>
               {out.busy ? <><Spinner light />로그아웃하는 중</> : '로그아웃'}
             </button>
           </>}>

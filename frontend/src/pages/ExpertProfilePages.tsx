@@ -4,6 +4,7 @@ import { ApiError, errorText } from '../api/client';
 import * as api from '../api/endpoints';
 import type { ExpertProfile } from '../api/types';
 import { useSession } from '../auth/session';
+import { BookmarkButton } from '../components/BookmarkButton';
 import { ProfileView } from '../components/ProfileView';
 import { ErrorView, LoadingView, Spinner } from '../components/ui';
 import { useMyExpertProfile } from '../hooks/useData';
@@ -55,5 +56,5 @@ export function PublicExpertProfilePage({ id }: { id: number }) {
   );
   if (state.kind === 'loading') return <main className="page"><LoadingView /></main>;
   if (state.kind === 'error') return <main className="page"><ErrorView title="고수 프로필을 불러오지 못했어요" message={errorText(state.e)} onRetry={load} /></main>;
-  return <main className="page"><ProfileView p={state.p} /></main>;
+  return <main className="page"><ProfileView p={state.p} side={<BookmarkButton expertProfileId={state.p.id} ownerMemberNickname={state.p.nickname} />} /></main>;
 }
