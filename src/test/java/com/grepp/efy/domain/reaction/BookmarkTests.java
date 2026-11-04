@@ -21,8 +21,10 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -32,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class BookmarkTests {
     private static final LocalDateTime OLD_TIME = LocalDateTime.of(2020, 1, 1, 0, 0);
     private static final String PROFILE_NOT_FOUND = "고수 프로필을 찾을 수 없습니다.";
+    private static final String BOOKMARK_NOT_FOUND = "존재하지 않는 북마크입니다.";
     @Autowired MockMvc mockMvc;
     @Autowired JdbcTemplate jdbcTemplate;
     @Autowired MemberService memberService;
@@ -138,8 +141,54 @@ class BookmarkTests {
         create(me, profileId).andExpect(status().isCreated());
     }
 
+    // ---------- 취소 ----------
+
+    @Test
+    void 취소하면_200이고_기록은_비활성으로_남으며_다시_등록할_수_있다() throws Exception {
+        create(me, profileId);
+
+        cancel(me, profileId)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.expertProfileId").value(profileId.intValue()))
+                .andExpect(jsonPath("$.bookmarked").value(false));
+        assertFalse(isActive(me, profileId));
+
+        create(me, profileId).andExpect(status().isCreated());
+        assertTrue(isActive(me, profileId));
+        assertEquals(1, jdbcTemplate.queryForObject("select count(*) from bookmark where member_id = ?", Integer.class, me));
+    }
+
+    @Test
+    void 북마크하지_않았거나_이미_취소했으면_404다() throws Exception {
+        cancel(me, profileId)
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(BOOKMARK_NOT_FOUND));
+
+        create(me, profileId);
+        cancel(me, profileId).andExpect(status().isOk());
+        cancel(me, profileId)
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(BOOKMARK_NOT_FOUND));
+    }
+
+    @Test
+    void 없는_고수_프로필이나_탈퇴한_고수의_북마크는_취소할_수_없다() throws Exception {
+        cancel(me, 999999999L)
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(PROFILE_NOT_FOUND));
+
+        create(me, profileId);
+        jdbcTemplate.update("update member set deleted_at = CURRENT_TIMESTAMP where id = ?", expertMember);
+        cancel(me, profileId)
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(PROFILE_NOT_FOUND));
+        assertTrue(isActive(me, profileId));
+    }
+
     @Test
     void 잘못된_id는_400_토큰이_없으면_401이다() throws Exception {
+        cancel(me, 0L).andExpect(status().isBadRequest());
+        mockMvc.perform(delete(url(profileId))).andExpect(status().isUnauthorized());
         create(me, 0L)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("입력값이 올바르지 않습니다."));
@@ -151,6 +200,10 @@ class BookmarkTests {
 
     private ResultActions create(Long memberId, Long expertProfileId) throws Exception {
         return mockMvc.perform(post(url(expertProfileId)).header("Authorization", "Bearer " + token(memberId)));
+    }
+
+    private ResultActions cancel(Long memberId, Long expertProfileId) throws Exception {
+        return mockMvc.perform(delete(url(expertProfileId)).header("Authorization", "Bearer " + token(memberId)));
     }
 
     private static String url(Long expertProfileId) {

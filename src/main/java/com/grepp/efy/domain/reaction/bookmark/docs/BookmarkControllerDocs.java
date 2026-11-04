@@ -1,5 +1,6 @@
 package com.grepp.efy.domain.reaction.bookmark.docs;
 
+import com.grepp.efy.domain.reaction.bookmark.dto.BookmarkCancelResponse;
 import com.grepp.efy.domain.reaction.bookmark.dto.BookmarkResponse;
 import com.grepp.efy.global.exception.ErrorResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
@@ -52,6 +53,34 @@ public interface BookmarkControllerDocs {
                             """)
             }))
     ResponseEntity<BookmarkResponse> createBookmark(
+            @Parameter(hidden = true) CustomUserDetails userDetails,
+            @Positive Long expertProfileId);
+
+    @Operation(summary = "북마크 취소",
+            description = "로그인한 회원이 등록한 고수 프로필 북마크를 취소합니다. 요청 본문은 없습니다. "
+                    + "기록은 지우지 않고 비활성으로 바꾸며, 취소한 뒤 같은 고수 프로필을 다시 북마크할 수 있습니다. "
+                    + "북마크하지 않았거나 이미 취소한 경우 404로 응답합니다. "
+                    + "탈퇴한 고수의 북마크는 취소할 수 없고 404로 응답합니다(등록과 같은 규칙).")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "200", description = "취소 성공",
+            content = @Content(schema = @Schema(implementation = BookmarkCancelResponse.class)))
+    @ApiResponse(responseCode = "400", description = "expertProfileId가 정수가 아니거나 1 미만",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "401", description = "인증 실패")
+    @ApiResponse(responseCode = "404", description = "존재하지 않거나 탈퇴한 고수 프로필, 또는 활성 북마크가 없음",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
+                    @ExampleObject(name = "고수 프로필 없음", value = """
+                            {
+                              "message": "고수 프로필을 찾을 수 없습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "북마크 없음", value = """
+                            {
+                              "message": "존재하지 않는 북마크입니다."
+                            }
+                            """)
+            }))
+    ResponseEntity<BookmarkCancelResponse> cancelBookmark(
             @Parameter(hidden = true) CustomUserDetails userDetails,
             @Positive Long expertProfileId);
 }

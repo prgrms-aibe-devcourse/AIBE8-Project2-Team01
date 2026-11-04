@@ -1,6 +1,7 @@
 package com.grepp.efy.domain.reaction.bookmark;
 
 import com.grepp.efy.domain.reaction.bookmark.docs.BookmarkControllerDocs;
+import com.grepp.efy.domain.reaction.bookmark.dto.BookmarkCancelResponse;
 import com.grepp.efy.domain.reaction.bookmark.dto.BookmarkResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import jakarta.validation.constraints.Positive;
@@ -27,5 +28,18 @@ public class BookmarkController implements BookmarkControllerDocs {
         BookmarkResponse response = bookmarkService.createBookmark(userDetails.getMemberId(), expertProfileId);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // 기록은 남기고 비활성으로 바꾸므로, 결과를 담아 200으로 응답
+    @Override
+    @DeleteMapping("/{expertProfileId}")
+    public ResponseEntity<BookmarkCancelResponse> cancelBookmark(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable @Positive Long expertProfileId
+    ) {
+
+        BookmarkCancelResponse response = bookmarkService.cancelBookmark(userDetails.getMemberId(), expertProfileId);
+
+        return ResponseEntity.ok(response);
     }
 }
