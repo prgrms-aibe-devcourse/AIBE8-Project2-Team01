@@ -1,10 +1,9 @@
 package com.grepp.efy.domain.estimate.quote;
 
+import com.grepp.efy.domain.estimate.enums.QuoteStatus;
 import com.grepp.efy.domain.estimate.quote.docs.QuoteControllerDocs;
-import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
-import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateResponse;
-import com.grepp.efy.domain.estimate.quote.dto.QuoteRequestResponse;
-import com.grepp.efy.domain.estimate.quote.dto.QuoteResponse;
+import com.grepp.efy.domain.estimate.quote.dto.*;
+import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +20,20 @@ import java.util.List;
 public class QuoteController implements QuoteControllerDocs {
 
     private final QuoteService quoteService;
+
+    @Override
+    @GetMapping("/admin/quotes")
+    public ResponseEntity<PageResponse<AdminQuoteResponse>> getAdminQuotes(
+            @RequestParam(required = false) QuoteStatus status,
+            @RequestParam(defaultValue = "1") Integer pageNumber,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(defaultValue = "sentAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortOrder
+    ) {
+        PageResponse<AdminQuoteResponse> response =
+                quoteService.getAdminQuotes(status, pageNumber, pageSize, sortBy, sortOrder);
+        return ResponseEntity.ok(response);
+    }
 
     @Override
     @GetMapping("/quotes")

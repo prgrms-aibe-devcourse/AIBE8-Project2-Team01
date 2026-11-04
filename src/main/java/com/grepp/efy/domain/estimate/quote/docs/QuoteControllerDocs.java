@@ -1,9 +1,8 @@
 package com.grepp.efy.domain.estimate.quote.docs;
 
-import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateRequest;
-import com.grepp.efy.domain.estimate.quote.dto.QuoteCreateResponse;
-import com.grepp.efy.domain.estimate.quote.dto.QuoteRequestResponse;
-import com.grepp.efy.domain.estimate.quote.dto.QuoteResponse;
+import com.grepp.efy.domain.estimate.enums.QuoteStatus;
+import com.grepp.efy.domain.estimate.quote.dto.*;
+import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,6 +25,21 @@ import java.util.List;
 @Tag(name = "견적서", description = "견적서 작성·목록·상세 조회 API")
 @SecurityRequirement(name = "bearerAuth")
 public interface QuoteControllerDocs {
+
+    @Operation(
+            summary = "관리자 견적서 전체 목록 조회",
+            description = "관리자가 모든 견적서를 페이지 단위로 조회합니다. " +
+                    "발송(SENT)·의뢰 요청(REQUESTED) 견적서를 모두 포함하며, 72시간이 지난 SENT 견적서는 스케줄러가 삭제하기 전까지 함께 조회됩니다. " +
+                    "status로 상태를 필터링할 수 있으며, sortBy는 id·sentAt·price·quoteStatus를 지원합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공 (결과가 없으면 빈 목록)"),
+            @ApiResponse(responseCode = "400", description = "잘못된 페이지·정렬·상태 값", content = @Content),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content),
+            @ApiResponse(responseCode = "403", description = "관리자가 아닌 사용자", content = @Content)
+    })
+    ResponseEntity<PageResponse<AdminQuoteResponse>> getAdminQuotes(
+            QuoteStatus status, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
     @Operation(
             summary = "견적서 상세 조회",
