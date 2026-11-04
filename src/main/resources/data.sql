@@ -157,7 +157,7 @@ VALUES (189, '렌탈', '렌탈', 11),
        (208, '알바-그 외', '알바-그 외', 11);
 
 -- 로컬 테스트 회원: 공통 비밀번호 1234 (BCrypt 암호화)
--- EXPERT 계정은 권한 테스트용이며 고수 프로필은 포함하지 않습니다.
+-- 기존 6개 회원의 입력 순서와 ID를 유지합니다. expert3만 프로필 없는 예외 검증 계정입니다.
 
 INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
 VALUES ('customer1@example.com',
@@ -756,3 +756,236 @@ VALUES (1, '크레딧 10개', 10000, 10, 0, TRUE, CURRENT_TIMESTAMP),
        (2, '크레딧 30개', 30000, 30, 0, TRUE, CURRENT_TIMESTAMP),
        (3, '크레딧 50개', 50000, 50, 0, TRUE, CURRENT_TIMESTAMP),
        (4, '크레딧 100개', 100000, 100, 0, TRUE, CURRENT_TIMESTAMP);
+
+-- 팀원별 10번대~50번대 계정: 각 고객·고수·관리자 2개씩. 기존 회원 ID 보존을 위해 마지막에 입력합니다.
+-- 각 번호대 끝자리 9번 고객은 탈퇴 테스트 전용이며 초기 상태는 정상 회원입니다.
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('customer11@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원1고객1', '01000001011', 'USER', CURRENT_TIMESTAMP, 0),
+       ('customer12@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원1고객2', '01000001012', 'USER', CURRENT_TIMESTAMP, 0),
+       ('expert11@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원1고수1', '01000002011', 'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('expert12@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원1고수2', '01000002012', 'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('admin11@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원1관리자1', '01000003011', 'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('admin12@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원1관리자2', '01000003012', 'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('customer21@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원2고객1', '01000001021', 'USER', CURRENT_TIMESTAMP, 0),
+       ('customer22@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원2고객2', '01000001022', 'USER', CURRENT_TIMESTAMP, 0),
+       ('expert21@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원2고수1', '01000002021', 'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('expert22@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원2고수2', '01000002022', 'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('admin21@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원2관리자1', '01000003021', 'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('admin22@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원2관리자2', '01000003022', 'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('customer31@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원3고객1', '01000001031', 'USER', CURRENT_TIMESTAMP, 0),
+       ('customer32@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원3고객2', '01000001032', 'USER', CURRENT_TIMESTAMP, 0),
+       ('expert31@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원3고수1', '01000002031', 'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('expert32@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원3고수2', '01000002032', 'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('admin31@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원3관리자1', '01000003031', 'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('admin32@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원3관리자2', '01000003032', 'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('customer41@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원4고객1', '01000001041', 'USER', CURRENT_TIMESTAMP, 0),
+       ('customer42@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원4고객2', '01000001042', 'USER', CURRENT_TIMESTAMP, 0),
+       ('expert41@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원4고수1', '01000002041', 'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('expert42@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원4고수2', '01000002042', 'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('admin41@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원4관리자1', '01000003041', 'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('admin42@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원4관리자2', '01000003042', 'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('customer51@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원5고객1', '01000001051', 'USER', CURRENT_TIMESTAMP, 0),
+       ('customer52@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원5고객2', '01000001052', 'USER', CURRENT_TIMESTAMP, 0),
+       ('expert51@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원5고수1', '01000002051', 'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('expert52@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원5고수2', '01000002052', 'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('admin51@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원5관리자1', '01000003051', 'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('admin52@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원5관리자2', '01000003052', 'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('customer19@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원1탈퇴테스트', '01000009019', 'USER', CURRENT_TIMESTAMP, 0),
+       ('customer29@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원2탈퇴테스트', '01000009029', 'USER', CURRENT_TIMESTAMP, 0),
+       ('customer39@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원3탈퇴테스트', '01000009039', 'USER', CURRENT_TIMESTAMP, 0),
+       ('customer49@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원4탈퇴테스트', '01000009049', 'USER', CURRENT_TIMESTAMP, 0),
+       ('customer59@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '팀원5탈퇴테스트', '01000009059', 'USER', CURRENT_TIMESTAMP, 0);
+
+-- 팀원별 지역을 분리합니다. 끝자리 1번은 개별 시군구 이사·입주 청소. 2번은 해당 시도 전체 이사·개발 외주.
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id, is_nationwide)
+VALUES ((SELECT id FROM member WHERE email = 'expert11@example.com'), '서울 강남구 테스트 고수입니다.', '서울 강남구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert12@example.com'), '서울 강남구 테스트 고수입니다.', '서울 강남구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert21@example.com'), '부산 중구 테스트 고수입니다.', '부산 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert22@example.com'), '부산 중구 테스트 고수입니다.', '부산 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert31@example.com'), '대구 중구 테스트 고수입니다.', '대구 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert32@example.com'), '대구 중구 테스트 고수입니다.', '대구 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert41@example.com'), '인천 제물포구 테스트 고수입니다.', '인천 제물포구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert42@example.com'), '인천 제물포구 테스트 고수입니다.', '인천 제물포구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert51@example.com'), '대전 동구 테스트 고수입니다.', '대전 동구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert52@example.com'), '대전 동구 테스트 고수입니다.', '대전 동구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE);
+
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert11@example.com'), 101),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert11@example.com'), 102),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert12@example.com'), 101),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert12@example.com'), 139),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert21@example.com'), 101),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert21@example.com'), 102),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert22@example.com'), 101),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert22@example.com'), 139),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert31@example.com'), 101),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert31@example.com'), 102),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert32@example.com'), 101),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert32@example.com'), 139),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert41@example.com'), 101),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert41@example.com'), 102),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert42@example.com'), 101),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert42@example.com'), 139),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert51@example.com'), 101),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert51@example.com'), 102),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert52@example.com'), 101),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert52@example.com'), 139);
+
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert11@example.com'), 39),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert21@example.com'), 69),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert31@example.com'), 85),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert41@example.com'), 94),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert51@example.com'), 105);
+
+INSERT INTO expert_profile_whole_regions (expert_profile_id, whole_regions_id)
+VALUES ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert12@example.com'), 1),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert22@example.com'), 3),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert32@example.com'), 4),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert42@example.com'), 5),
+       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert52@example.com'), 6);
+
+-- 신규 고수는 20크레딧에서 시작합니다. 아래 의뢰 요청됨 시드에만 2크레딧 사용을 반영합니다.
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM member
+WHERE email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com', 'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com', 'expert51@example.com', 'expert52@example.com');
+
+-- 팀원별 요청서·견적 화면 시나리오: 원본 요청서 1~10과 원본 견적은 유지합니다.
+INSERT INTO service_request (member_id, second_category_id, second_region_id, request_status, created_at)
+VALUES ((SELECT id FROM member WHERE email='customer11@example.com'), 101, 39, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer11@example.com'), 139, 39, 'CLOSED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer12@example.com'), 102, 39, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer12@example.com'), 139, 39, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer21@example.com'), 101, 69, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer21@example.com'), 139, 69, 'CLOSED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer22@example.com'), 102, 69, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer22@example.com'), 139, 69, 'MATCHED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer31@example.com'), 101, 85, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer31@example.com'), 139, 85, 'CLOSED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer32@example.com'), 102, 85, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer32@example.com'), 139, 85, 'MATCHED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer41@example.com'), 101, 94, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer41@example.com'), 139, 94, 'CLOSED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer42@example.com'), 102, 94, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer42@example.com'), 139, 94, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer51@example.com'), 101, 105, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer51@example.com'), 139, 105, 'CLOSED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer52@example.com'), 102, 105, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email='customer52@example.com'), 139, 105, 'MATCHED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP));
+
+-- 새 고객의 요청서에는 필수·선택 질문 답변을 모두 저장합니다.
+INSERT INTO request_answer (service_request_id, question_id, question_content, content)
+SELECT sr.id, q.id, q.content,
+       CASE q.display_order WHEN 1 THEN '시드 요청서의 서비스 견적을 받고 싶습니다.'
+                            WHEN 2 THEN '고수와 일정 협의 예정입니다.'
+                            WHEN 3 THEN '예산은 견적 확인 후 협의합니다.'
+                            ELSE '팀원별 화면 확인용 테스트 요청서입니다.' END
+FROM service_request sr JOIN member m ON sr.member_id=m.id CROSS JOIN question q
+WHERE m.email IN ('customer11@example.com', 'customer12@example.com', 'customer21@example.com', 'customer22@example.com', 'customer31@example.com', 'customer32@example.com', 'customer41@example.com', 'customer42@example.com', 'customer51@example.com', 'customer52@example.com');
+
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id, sr.id, 'expert12의 팀원별 SENT 견적입니다.', 112000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
+FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
+CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
+WHERE expert.email='expert12@example.com' AND customer.email='customer11@example.com'
+  AND sr.second_category_id=101 AND sr.request_status<>'CLOSED';
+
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id, sr.id, 'expert21의 팀원별 SENT 견적입니다.', 121000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
+FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
+CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
+WHERE expert.email='expert21@example.com' AND customer.email='customer22@example.com'
+  AND sr.second_category_id=102 AND sr.request_status<>'CLOSED';
+
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id, sr.id, 'expert22의 팀원별 REQUESTED 견적입니다.', 122000, 'REQUESTED', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
+FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
+CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
+WHERE expert.email='expert22@example.com' AND customer.email='customer22@example.com'
+  AND sr.second_category_id=139 AND sr.request_status<>'CLOSED';
+
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id, sr.id, 'expert31의 팀원별 SENT 견적입니다.', 131000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
+FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
+CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
+WHERE expert.email='expert31@example.com' AND customer.email='customer31@example.com'
+  AND sr.second_category_id=101 AND sr.request_status<>'CLOSED';
+
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id, sr.id, 'expert31의 팀원별 SENT 견적입니다.', 131000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
+FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
+CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
+WHERE expert.email='expert31@example.com' AND customer.email='customer32@example.com'
+  AND sr.second_category_id=102 AND sr.request_status<>'CLOSED';
+
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id, sr.id, 'expert32의 팀원별 REQUESTED 견적입니다.', 132000, 'REQUESTED', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
+FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
+CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
+WHERE expert.email='expert32@example.com' AND customer.email='customer32@example.com'
+  AND sr.second_category_id=139 AND sr.request_status<>'CLOSED';
+
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id, sr.id, 'expert32의 팀원별 SENT 견적입니다.', 132000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
+FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
+CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
+WHERE expert.email='expert32@example.com' AND customer.email='customer31@example.com'
+  AND sr.second_category_id=101 AND sr.request_status<>'CLOSED';
+
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id, sr.id, 'expert41의 팀원별 SENT 견적입니다.', 141000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
+FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
+CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
+WHERE expert.email='expert41@example.com' AND customer.email='customer42@example.com'
+  AND sr.second_category_id=102 AND sr.request_status<>'CLOSED';
+
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id, sr.id, 'expert51의 팀원별 SENT 견적입니다.', 151000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
+FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
+CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
+WHERE expert.email='expert51@example.com' AND customer.email='customer51@example.com'
+  AND sr.second_category_id=101 AND sr.request_status<>'CLOSED';
+
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id, sr.id, 'expert51의 팀원별 SENT 견적입니다.', 151000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
+FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
+CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
+WHERE expert.email='expert51@example.com' AND customer.email='customer52@example.com'
+  AND sr.second_category_id=102 AND sr.request_status<>'CLOSED';
+
+INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
+SELECT ep.id, sr.id, 'expert52의 팀원별 REQUESTED 견적입니다.', 152000, 'REQUESTED', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)
+FROM expert_profile ep JOIN member expert ON ep.member_id=expert.id
+CROSS JOIN service_request sr JOIN member customer ON sr.member_id=customer.id
+WHERE expert.email='expert52@example.com' AND customer.email='customer52@example.com'
+  AND sr.second_category_id=139 AND sr.request_status<>'CLOSED';
+
+-- SENT는 예약만 반영하고 REQUESTED는 실제 의뢰 요청처럼 사용 처리·잔액·내역·채팅방을 맞춥니다.
+INSERT INTO credit_reservation (credit_wallet_id, quote_id, amount, reservation_status, created_at)
+SELECT w.id, q.id, 2, CASE WHEN q.quote_status='REQUESTED' THEN 'USED' ELSE 'RESERVED' END, q.sent_at
+FROM quote q JOIN expert_profile ep ON q.expert_id=ep.id
+JOIN member m ON ep.member_id=m.id JOIN credit_wallet w ON w.member_id=m.id
+WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com', 'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com', 'expert51@example.com', 'expert52@example.com');
+
+UPDATE credit_wallet SET balance=18
+WHERE member_id IN (SELECT id FROM member WHERE email IN ('expert22@example.com', 'expert32@example.com', 'expert52@example.com'));
+
+INSERT INTO credit_history (credit_wallet_id, history_type, amount, balance_after, quote_id, created_at)
+SELECT w.id, 'USE', -2, 18, q.id, q.sent_at
+FROM quote q JOIN expert_profile ep ON q.expert_id=ep.id
+JOIN member m ON ep.member_id=m.id JOIN credit_wallet w ON w.member_id=m.id
+WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com', 'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com', 'expert51@example.com', 'expert52@example.com') AND q.quote_status='REQUESTED';
+
+INSERT INTO chat_room (quote_id, created_at)
+SELECT q.id, q.sent_at FROM quote q JOIN expert_profile ep ON q.expert_id=ep.id
+JOIN member m ON ep.member_id=m.id
+WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com', 'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com', 'expert51@example.com', 'expert52@example.com') AND q.quote_status='REQUESTED';
+
+INSERT INTO chat_participant (chat_room_id, member_id)
+SELECT cr.id, ep.member_id FROM chat_room cr JOIN quote q ON cr.quote_id=q.id
+JOIN expert_profile ep ON q.expert_id=ep.id JOIN member m ON ep.member_id=m.id
+WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com', 'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com', 'expert51@example.com', 'expert52@example.com')
+UNION ALL
+SELECT cr.id, sr.member_id FROM chat_room cr JOIN quote q ON cr.quote_id=q.id
+JOIN service_request sr ON q.service_request_id=sr.id JOIN expert_profile ep ON q.expert_id=ep.id
+JOIN member m ON ep.member_id=m.id WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com', 'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com', 'expert51@example.com', 'expert52@example.com');
