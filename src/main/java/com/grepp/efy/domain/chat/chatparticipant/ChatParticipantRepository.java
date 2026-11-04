@@ -3,6 +3,7 @@ package com.grepp.efy.domain.chat.chatparticipant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -22,6 +23,15 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
         where p.chatRoom.id = :roomId and p.member.id = :memberId and p.leftAt is null
         """)
     Optional<ChatParticipant> findActiveParticipant(@Param("roomId") Long roomId, @Param("memberId") Long memberId);
+
+    // 읽음 위치는 앞으로만 간다. 늦게 끝난 요청이 더 작은 값으로 덮어쓰지 않도록 조건부로 갱신
+    @Modifying
+    @Query("""
+        update ChatParticipant p set p.lastReadMessageId = :messageId
+        where p.id = :participantId
+          and (p.lastReadMessageId is null or p.lastReadMessageId < :messageId)
+        """)
+    int updateLastRead(@Param("participantId") Long participantId, @Param("messageId") Long messageId);
 
     // 내가 나가지 않은 방. 메시지가 없는 방은 생성 시각으로 정렬
     @Query(value = """

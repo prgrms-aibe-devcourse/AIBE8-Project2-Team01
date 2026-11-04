@@ -43,4 +43,14 @@ public class ChatRoomController implements ChatRoomControllerDocs {
         return ResponseEntity.ok(response);
     }
 
+    @Override
+    @PatchMapping("/chat-rooms/{roomId}/read")
+    public ResponseEntity<Void> readChatRoom(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable @Positive Long roomId
+    ) {
+        chatRoomService.read(roomId, userDetails.getMemberId());
+        return ResponseEntity.noContent().build();
+    }
+
 }
