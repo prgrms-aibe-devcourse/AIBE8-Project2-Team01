@@ -1,6 +1,7 @@
 package com.grepp.efy.domain.reaction.bookmark;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,4 +18,12 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
           and b.expertProfile.member.deletedAt is null
         """)
     long countActive(@Param("memberId") Long memberId);
+
+    // 활성일 때만 비활성으로 바꾸고 바뀐 행 수를 돌려준다. 동시에 두 번 취소해도 한 번만 1이 나온다
+    @Modifying
+    @Query("""
+        update Bookmark b set b.active = false
+        where b.member.id = :memberId and b.expertProfile.id = :expertProfileId and b.active = true
+        """)
+    int deactivate(@Param("memberId") Long memberId, @Param("expertProfileId") Long expertProfileId);
 }

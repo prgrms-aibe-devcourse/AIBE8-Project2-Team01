@@ -1,5 +1,6 @@
 package com.grepp.efy.domain.reaction.bookmark;
 
+import com.grepp.efy.domain.reaction.bookmark.dto.BookmarkCancelResponse;
 import com.grepp.efy.domain.reaction.bookmark.dto.BookmarkResponse;
 import com.grepp.efy.domain.user.expertprofile.ExpertProfile;
 import com.grepp.efy.domain.user.expertprofile.ExpertProfileRepository;
@@ -55,6 +56,19 @@ public class BookmarkService {
         } catch (DataIntegrityViolationException e) {
             throw new BusinessException(ErrorCode.ALREADY_BOOKMARKED_EXCEPTION);
         }
+    }
+
+    // 기록은 남기고 비활성으로. 판단 순서: 고수 프로필 없음·탈퇴(404) → 활성 북마크 없음(404)
+    @Transactional
+    public BookmarkCancelResponse cancelBookmark(Long memberId, Long expertProfileId) {
+
+        findExpertProfile(expertProfileId);
+
+        if (bookmarkRepository.deactivate(memberId, expertProfileId) == 0) {
+            throw new BusinessException(ErrorCode.BOOKMARK_NOT_FOUND_EXCEPTION);
+        }
+
+        return new BookmarkCancelResponse(expertProfileId, false);
     }
 
     // 고수 프로필은 회원과 1:1이고 따로 삭제 표시가 없으므로, 회원이 탈퇴했으면 없는 프로필로 취급
