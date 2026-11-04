@@ -160,8 +160,8 @@ public class ServiceRequestService {
     private void validateDuplicateRequest(Long memberId, Long secondCategoryId) {
         LocalDateTime expirationBoundary = LocalDateTime.now().minusHours(ServiceRequest.VALID_HOURS);
 
-        boolean exists = serviceRequestRepository.existsByMemberIdAndSecondCategoryIdAndRequestStatusAndCreatedAtAfter(
-                memberId, secondCategoryId, RequestStatus.OPEN, expirationBoundary);
+        boolean exists = serviceRequestRepository.existsByMemberIdAndSecondCategoryIdAndRequestStatusNotAndCreatedAtAfter(
+                memberId, secondCategoryId, RequestStatus.CLOSED, expirationBoundary);
 
         if (exists) throw new BusinessException(DUPLICATE_SERVICE_REQUEST_EXCEPTION);
     }
