@@ -20,11 +20,13 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -65,9 +67,72 @@ class BookmarkTests {
             jdbcTemplate.update("delete from bookmark where expert_profile_id in (select id from expert_profile where member_id = ?)", id);
         }
         for (Long id : memberIds) {
+            String profile = "(select id from expert_profile where member_id = " + id + ")";
+            jdbcTemplate.update("delete from expert_profile_whole_regions where expert_profile_id in " + profile);
+            jdbcTemplate.update("delete from expert_profile_regions where expert_profile_id in " + profile);
             jdbcTemplate.update("delete from expert_profile where member_id = ?", id);
             jdbcTemplate.update("delete from member where id = ?", id);
         }
+    }
+
+    // ---------- 목록 ----------
+
+    @Test
+    void 목록은_활성_북마크만_최신순으로_주고_취소나_탈퇴한_고수는_뺀다() throws Exception {
+        Long older = expertProfile(member("EXPERT"));
+        Long canceled = expertProfile(member("EXPERT"));
+        Long withdrawnMember = member("EXPERT");
+        Long withdrawn = expertProfile(withdrawnMember);
+        bookmark(me, older, true, LocalDateTime.of(2026, 1, 1, 0, 0));
+        bookmark(me, profileId, true, LocalDateTime.of(2026, 2, 1, 0, 0));
+        bookmark(me, canceled, false, LocalDateTime.of(2026, 3, 1, 0, 0));
+        bookmark(me, withdrawn, true, LocalDateTime.of(2026, 4, 1, 0, 0));
+        jdbcTemplate.update("update member set deleted_at = CURRENT_TIMESTAMP where id = ?", withdrawnMember);
+        // 다른 회원의 북마크는 안 보인다
+        bookmark(expertMember, older, true, LocalDateTime.of(2026, 5, 1, 0, 0));
+
+        list(me, 1)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].expertProfileId").value(profileId.intValue()))
+                .andExpect(jsonPath("$.content[1].expertProfileId").value(older.intValue()))
+                .andExpect(jsonPath("$.lastPage").value(true));
+    }
+
+    @Test
+    void 목록_항목에는_대표_카테고리와_활동_지역이_모두_담기고_리뷰는_null_0이다() throws Exception {
+        // 시/도 전체: 서울(1), 개별 시/군/구: 강남구(39)·중구(18)
+        jdbcTemplate.update("insert into expert_profile_whole_regions(expert_profile_id, whole_regions_id) values (?, 1)", profileId);
+        jdbcTemplate.update("insert into expert_profile_regions(expert_profile_id, regions_id) values (?, 39), (?, 18)", profileId, profileId);
+        bookmark(me, profileId, true, LocalDateTime.of(2026, 2, 1, 0, 0));
+
+        list(me, 1)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].expertNickname").exists())
+                .andExpect(jsonPath("$.content[0].expertProfileImageUrl").value(nullValue()))
+                .andExpect(jsonPath("$.content[0].averageRating").value(nullValue()))
+                .andExpect(jsonPath("$.content[0].reviewCount").value(0))
+                .andExpect(jsonPath("$.content[0].category.secondCategoryId").value(101))
+                .andExpect(jsonPath("$.content[0].category.firstCategoryName").exists())
+                .andExpect(jsonPath("$.content[0].nationwide").value(false))
+                .andExpect(jsonPath("$.content[0].wholeRegions[0].firstRegionId").value(1))
+                .andExpect(jsonPath("$.content[0].regions.length()").value(2))
+                .andExpect(jsonPath("$.content[0].regions[0].secondRegionId").value(18))
+                .andExpect(jsonPath("$.content[0].regions[1].secondRegionId").value(39))
+                .andExpect(jsonPath("$.content[0].regions[1].firstRegionId").value(1))
+                .andExpect(jsonPath("$.content[0].bookmarkedAt").exists());
+    }
+
+    @Test
+    void 북마크가_없거나_범위를_넘으면_빈_목록이고_잘못된_pageNumber는_400이다() throws Exception {
+        list(me, 1).andExpect(status().isOk()).andExpect(jsonPath("$.content").isEmpty());
+
+        bookmark(me, profileId, true, LocalDateTime.now());
+        list(me, 2).andExpect(status().isOk()).andExpect(jsonPath("$.content").isEmpty());
+
+        list(me, 0).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/members/me/bookmarks")).andExpect(status().isUnauthorized());
     }
 
     // ---------- 등록 ----------
@@ -200,6 +265,17 @@ class BookmarkTests {
 
     private ResultActions create(Long memberId, Long expertProfileId) throws Exception {
         return mockMvc.perform(post(url(expertProfileId)).header("Authorization", "Bearer " + token(memberId)));
+    }
+
+    private ResultActions list(Long memberId, int pageNumber) throws Exception {
+        return mockMvc.perform(get("/api/members/me/bookmarks")
+                .param("pageNumber", String.valueOf(pageNumber))
+                .header("Authorization", "Bearer " + token(memberId)));
+    }
+
+    private void bookmark(Long memberId, Long expertProfileId, boolean active, LocalDateTime at) {
+        jdbcTemplate.update("insert into bookmark(member_id, expert_profile_id, is_active, bookmarked_at) values (?, ?, ?, ?)",
+                memberId, expertProfileId, active, Timestamp.valueOf(at));
     }
 
     private ResultActions cancel(Long memberId, Long expertProfileId) throws Exception {
