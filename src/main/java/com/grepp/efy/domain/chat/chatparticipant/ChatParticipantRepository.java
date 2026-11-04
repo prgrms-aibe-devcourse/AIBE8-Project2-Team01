@@ -7,11 +7,21 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ChatParticipantRepository extends JpaRepository<ChatParticipant, Long> {
 
     // 채팅방에 참여 중(나가지 않음)인지 확인
     boolean existsByChatRoomIdAndMemberIdAndLeftAtIsNull(Long chatRoomId, Long memberId);
+
+    // 메시지 전송용. 참여 중인 참여 기록과 채팅방·보낸 사람을 한 번에 조회
+    @Query("""
+        select p from ChatParticipant p
+        join fetch p.chatRoom
+        join fetch p.member
+        where p.chatRoom.id = :roomId and p.member.id = :memberId and p.leftAt is null
+        """)
+    Optional<ChatParticipant> findActiveParticipant(@Param("roomId") Long roomId, @Param("memberId") Long memberId);
 
     // 내가 나가지 않은 방. 메시지가 없는 방은 생성 시각으로 정렬
     @Query(value = """

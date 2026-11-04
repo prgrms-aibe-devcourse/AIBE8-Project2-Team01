@@ -43,10 +43,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
     // /pub으로 보낸 메시지는 @MessageMapping으로, /sub 구독은 메모리 기반 Simple Broker가 전달
+    // /queue는 @SendToUser로 특정 세션에만 보내는 메시지 (/user/queue/errors → 세션별 /queue/errors-user{id})
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.setApplicationDestinationPrefixes(applicationPrefix);
-        registry.enableSimpleBroker(brokerPrefix);
+        registry.enableSimpleBroker(brokerPrefix, "/queue");
     }
 
     // 클라이언트가 보내는 모든 STOMP 프레임은 인증 인터셉터를 먼저 거친다 (CONNECT에서만 검사)
