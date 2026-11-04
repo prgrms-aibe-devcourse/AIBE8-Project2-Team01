@@ -11,8 +11,8 @@ import java.util.List;
 @Repository
 public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, Long> {
 
-    boolean existsByMemberIdAndSecondCategoryIdAndRequestStatusAndCreatedAtAfter(
-            Long memberId, Long secondCategoryId, RequestStatus requestStatus, LocalDateTime expirationBoundary);
+    boolean existsByMemberIdAndSecondCategoryIdAndRequestStatusNotAndCreatedAtAfter
+            (Long memberId, Long secondCategoryId, RequestStatus requestStatus, LocalDateTime expirationBoundary);
 
     List<ServiceRequest> findByMemberIdAndRequestStatusNotOrderByCreatedAtDesc(Long member_id, RequestStatus requestStatus);
 
@@ -25,6 +25,7 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, 
                    OR r.secondRegion.firstRegion.id IN :firstRegionIds)
               AND r.requestStatus <> :requestStatus
               AND r.member.id <> :id
+              AND r.member.deletedAt IS NULL
               AND r.createdAt > :boundary
             ORDER BY r.createdAt DESC
             """)
