@@ -38,21 +38,11 @@ public class ChatRoomService {
 
     @Transactional
     public ChatRoomCreateResponse createChatRoom(Long memberId, ChatRoomCreateRequest request) {
-        Quote quote = quoteService.getQuoteEntity(request.quoteId());
+        // 의뢰 요청과 함께 채팅방을 만든다. 요청서 작성자 확인·중복 요청(409)·상태 전이는 requestQuote가 처리
+        Quote quote = quoteService.requestQuote(memberId, request.quoteId());
 
         Member customer = quote.getServiceRequest().getMember();
         Member expert = quote.getExpertProfile().getMember();
-
-        boolean isCustomer = customer.getId().equals(memberId);
-        boolean isExpert = expert.getId().equals(memberId);
-
-        if (!isCustomer && !isExpert) {
-            throw new BusinessException(ErrorCode.NOT_QUOTE_PARTY_EXCEPTION);
-        }
-
-        if (chatRoomRepository.existsByQuoteId(quote.getId())) {
-            throw new BusinessException(ErrorCode.CHAT_ROOM_ALREADY_EXISTS_EXCEPTION);
-        }
 
         ChatRoom room;
         try {

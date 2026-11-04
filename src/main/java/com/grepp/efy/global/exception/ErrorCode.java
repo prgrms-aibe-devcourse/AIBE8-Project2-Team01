@@ -97,7 +97,6 @@ public enum ErrorCode {
     PAYMENT_CONFIRM_FAILED_EXCEPTION(HttpStatus.BAD_GATEWAY, "결제 승인에 실패했습니다."),
 
     // ⑧ 채팅
-    NOT_QUOTE_PARTY_EXCEPTION(HttpStatus.FORBIDDEN, "해당 견적서의 당사자가 아닙니다."),
     CHAT_ROOM_ALREADY_EXISTS_EXCEPTION(HttpStatus.CONFLICT, "이미 채팅방이 존재합니다."),
 
     // ⑨ 파일 (공통)
