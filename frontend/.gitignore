@@ -4,3 +4,5 @@ dist/
 # 로컬 환경 변수
 .env.local
 .env.*.local
+# 운영체제 파일
+.DS_Store

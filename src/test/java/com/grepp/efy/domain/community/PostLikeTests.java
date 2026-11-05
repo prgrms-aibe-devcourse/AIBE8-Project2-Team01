@@ -157,6 +157,7 @@ class PostLikeTests {
         mockMvc.perform(get("/api/admin/posts")
                         .header("Authorization", "Bearer " + token(admin))
                         .param("sortBy", "likeCount")
+                        .param("keyword", "좋아요검증-")
                         .param("pageSize", "2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].postId").value(popular.intValue()))
@@ -269,7 +270,7 @@ class PostLikeTests {
 
     // post()로 지으면 static import한 MockMvc post()와 헷갈리므로 newPost
     private Long newPost(Long memberId) {
-        String title = UUID.randomUUID().toString().substring(0, 20);
+        String title = "좋아요검증-" + UUID.randomUUID().toString().substring(0, 20);
         Timestamp time = Timestamp.valueOf(LocalDateTime.now());
         jdbcTemplate.update("""
                 insert into post(member_id, board_type, title, content, view_count, created_at, updated_at, is_visible)

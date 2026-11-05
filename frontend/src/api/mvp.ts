@@ -100,8 +100,11 @@ export interface Comment {
   commentId: number; memberId: number; memberNickname: string; memberProfileImageUrl: string | null; isExpert: boolean;
   content: string; images: PostImage[]; likeCount: number; liked: boolean; createdAt: string; updatedAt: string;
 }
-export const getPosts = (boardType: BoardType, pageNumber: number, keyword?: string) =>
-  request<Page<PostSummary>>(`/api/public/posts?boardType=${boardType}&pageNumber=${pageNumber}${keyword ? `&keyword=${encodeURIComponent(keyword)}` : ''}`);
+// 분야·지역 필터는 선택 (firstCategoryId·secondCategoryId·firstRegionId·secondRegionId)
+export interface PostFilter { firstCategoryId?: number; secondCategoryId?: number; firstRegionId?: number; secondRegionId?: number }
+const filterQuery = (f?: PostFilter) => f ? Object.entries(f).filter(([, v]) => v != null).map(([k, v]) => `&${k}=${v}`).join('') : '';
+export const getPosts = (boardType: BoardType, pageNumber: number, keyword?: string, filter?: PostFilter) =>
+  request<Page<PostSummary>>(`/api/public/posts?boardType=${boardType}&pageNumber=${pageNumber}${keyword ? `&keyword=${encodeURIComponent(keyword)}` : ''}${filterQuery(filter)}`);
 export const getMyPosts = (pageNumber: number, boardType?: BoardType) =>
   request<Page<PostSummary>>(`/api/members/me/posts?pageNumber=${pageNumber}${boardType ? `&boardType=${boardType}` : ''}`);
 export const getPost = (postId: number) => request<Post>(`/api/public/posts/${postId}`);
@@ -127,6 +130,16 @@ export async function uploadPublicFiles(files: File[]): Promise<FileUploadRespon
   return request<FileUploadResponse[]>('/api/files', { method: 'POST', form });
 }
 
+// 채팅 사진: 비공개(PRIVATE) 파일로 올린 뒤 받은 fileId로 IMAGE 메시지를 보낸다 (서버는 본인이 올린 PRIVATE 파일만 받음)
+export async function uploadPrivateImage(file: File): Promise<FileUploadResponse> {
+  const form = new FormData();
+  form.append('files', file);
+  form.append('visibility', 'PRIVATE');
+  const list = await request<FileUploadResponse[]>('/api/files', { method: 'POST', form });
+  if (!list?.[0]?.fileId || list[0].visibility !== 'PRIVATE') throw new Error('사진 업로드 결과를 확인하지 못했어요.');
+  return list[0];
+}
+
 // ── 고수 찜 (BM) ──
 export interface BookmarkSummary {
   expertProfileId: number; expertNickname: string; expertProfileImageUrl: string | null;
@@ -139,6 +152,9 @@ export const addBookmark = (expertProfileId: number) =>
   request<{ expertProfileId: number; bookmarked: boolean }>(`/api/members/me/bookmarks/${expertProfileId}`, { method: 'POST' });
 export const removeBookmark = (expertProfileId: number) =>
   request<{ expertProfileId: number; bookmarked: boolean }>(`/api/members/me/bookmarks/${expertProfileId}`, { method: 'DELETE' });
+
+// ── 회원 탈퇴 (MemberController DELETE /api/members/me · 204 · 리프레시 쿠키도 만료) ──
+export const deleteMe = () => request<void>('/api/members/me', { method: 'DELETE' });
 
 // ── 관리자 ──
 export const adminGetMembers = (pageNumber: number, sortBy = 'id', sortOrder = 'asc') =>
@@ -164,3 +180,28 @@ export const adminCreateSecondRegion = (firstRegionId: number, name: string, cod
 export const adminUpdateSecondRegion = (id: number, name: string, code: string, firstRegionId: number) =>
   request<unknown>(`/api/admin/second-regions/${id}`, { method: 'PUT', body: { name, code, firstRegionId } });
 export const adminDeleteSecondRegion = (id: number) => request<unknown>(`/api/admin/second-regions/${id}`, { method: 'DELETE' });
+
+// ── 관리자 · 게시글 공개 관리 (PostController) ──
+export type PostSort = 'createdAt' | 'commentCount' | 'likeCount' | 'viewCount';
+export interface AdminPostQuery extends PostFilter { pageNumber: number; boardType?: BoardType; keyword?: string; isVisible?: boolean; sortBy?: PostSort; sortOrder?: 'asc' | 'desc' }
+export const adminGetPosts = (q: AdminPostQuery) => {
+  const qs = new URLSearchParams();
+  Object.entries(q).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') qs.set(k, String(v)); });
+  qs.set('pageSize', '20');
+  return request<Page<PostSummary>>(`/api/admin/posts?${qs}`);
+};
+export const adminSetPostVisibility = (postId: number, isVisible: boolean, reason?: string) =>
+  request<{ postId: number; isVisible: boolean }>(`/api/admin/posts/${postId}/visibility`, { method: 'PATCH', body: { isVisible, ...(reason ? { reason } : {}) } });
+export interface VisibilityHistory { historyId: number; isVisible: boolean; reason: string | null; adminId: number; adminNickname: string; createdAt: string }
+export const adminGetPostVisibilityHistory = (postId: number) =>
+  request<{ postId: number; histories: VisibilityHistory[] }>(`/api/admin/posts/${postId}/visibility-history`);
+
+// ── 관리자 · 요청서·견적 현황 (ServiceRequestController · QuoteController) ──
+export interface AdminRequest { requestId: number; customerId: number; customerNickname: string; secondCategoryName: string; secondRegionName: string; requestStatus: RequestStatus; createdAt: string }
+export interface AdminQuote { quoteId: number; serviceRequestId: number; expertProfileId: number; expertNickname: string; customerId: number; customerNickname: string; secondCategoryName: string; secondRegionName: string; price: number; quoteStatus: QuoteStatus; sentAt: string }
+const adminList = (path: string, pageNumber: number, sortBy: string, sortOrder: string, status?: string) =>
+  `${path}?pageNumber=${pageNumber}&pageSize=10&sortBy=${sortBy}&sortOrder=${sortOrder}${status ? `&status=${status}` : ''}`;
+export const adminGetRequests = (pageNumber: number, sortBy = 'createdAt', sortOrder = 'desc', status?: RequestStatus) =>
+  request<Page<AdminRequest>>(adminList('/api/admin/requests', pageNumber, sortBy, sortOrder, status));
+export const adminGetQuotes = (pageNumber: number, sortBy = 'sentAt', sortOrder = 'desc', status?: QuoteStatus) =>
+  request<Page<AdminQuote>>(adminList('/api/admin/quotes', pageNumber, sortBy, sortOrder, status));

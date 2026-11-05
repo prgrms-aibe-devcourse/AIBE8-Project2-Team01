@@ -1,0 +1,602 @@
+/* 히어로 오른쪽: 요청서 → 견적 → 채팅 흐름을 자동으로 반복하는 예시 화면 */
+.flow {
+  grid-column: 9 / span 4;
+  justify-self: end;
+  width: 100%;
+  max-width: 340px;
+}
+
+.flow-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.flow-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--ink-600);
+  box-shadow: inset 0 0 0 1px var(--ink-100);
+  transition: background-color var(--dur) var(--ease-out);
+}
+
+.flow-toggle:hover {
+  background: var(--paper-soft);
+}
+
+/* 장면마다 바뀌는 한 줄 문구: 왼쪽부터 드러나고 끝에 커서가 깜빡인다 */
+.flow-caption {
+  height: 30px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.flow-caption span {
+  position: relative;
+  display: inline-block;
+  padding-right: 8px;
+  color: var(--ink-900);
+  font-size: var(--fs-lead);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  clip-path: inset(0 0 0 0);
+  animation: type-in 700ms steps(14, end) both;
+}
+
+.flow-caption span::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 15%;
+  width: 3px;
+  height: 70%;
+  background: var(--blue-fill);
+  animation: caret 900ms step-end infinite;
+}
+
+@keyframes type-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* 앱 화면 틀 */
+.flow-screen {
+  position: relative;
+  height: 330px;
+  padding: 18px;
+  border-radius: var(--r-tile);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--ink-100), 0 2px 4px rgb(var(--shade) / 0.04), 0 24px 48px -28px rgba(31, 106, 230, 0.4);
+  overflow: hidden;
+}
+
+.scene {
+  position: absolute;
+  inset: 18px;
+  display: flex;
+  flex-direction: column;
+  transform-origin: 50% 40%;
+  animation: scene-in 420ms var(--ease-out) both, push 3.6s linear both;
+}
+
+@keyframes scene-in {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+    filter: blur(4px);
+  }
+}
+
+/* 아주 천천히 다가가는 카메라 */
+@keyframes push {
+  to {
+    scale: 1.035;
+  }
+}
+
+.fr-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fr-head img {
+  flex: none;
+  width: 52px;
+  height: 52px;
+}
+
+.fr-title {
+  font-size: var(--fs-body);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.fr-sub {
+  color: var(--ink-500);
+  font-size: var(--fs-xs);
+}
+
+.fr-answers {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.fr-answers li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--r-control);
+  background: var(--paper-soft);
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  animation: fill-in 380ms var(--ease-out) var(--d) both;
+}
+
+.fr-answers li span {
+  color: var(--ink-500);
+  font-weight: 550;
+}
+
+@keyframes fill-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.fr-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  margin-top: auto;
+  border-radius: var(--r-control);
+  background: var(--blue-fill);
+  color: #fff;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+/* 누르는 위치를 보여주는 원 */
+.tap-target {
+  animation: press 260ms var(--ease-out) calc(var(--press, 2100ms)) both;
+}
+
+.tap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border-radius: 50%;
+  background: rgb(var(--shade) / 0.22);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+  opacity: 0;
+  pointer-events: none;
+  animation: tap 700ms var(--ease-out) var(--d) both;
+}
+
+@keyframes tap {
+  0% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+@keyframes press {
+  50% {
+    transform: scale(0.97);
+  }
+}
+
+.scene-request .tap-target {
+  --press: 2200ms;
+}
+
+/* 전달 완료 */
+.scene-sent {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.sent-plane {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 10px;
+  border-radius: 50%;
+  background: var(--blue-soft);
+  color: var(--blue);
+  animation: fly 900ms var(--ease-out) both;
+}
+
+@keyframes fly {
+  0% {
+    transform: translate(-60px, 40px) rotate(-20deg) scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.sent-stack {
+  display: inline-flex;
+  margin-top: 14px;
+}
+
+.sent-stack img {
+  width: 36px;
+  height: 36px;
+  margin-left: -10px;
+  border-radius: 50%;
+  background: var(--paper-soft);
+  box-shadow: 0 0 0 3px var(--paper);
+  animation: pop 420ms var(--ease-out) calc(500ms + var(--i) * 140ms) both;
+}
+
+.sent-stack img:first-child {
+  margin-left: 0;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+/* 견적 목록 */
+.fl-head {
+  margin-bottom: 12px;
+  font-size: var(--fs-body);
+  font-weight: 750;
+}
+
+.fl-head b {
+  color: var(--teal);
+}
+
+.scene-list ul {
+  display: grid;
+  gap: 8px;
+}
+
+.fl-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 10px 10px;
+  border-radius: var(--r-card);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--ink-100);
+  animation: fill-in 420ms var(--ease-out) calc(200ms + var(--i) * 180ms) both;
+}
+
+.fl-row.is-first {
+  --press: 2000ms;
+  animation: fill-in 420ms var(--ease-out) 200ms both, pick 500ms var(--ease-out) 2000ms both;
+}
+
+@keyframes pick {
+  to {
+    box-shadow: inset 0 0 0 2px var(--blue);
+    background: var(--blue-soft);
+  }
+}
+
+.fl-row img {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--paper-soft);
+}
+
+.fl-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.fl-name small {
+  display: block;
+  color: var(--ink-500);
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.fl-price {
+  flex: none;
+  font-size: var(--fs-sm);
+  font-weight: 800;
+}
+
+/* 견적 상세 */
+.fd-back {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 14px;
+  color: var(--ink-500);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.fd-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fd-profile img {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--paper-soft);
+}
+
+.fd-price {
+  margin-top: 16px;
+  font-size: var(--fs-h2);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.fd-desc {
+  margin-top: 4px;
+  color: var(--ink-600);
+  font-size: var(--fs-xs);
+}
+
+.scene-detail .tap-target {
+  --press: 2000ms;
+}
+
+/* 의뢰 요청 도장 */
+.fd-stamp {
+  position: absolute;
+  right: 6px;
+  top: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 3px var(--blue), inset 0 0 0 7px var(--paper), inset 0 0 0 8px var(--blue);
+  color: var(--blue);
+  font-size: var(--fs-sm);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  opacity: 0;
+  animation: stamp 380ms var(--ease-out) 2250ms both;
+}
+
+@keyframes stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.8) rotate(-24deg);
+  }
+  100% {
+    opacity: 0.92;
+    transform: scale(1) rotate(-12deg);
+  }
+}
+
+/* 채팅 */
+.scene-chat {
+  gap: 10px;
+}
+
+.fc-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--ink-100);
+  font-size: var(--fs-sm);
+  font-weight: 750;
+}
+
+.fc-head img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--paper-soft);
+}
+
+.fc-system {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  background: var(--paper-soft);
+  color: var(--ink-600);
+  font-size: 12px;
+  font-weight: 650;
+  animation: pop 360ms var(--ease-out) 150ms both;
+}
+
+.bubble {
+  max-width: 82%;
+  padding: 10px 12px;
+  border-radius: 16px;
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  animation: fill-in 380ms var(--ease-out) var(--d) both;
+}
+
+.bubble.from-expert {
+  align-self: flex-start;
+  border-top-left-radius: 4px;
+  background: var(--paper-soft);
+  color: var(--ink-800);
+}
+
+.bubble.from-me {
+  align-self: flex-end;
+  border-top-right-radius: 4px;
+  background: var(--blue-fill);
+  color: #fff;
+}
+
+.bubble.typing {
+  display: inline-flex;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.bubble.typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-400);
+  animation: dot 900ms ease-in-out infinite;
+}
+
+.bubble.typing span:nth-child(2) {
+  animation-delay: 150ms;
+}
+
+.bubble.typing span:nth-child(3) {
+  animation-delay: 300ms;
+}
+
+@keyframes dot {
+  50% {
+    transform: translateY(-3px);
+    opacity: 0.5;
+  }
+}
+
+/* 단계 표시: 파란 선이 현재 단계까지 그어진다 */
+.flow-steps {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  margin-top: 14px;
+}
+
+.flow-steps::before,
+.flow-steps::after {
+  content: '';
+  position: absolute;
+  top: 9px;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: var(--ink-100);
+}
+
+.flow-steps::after {
+  background: var(--blue-fill);
+  transform-origin: left;
+  transform: scaleX(var(--progress));
+  transition: transform 600ms var(--ease-out);
+}
+
+.flow-steps button {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 2px 0;
+  color: var(--ink-500);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.flow-dot {
+  width: 12px;
+  height: 12px;
+  margin-top: 2px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 2px var(--ink-200);
+  transition: box-shadow var(--dur) var(--ease-out), background-color var(--dur) var(--ease-out);
+}
+
+.flow-steps .is-done .flow-dot {
+  background: var(--blue-fill);
+  box-shadow: none;
+}
+
+.flow-steps .is-current {
+  color: var(--blue-strong);
+}
+
+.flow-steps .is-current .flow-dot {
+  background: var(--paper);
+  box-shadow: inset 0 0 0 4px var(--blue);
+}
+
+@media (max-width: 1080px) {
+  .flow {
+    grid-column: 8 / span 5;
+  }
+}
+
+@media (max-width: 900px) {
+  .flow {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene {
+    animation: none;
+  }
+  .flow-caption span {
+    animation: none;
+  }
+  .fd-stamp {
+    opacity: 0.92;
+    transform: rotate(-12deg);
+  }
+}

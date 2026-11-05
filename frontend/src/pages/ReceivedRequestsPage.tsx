@@ -9,9 +9,11 @@ import { useToast } from '../components/toast';
 import { Banner, ErrorView, Field, Lines, LoadingView, Modal, Spinner } from '../components/ui';
 import { navigate } from '../hooks/useHashRoute';
 import { useLoad } from '../hooks/useLoad';
+import { useMyExpertProfile } from '../hooks/useData';
 import { useSingleFlight } from '../hooks/useSingleFlight';
 import { remainText, requestDeadline, shortDateTime, won } from '../lib/labels';
 import { friendly } from '../lib/messages';
+import CategoryIcon from '../components/CategoryIcon';
 
 const DESC_MAX = 1000;
 
@@ -35,15 +37,22 @@ export function ReceivedRequestsPage({ selected }: { selected: string | null }) 
     }
   }, [list.state, selId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const cats = useMemo(() => list.state.kind === 'ok' ? ['전체', ...Array.from(new Set(list.state.data.map((r) => r.secondCategoryName)))] : ['전체'], [list.state]);
+  // 내가 맡은 서비스를 기준으로 거른다. 서버도 서비스·활동 지역이 맞는 요청서만 내려 준다
+  const mine = useMyExpertProfile(true);
+  const myServices = mine.state.kind === 'ok' ? mine.state.profile.services.map((x) => x.name) : [];
+  const cats = useMemo(() => {
+    const fromList = list.state.kind === 'ok' ? list.state.data.map((r) => r.secondCategoryName) : [];
+    return ['전체', ...Array.from(new Set([...myServices, ...fromList]))];
+  }, [list.state, myServices.join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
+  const countOf = (c: string) => (list.state.kind === 'ok' ? list.state.data.filter((r) => c === '전체' || r.secondCategoryName === c).length : 0);
 
   return (
     <main className={`page req-page${selId ? ' has-sel' : ''}`}>
       <div className="split">
         <aside className="split-list col gap-s">
           <h1 className="page-title">받은 요청서 <span className="blue-t">{list.state.kind === 'ok' ? list.state.data.length : ''}</span></h1>
-          <p className="sub">내 서비스와 활동 지역에 맞는 요청이에요</p>
-          {cats.length > 2 && <div className="tabs">{cats.map((c) => <button type="button" key={c} className={`tab${c === filter ? ' on' : ''}`} onClick={() => setFilter(c)}>{c}</button>)}</div>}
+          <p className="sub">내가 맡은 서비스와 활동 지역에 맞는 요청서만 보여요</p>
+          {cats.length > 2 && <div className="tabs wrap-tabs">{cats.map((c) => <button type="button" key={c} className={`tab${c === filter ? ' on' : ''}`} onClick={() => setFilter(c)}>{c} <span className="tab-count">{countOf(c)}</span></button>)}</div>}
           <LoadBox load={list.state} title="받은 요청서를 불러오지 못했어요" onRetry={() => list.reload()}>
             {(items) => {
               const shown = items.filter((r) => filter === '전체' || r.secondCategoryName === filter);
@@ -53,8 +62,11 @@ export function ReceivedRequestsPage({ selected }: { selected: string | null }) 
                 <div className="col gap-s">
                   {shown.map((r) => (
                     <a key={r.requestId} href={`#/received?id=${r.requestId}`} className={`req-card${r.requestId === selId ? ' on' : ''}`}>
-                      <span className="row between"><b>{r.secondCategoryName}</b>{r.sentQuoteId ? <Badge text="견적 보냄" tone="teal" /> : <small className="blue-t strong">마감까지 {remainText(requestDeadline(r.createdAt))}</small>}</span>
-                      <span className="sub">{r.secondRegionName} · {shortDateTime(r.createdAt)}</span>
+                      <CategoryIcon secondName={r.secondCategoryName} size={44} />
+                      <span className="req-card-body">
+                        <span className="row between"><b>{r.secondCategoryName}</b>{r.sentQuoteId ? <Badge text="견적 보냄" tone="teal" /> : <small className="blue-t strong">마감까지 {remainText(requestDeadline(r.createdAt))}</small>}</span>
+                        <span className="sub">{r.secondRegionName} · {shortDateTime(r.createdAt)}</span>
+                      </span>
                     </a>
                   ))}
                 </div>
@@ -92,7 +104,7 @@ function ReceivedDetail({ id, sentQuoteId, inList, onSent }: { id: number; sentQ
       <a className="back show-m" href="#/received">‹ 받은 요청서</a>
       <div className="card">
         <span className="sec-title">요청서 상세</span>
-        <b className="card-title">{r.secondCategoryName} · {r.secondRegionName}</b>
+        <span className="row detail-head"><CategoryIcon secondName={r.secondCategoryName} size={56} /><b className="card-title">{r.secondCategoryName} · {r.secondRegionName}</b></span>
         <div className="answers">
           {r.answers.map((a) => <div className="cell" key={a.questionId}><small>{a.questionContent}</small><span>{a.content}</span></div>)}
           <div className="cell"><small>접수 마감</small><span>{shortDateTime(deadline.toISOString())}</span></div>

@@ -1,0 +1,162 @@
+:root {
+  color-scheme: light;
+
+  /* 잉크: 본문과 선 */
+  --ink-900: #141833;
+  --ink-800: #252a48;
+  --ink-600: #4a5072;
+  --ink-500: #5e647f;
+  --ink-400: #8a90a8;
+  --ink-200: #d9dce7;
+  --ink-100: #e8eaf1;
+  --ink-50: #f4f5f9;
+
+  /* 종이 */
+  --paper: #ffffff;
+  --paper-soft: #f6f7fb;
+  /* 기능 화면의 바탕과 그 위에 올리는 면 */
+  /* 강사님 피드백: 팀원 저장소처럼 거의 흰색인 무채색 바탕 */
+  --canvas: #fafafa;
+  --surface: #ffffff;
+
+  /* 로고 파랑: 고객·요청·행동. 버튼 글자 대비를 위해 행동 색은 로고보다 한 단계 짙게 쓴다 */
+  --brand-blue: #2f7ffd;
+  --blue: #1f6ae6;
+  --blue-strong: #1857c4;
+  --blue-soft: #edf4ff;
+  --blue-line: #c8dbff;
+  /* 흰 글자를 얹는 파란 면. 다크 모드에서는 글자용 파랑과 값이 갈린다 */
+  --blue-fill: #1f6ae6;
+  --blue-fill-strong: #1857c4;
+
+  /* 로고 청록: 로고와 미리보기의 견적 도착 문구에만 아주 작게 쓴다 */
+  --brand-teal: #03948f;
+  --teal: #037a76;
+
+  /* 상황별 묶음 카드 바탕: 묶음 성격에 맞춘 엷은 색. 글자는 잉크색 그대로 쓴다 */
+  --col-moving: #fff1d6;
+  --col-moving-ink: #7a4a00;
+  --col-repair: #e3edff;
+  --col-repair-ink: #1d4fa8;
+  --col-learn: #e0f3e8;
+  --col-learn-ink: #1e6142;
+  --col-event: #fde6ee;
+  --col-event-ink: #9b2450;
+
+  /* 상태 */
+  --danger: #c8283a;
+  --danger-soft: #fdecee;
+  --sample: #4a5072;
+  --sample-soft: #eef0f5;
+  --heart: #d42a50;
+  --star: #f5b301;
+
+  /* 그림자와 덮개의 바탕 색(RGB 세 값). 반투명 값은 rgb(var(--shade) / 알파)로 쓴다 */
+  --shade: 20 24 51;
+  /* 색 바탕 카드 위의 칩 바탕 */
+  --chip-on-tint: rgb(255 255 255 / 0.88);
+  /* 커뮤니티 썸네일 색을 종이색과 섞는 비율 */
+  --thumb-mix: 100%;
+
+  /* 서체 */
+  --font: 'NanumSquare Neo', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+  /* 히어로 제목 한 곳에만 쓰는 굵은 제목체. 작게 쓰면 뭉개져서 다른 곳에는 쓰지 않는다 */
+  --font-display: 'Black Han Sans', 'NanumSquare Neo', sans-serif;
+
+  /* 글자 크기: 팀원 저장소 기준으로 제목을 한 단계씩 키웠다 (페이지 제목 34px, 섹션 제목 28px, 카드 제목 20px) */
+  --fs-hero: clamp(2.25rem, 1.4rem + 4vw, 4.5rem);
+  --fs-display: clamp(1.875rem, 1.2rem + 2.4vw, 2.875rem);
+  --fs-page: clamp(1.5rem, 1.1rem + 1.6vw, 2.125rem);
+  --fs-h2: clamp(1.5rem, 1.2rem + 1vw, 1.75rem);
+  --fs-sub: 1.375rem;
+  --fs-h3: 1.25rem;
+  --fs-lead: 1.125rem;
+  --fs-body: 1rem;
+  --fs-sm: 0.9375rem;
+  --fs-xs: 0.8125rem;
+
+  /* 간격: 4px 기반 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --section-gap: clamp(72px, 6vw + 40px, 128px);
+
+  /* 레이아웃: 숨고처럼 고정 폭 본문과 양옆 여백 */
+  --page-max: 1200px;
+  --gutter: clamp(20px, 4vw, 40px);
+  --header-h: 72px;
+
+  /* 모서리: 위계에 따라 다르게 */
+  --r-slip: 22px;
+  --r-tile: 20px;
+  --r-card: 16px;
+  --r-control: 12px;
+  --r-tag: 8px;
+  --r-band: 28px;
+  --r-pill: 999px;
+
+  /* 깊이: 오프셋과 흐림이 있는 그림자만 */
+  --shadow-sheet: 0 1px 2px rgb(var(--shade) / 0.06), 0 18px 40px -18px rgb(var(--shade) / 0.28);
+  --shadow-float: 0 1px 2px rgb(var(--shade) / 0.08), 0 10px 24px -10px rgb(var(--shade) / 0.24);
+  --shadow-lift: 0 2px 4px rgb(var(--shade) / 0.06), 0 14px 28px -14px rgb(var(--shade) / 0.26);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur: 220ms;
+}
+
+/* 다크 모드. index.html의 첫 스크립트가 시스템 설정이나 저장된 선택을 보고 data-theme를 붙인다 */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --ink-900: #f0f2f8;
+  --ink-800: #dadded;
+  --ink-600: #b3b8cf;
+  --ink-500: #9aa0ba;
+  --ink-400: #7a809c;
+  --ink-200: #353b58;
+  --ink-100: #262b45;
+  --ink-50: #1c2036;
+
+  --paper: #0f1222;
+  --paper-soft: #161a2e;
+  --canvas: #0b0e1c;
+  --surface: #141830;
+
+  --brand-blue: #5f97ff;
+  --blue: #78a8ff;
+  --blue-strong: #9dc0ff;
+  --blue-soft: #17264a;
+  --blue-line: #2b4378;
+  --blue-fill: #2a66e0;
+  --blue-fill-strong: #2259c4;
+
+  --brand-teal: #3cc4bd;
+  --teal: #3cc4bd;
+
+  --col-moving: #2e2412;
+  --col-moving-ink: #f3c97a;
+  --col-repair: #16233f;
+  --col-repair-ink: #9dc0ff;
+  --col-learn: #142b20;
+  --col-learn-ink: #8fd6ad;
+  --col-event: #33172a;
+  --col-event-ink: #f2a3c0;
+
+  --danger: #ff6b7d;
+  --danger-soft: #3a1720;
+  --sample: #b3b8cf;
+  --sample-soft: #1f2339;
+  --heart: #ff5c7f;
+  --star: #f5b301;
+
+  --shade: 0 0 0;
+  --chip-on-tint: rgb(255 255 255 / 0.08);
+  --thumb-mix: 24%;
+}

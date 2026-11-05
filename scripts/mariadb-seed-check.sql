@@ -1,8 +1,8 @@
 -- 시드 적용 직후 실행합니다. count 행은 기대값과 일치하고 violations 행은 모두 0이어야 합니다.
-SELECT 'members' AS item, 17 AS expected, COUNT(*) AS actual FROM member
+SELECT 'members' AS item, 37 AS expected, COUNT(*) AS actual FROM member
 UNION ALL SELECT 'admins', 1, COUNT(*) FROM member WHERE role='ADMIN'
 UNION ALL SELECT 'users_with_withdraw', 6, COUNT(*) FROM member WHERE role='USER'
-UNION ALL SELECT 'experts', 10, COUNT(*) FROM expert_profile
+UNION ALL SELECT 'experts', 30, COUNT(*) FROM expert_profile
 UNION ALL SELECT 'first_categories', 11, COUNT(*) FROM first_category
 UNION ALL SELECT 'second_categories', 108, COUNT(*) FROM second_category
 UNION ALL SELECT 'first_regions', 16, COUNT(*) FROM first_region
@@ -41,7 +41,8 @@ WHERE ep.is_nationwide=FALSE
 AND NOT EXISTS (SELECT 1 FROM expert_profile_regions er WHERE er.expert_profile_id=ep.id AND er.regions_id=sr.id)
 AND NOT EXISTS (SELECT 1 FROM expert_profile_whole_regions ew WHERE ew.expert_profile_id=ep.id AND ew.whole_regions_id=sr.first_region_id)
 UNION ALL SELECT 'wallet_balance', COUNT(*) FROM credit_wallet w
-WHERE w.balance <> 50 + COALESCE((SELECT SUM(h.amount) FROM credit_history h WHERE h.credit_wallet_id=w.id),0)
+JOIN member wm ON wm.id=w.member_id
+WHERE w.balance <> (CASE WHEN wm.email LIKE 'profile%@example.com' THEN 20 ELSE 50 END) + COALESCE((SELECT SUM(h.amount) FROM credit_history h WHERE h.credit_wallet_id=w.id),0)
 OR w.balance < COALESCE((SELECT SUM(r.amount) FROM credit_reservation r WHERE r.credit_wallet_id=w.id AND r.reservation_status='RESERVED'),0)
 UNION ALL SELECT 'quote_reservation', COUNT(*) FROM quote q
 LEFT JOIN credit_reservation r ON r.quote_id=q.id
@@ -74,3 +75,8 @@ UNION ALL SELECT 'withdraw_activity', SUM(n) FROM (
     UNION ALL SELECT COUNT(*) FROM bookmark WHERE member_id=21
     UNION ALL SELECT COUNT(*) FROM chat_participant WHERE member_id=21
 ) withdraw_check;
+
+-- 홈 예시 고수의 사진과 작업 사진 연결 검사
+SELECT 'profile_photos' AS item, 20 AS expected, COUNT(*) AS actual FROM member m JOIN file f ON m.image_id=f.id WHERE f.storage_path LIKE 'seed/expert-profiles/%'
+UNION ALL SELECT 'work_images', 16, COUNT(*) FROM work_image wi JOIN file f ON wi.file_id=f.id WHERE f.storage_path LIKE 'seed/expert-work/%';
+SELECT 'image_owner' AS violations, COUNT(*) AS actual FROM work_image wi JOIN expert_profile ep ON wi.expert_profile_id=ep.id JOIN file f ON wi.file_id=f.id WHERE ep.member_id<>f.uploader_id;

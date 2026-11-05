@@ -7,13 +7,14 @@ import { useFirstRegions } from '../hooks/useData';
 import { careerLabel, regionLabels } from '../lib/format';
 import { Avatar } from './ui';
 
-export function ProfileView({ p, side }: { p: ExpertProfile; side?: ReactNode }) {
+export function ProfileView({ p, side, note }: { p: ExpertProfile; side?: ReactNode; note?: ReactNode }) {
   const firstRegions = useFirstRegions();
   const services = [...p.services].sort((a, b) => (a.id === p.primaryCategory?.id ? -1 : b.id === p.primaryCategory?.id ? 1 : 0));
   return (
     <div className="profile-grid">
       <aside className="card profile-side">
-        <Avatar url={p.imageUrl} size={112} alt={`${p.nickname} 프로필 사진`} />
+        <div className="profile-photo"><Avatar url={p.imageUrl} size={0} alt={`${p.nickname} 프로필 사진`} /></div>
+        {note}
         <b className="me-big">{p.nickname}</b>
         {p.primaryCategory && <span className="tag teal">대표 · {p.primaryCategory.name}</span>}
         <span className="intro center">{p.shortIntro}</span>
@@ -29,6 +30,19 @@ export function ProfileView({ p, side }: { p: ExpertProfile; side?: ReactNode })
           <b className="sec-title">활동 지역</b>
           <div className="chips">{regionLabels(p, firstRegions).map((r) => <span key={r} className="chip">{r}</span>)}</div>
         </section>
+        {p.workImages && p.workImages.length > 0 && (
+          <section className="card">
+            <b className="sec-title">작업 사진 <span className="blue-t">{p.workImages.length}</span></b>
+            <div className="work-gallery">
+              {p.workImages.map((w, i) => (
+                <figure key={w.fileId}>
+                  <img src={w.url} alt={w.description || `작업 사진 ${i + 1}`} loading="lazy" />
+                  {w.description && <figcaption>{w.description}</figcaption>}
+                </figure>
+              ))}
+            </div>
+          </section>
+        )}
         <section className="card">
           <b className="sec-title">서비스 소개</b>
           <p className="body-text">{p.description}</p>

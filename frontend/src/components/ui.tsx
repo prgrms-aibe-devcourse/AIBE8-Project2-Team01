@@ -8,9 +8,10 @@ export function Lines({ text }: { text: string }) {
 }
 
 // 사진이 없거나 불러오지 못하면 기본 이미지
+// size가 0이면 크기를 정하지 않고 감싸는 요소의 크기를 따른다
 export function Avatar({ url, size = 64, alt = '' }: { url?: string | null; size?: number; alt?: string }) {
   return (
-    <span className="avatar" style={{ width: size, height: size }}>
+    <span className="avatar" style={size ? { width: size, height: size } : undefined}>
       {url ? <img src={url} alt={alt} onError={(e) => { (e.currentTarget.style.display = 'none'); }} /> : null}
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.2" r="4.2" /><path d="M3.6 21c.7-4.4 4.2-7 8.4-7s7.7 2.6 8.4 7z" /></svg>
     </span>

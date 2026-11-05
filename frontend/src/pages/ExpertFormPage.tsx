@@ -12,6 +12,8 @@ import { loadFirstRegions, useMyExpertProfile } from '../hooks/useData';
 import { useSingleFlight } from '../hooks/useSingleFlight';
 import { navigate } from '../hooks/useHashRoute';
 import { CAREER_DESC_MAX, CAREER_YEARS_MAX, DESCRIPTION_MAX, DESCRIPTION_MIN, SHORT_INTRO_MAX } from '../lib/policy';
+import { ProfilePhotoCard } from '../components/ProfilePhotoCard';
+import { WorkImagesField, type WorkDraft } from '../components/WorkImagesField';
 
 type ErrKey = 'shortIntro' | 'description' | 'careerYears' | 'careerDescription' | 'services' | 'primary' | 'regions';
 type Errs = Partial<Record<ErrKey, string>>;
@@ -61,6 +63,10 @@ function ExpertForm({ mode, initial, head }: { mode: 'create' | 'edit'; initial:
   const [nationwide, setNationwide] = useState(initial?.nationwide ?? false);
   const [wholes, setWholes] = useState<FirstRegion[]>(initial ? [...initial.wholeRegions] : []);
   const [regions, setRegions] = useState<SecondRegion[]>(initial ? [...initial.regions] : []);
+  // 작업 사진: 고를 때 바로 올리고 등록·저장할 때 파일 번호를 보낸다
+  const initialWorks: WorkDraft[] = (initial?.workImages ?? []).map((w) => ({ fileId: w.fileId, url: w.url, description: w.description ?? '' }));
+  const [works, setWorks] = useState<WorkDraft[]>(initialWorks);
+  const [worksBusy, setWorksBusy] = useState(false);
   const [errs, setErrs] = useState<Errs>({});
   const [fail, setFail] = useState('');
 
@@ -162,6 +168,7 @@ function ExpertForm({ mode, initial, head }: { mode: 'create' | 'edit'; initial:
           };
           if (careerYears !== '') body.careerYears = Number(careerYears);
           if (careerDescription.trim()) body.careerDescription = careerDescription.trim();
+          if (works.length) body.workImages = works.map((w) => ({ fileId: w.fileId, description: w.description.trim() || undefined }));
           await api.createExpertProfile(body);
           await reloadMe().catch(() => undefined);   // 서버가 바꾼 역할(고수) 확인
           toast('고수 프로필을 등록했어요.\n이제 고수로 활동할 수 있어요.');
@@ -177,6 +184,9 @@ function ExpertForm({ mode, initial, head }: { mode: 'create' | 'edit'; initial:
           const oldDesc = initial?.careerDescription ?? null;
           const newDesc = careerDescription.trim() === '' ? null : careerDescription.trim();
           if (newDesc !== oldDesc) body.careerDescription = newDesc;
+          // 작업 사진: 바뀐 경우에만 보낸다 (생략하면 서버가 기존 사진을 유지)
+          const sig = (l: WorkDraft[]) => JSON.stringify(l.map((w) => [w.fileId, w.description.trim()]));
+          if (sig(works) !== sig(initialWorks)) body.workImages = works.map((w) => ({ fileId: w.fileId, description: w.description.trim() || undefined }));
           await api.updateExpertProfile(body);
           await reloadMe().catch(() => undefined);
           toast('고수 프로필을 저장했어요.');
@@ -213,10 +223,16 @@ function ExpertForm({ mode, initial, head }: { mode: 'create' | 'edit'; initial:
   return (
     <main className="page narrow with-bar">
       {head}
-      <p className="sub">{mode === 'edit' ? '기존 내용을 불러왔어요.' : '고객에게 보여줄 프로필을 만들어 주세요.'}<br />닉네임과 사진은 내 정보에 등록된 것을 써요.</p>
+      <p className="sub">{mode === 'edit' ? '기존 내용을 불러왔어요.' : '고객에게 보여줄 프로필을 만들어 주세요.'}<br />닉네임은 내 정보에 등록된 것을 써요.</p>
+      {/* 고객이 고수를 고를 때 가장 먼저 보는 것이 사진이라 맨 위에 둔다 */}
+      <ProfilePhotoCard
+        large
+        title={<b className="sec-head"><span className="num">1</span>프로필 사진</b>}
+        note={<p className="sub">고객이 견적과 프로필에서 가장 먼저 보는 사진이에요.<br />얼굴이나 작업 모습이 잘 보이는 사진을 올려 주세요.<br />마이페이지에도 같은 사진이 보여요.</p>}
+      />
       <form id="expert-form" className="col gap" onSubmit={submit} noValidate>
         <fieldset className="card" disabled={busy}>
-          <legend className="sec-head"><span className="num">1</span>소개</legend>
+          <legend className="sec-head"><span className="num">2</span>소개</legend>
           <Field label="한 줄 소개" hint={`${shortIntro.trim().length} / ${SHORT_INTRO_MAX}`} htmlFor="si" error={errs.shortIntro}>
             <input id="si" className={`input${errs.shortIntro ? ' bad' : ''}`} value={shortIntro} maxLength={SHORT_INTRO_MAX + 20} onChange={(e) => setShortIntro(e.target.value)} placeholder="예: 꼼꼼한 원룸·소형 이사 전문" />
           </Field>
@@ -226,7 +242,7 @@ function ExpertForm({ mode, initial, head }: { mode: 'create' | 'edit'; initial:
         </fieldset>
 
         <fieldset className="card" disabled={busy}>
-          <legend className="sec-head"><span className="num">2</span>제공 서비스 · 대표 서비스</legend>
+          <legend className="sec-head"><span className="num">3</span>제공 서비스 · 대표 서비스</legend>
           <p className="sub">하나 이상 고르고 그중 하나를 대표로 정해 주세요.</p>
           <div className="tabs" role="tablist">{firstCats.map((c) => <button type="button" role="tab" aria-selected={c.id === catId} key={c.id} className={`tab${c.id === catId ? ' on' : ''}`} onClick={() => setCatId(c.id)}>{c.name}</button>)}</div>
           <div className="chips">
@@ -253,22 +269,43 @@ function ExpertForm({ mode, initial, head }: { mode: 'create' | 'edit'; initial:
         </fieldset>
 
         <fieldset className="card" disabled={busy}>
-          <legend className="sec-head"><span className="num">3</span>활동 지역</legend>
+          <legend className="sec-head"><span className="num">4</span>활동 지역</legend>
           <div className="seg" role="radiogroup" aria-label="활동 범위">
             <button type="button" role="radio" aria-checked={nationwide} className={nationwide ? 'on' : ''} onClick={() => chooseNationwide(true)}>전국</button>
             <button type="button" role="radio" aria-checked={!nationwide} className={!nationwide ? 'on' : ''} onClick={() => chooseNationwide(false)}>지역 고르기</button>
           </div>
           {nationwide ? <p className="sub">전국을 고르면 다른 지역은 함께 고를 수 없어요.</p> : (
             <>
-              <div className="tabs">{firstRegions.map((f) => <button type="button" key={f.id} className={`tab${f.id === regId ? ' on' : ''}`} onClick={() => setRegId(f.id)}>{f.name}</button>)}</div>
-              {curRegion && (
-                <div className="chips">
-                  <button type="button" aria-pressed={wholeOn} className={`opt${wholeOn ? ' on' : ''}`} onClick={() => setWholeFor(curRegion)}>{curRegion.name} 전체</button>
-                  {!regs ? <LoadingView label="시군구를 불러오는 중이에요" /> :
-                    regs.map((r) => { const on = regions.some((x) => x.id === r.id); return <button type="button" key={r.id} disabled={wholeOn} aria-pressed={on} className={`opt${on ? ' on' : ''}`} onClick={() => toggleRegion(r)}>{r.name}</button>; })}
+              {/* 왼쪽은 시도, 오른쪽은 고른 시도의 시군구. 두 목록은 각자 아래로 스크롤된다 */}
+              <div className="region-split">
+                <ul className="rs-first" aria-label="시·도">
+                  {firstRegions.map((f) => {
+                    const n = wholes.some((w) => w.id === f.id) ? '전체' : regions.filter((r) => r.firstRegionId === f.id).length || '';
+                    return (
+                      <li key={f.id}>
+                        <button type="button" className={`rs-item${f.id === regId ? ' on' : ''}`} aria-current={f.id === regId ? 'true' : undefined} onClick={() => setRegId(f.id)}>
+                          <span>{f.name}</span>{n !== '' && <span className="rs-count">{n}</span>}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="rs-second" aria-label={curRegion ? `${curRegion.name} 시·군·구` : '시·군·구'}>
+                  {curRegion && (
+                    <>
+                      <button type="button" aria-pressed={wholeOn} className={`rs-option rs-whole${wholeOn ? ' on' : ''}`} onClick={() => setWholeFor(curRegion)}>
+                        {curRegion.name} 전체
+                      </button>
+                      {!regs ? <LoadingView label="시군구를 불러오는 중이에요" /> : (
+                        <div className="rs-grid">
+                          {regs.map((r) => { const on = regions.some((x) => x.id === r.id); return <button type="button" key={r.id} disabled={wholeOn} aria-pressed={on} className={`rs-option${on ? ' on' : ''}`} onClick={() => toggleRegion(r)}>{r.name}</button>; })}
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
-              )}
-              {curRegion && <small className="sub">{curRegion.name} 전체를 고르면 {curRegion.name}의 시군구는 따로 고를 수 없어요.</small>}
+              </div>
+              {curRegion && <small className="sub">{curRegion.name} 전체를 고르면 {curRegion.name}의 시군구는 따로 고를 수 없어요. 전체를 한 번 더 누르면 다시 시군구를 고를 수 있어요.</small>}
             </>
           )}
           {regionChips.length > 0 && !nationwide && (
@@ -281,13 +318,18 @@ function ExpertForm({ mode, initial, head }: { mode: 'create' | 'edit'; initial:
         </fieldset>
 
         <fieldset className="card" disabled={busy}>
-          <legend className="sec-head"><span className="num">4</span>경력 <small className="sub">선택</small></legend>
+          <legend className="sec-head"><span className="num">5</span>경력 <small className="sub">선택</small></legend>
           <Field label="경력 연수" hint="0~80년 · 비워 두면 표시하지 않아요" htmlFor="cy" error={errs.careerYears}>
             <span className="row"><input id="cy" className={`input short${errs.careerYears ? ' bad' : ''}`} inputMode="numeric" value={careerYears} onChange={(e) => setCareerYears(e.target.value.replace(/[^\d]/g, '').slice(0, 2))} /><span>년</span></span>
           </Field>
           <Field label="경력 설명" hint={`${careerDescription.length} / 1,000`} htmlFor="cd" error={errs.careerDescription}>
             <textarea id="cd" className={`input area compact${errs.careerDescription ? ' bad' : ''}`} value={careerDescription} onChange={(e) => setCareerDescription(e.target.value)} />
           </Field>
+        </fieldset>
+
+        <fieldset className="card" disabled={busy}>
+          <legend className="sec-head"><span className="num">6</span>작업 사진 <small className="sub">선택</small></legend>
+          <WorkImagesField value={works} onChange={setWorks} onBusy={setWorksBusy} />
         </fieldset>
         {subErr && <Banner kind="warn"><Lines text={subErr} /></Banner>}
         {fail && <Banner><Lines text={fail} /></Banner>}
@@ -297,7 +339,7 @@ function ExpertForm({ mode, initial, head }: { mode: 'create' | 'edit'; initial:
         <div className="bar-inner">
           <small className="sub bar-note">{mode === 'create' ? (primaryMissing ? '대표 서비스를 고르면 등록할 수 있어요.' : '등록을 마치면 고수로 전환돼요.') : (me?.role === 'USER' ? '고객 상태에서도 수정할 수 있어요.' : '')}</small>
           <a className="btn" href={mode === 'edit' ? '#/expert/me' : '#/expert/intro'} aria-disabled={busy} onClick={(e) => busy && e.preventDefault()}>취소</a>
-          <button className="btn primary" type="submit" form="expert-form" disabled={busy}>
+          <button className="btn primary" type="submit" form="expert-form" disabled={busy || worksBusy}>
             {busy ? <><Spinner light />{mode === 'create' ? '등록하는 중' : '저장하는 중'}</> : (mode === 'create' ? '등록하고 고수로 전환' : '저장')}
           </button>
         </div>
