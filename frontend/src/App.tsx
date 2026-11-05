@@ -58,7 +58,7 @@ const ROUTES: Route[] = [
   { re: /^\/expert\/intro$/, access: 'member', render: () => <ExpertIntroPage /> },
   { re: /^\/expert\/register$/, access: 'member', render: () => <ExpertFormPage mode="create" /> },
   { re: /^\/expert\/me$/, access: 'member', render: () => <MyExpertProfilePage /> },
-  { re: /^\/expert\/me\/edit$/, access: 'member', render: () => <ExpertFormPage mode="edit" /> },
+  { re: /^\/expert\/me\/edit$/, access: 'member', render: (_m, q) => <ExpertFormPage mode="edit" focus={q.get('section')} /> },
 
   { re: /^\/requests\/new$/, access: ['USER'], render: (_m, q) => <RequestFormPage fc={q.get('fc')} cat={q.get('cat')} /> },
   { re: /^\/requests$/, access: ['USER'], render: (_m, q) => <MyRequestsPage selected={q.get('id')} quote={q.get('quote')} /> },

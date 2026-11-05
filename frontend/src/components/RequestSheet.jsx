@@ -4,6 +4,7 @@ import ServicePicker from './ServicePicker.jsx';
 import RegionPicker from './RegionPicker.jsx';
 import { REQUEST_QUESTIONS, WHEN_OPTIONS } from '../data/questions.js';
 import { regionLabel } from '../lib/homeFormat.js';
+import { CATEGORIES, getSub } from '../data/categoryMeta.js';
 import { createServiceRequest, getQuestions } from '../api/mvp';
 import { useSession } from '../auth/session';
 import { useToast } from './toast';
@@ -80,6 +81,10 @@ export default function RequestSheet({ open, draft, setDraft, onClose }) {
 
   if (!open) return null;
 
+  // 분야 아이콘으로 열었거나 서비스가 정해진 경우 그 분야의 세부 서비스를 칩으로 보여 준다
+  const firstCat = CATEGORIES.find((c) => c.id === (draft.sub?.parentId ?? draft.firstId)) ?? null;
+
+
   const setAnswer = (id, v) => {
     setAnswers((a) => ({ ...a, [id]: v }));
     if (errors[id]) setErrors((er) => ({ ...er, [id]: undefined }));
@@ -151,6 +156,29 @@ export default function RequestSheet({ open, draft, setDraft, onClose }) {
             <div className="sheet-body">
               <fieldset className="sheet-group">
                 <legend>무엇을 어디에서</legend>
+                {firstCat && (
+                  <div className="sheet-cat">
+                    <p className="field-label" id="sheet-cat-label">
+                      {firstCat.name} 세부 서비스
+                    </p>
+                    <div className="when" role="group" aria-labelledby="sheet-cat-label">
+                      {firstCat.subs.map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          className="chip"
+                          aria-pressed={draft.sub?.id === s.id}
+                          onClick={() => {
+                            setDraft((d) => ({ ...d, sub: getSub(s.id) }));
+                            setErrors((er) => ({ ...er, sub: undefined }));
+                          }}
+                        >
+                          {s.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className={errors.sub ? 'has-error' : ''}>
                   <ServicePicker
                     inputId="sheet-service"

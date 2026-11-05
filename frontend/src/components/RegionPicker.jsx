@@ -4,7 +4,8 @@ import { FIRST_REGIONS } from '../data/baseData.js';
 import { regionLabel, shortSido } from '../lib/homeFormat.js';
 
 // 시도를 고르고 시군구를 고르는 두 단계 선택. 요청서에는 시군구 ID 하나가 들어간다.
-export default function RegionPicker({ value, onChange, buttonId, label = '지역' }) {
+// buttonText: 버튼에 고른 지역 대신 고정 문구를 보여 줄 때 쓴다 (홈 고수 목록의 '다른 지역' 칩)
+export default function RegionPicker({ value, onChange, buttonId, label = '지역', buttonText = '' }) {
   const [open, setOpen] = useState(false);
   const [firstId, setFirstId] = useState(value?.first.id ?? FIRST_REGIONS[0].id);
   const wrapRef = useRef(null);
@@ -54,7 +55,11 @@ export default function RegionPicker({ value, onChange, buttonId, label = '지�
         onClick={() => setOpen((v) => !v)}
       >
         <MapPin className="field-icon" size={20} strokeWidth={2.2} aria-hidden="true" />
-        <span className={value ? 'field-value' : 'field-placeholder'}>{value ? regionLabel(value) : '시·군·구 선택'}</span>
+        {buttonText ? (
+          <span className="field-value">{buttonText}</span>
+        ) : (
+          <span className={value ? 'field-value' : 'field-placeholder'}>{value ? regionLabel(value) : '시·군·구 선택'}</span>
+        )}
         <ChevronDown className="field-caret" size={18} aria-hidden="true" />
       </button>
 

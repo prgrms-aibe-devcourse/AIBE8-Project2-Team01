@@ -87,7 +87,6 @@ export function ReceivedRequestsPage({ selected }: { selected: string | null }) 
 
 function ReceivedDetail({ id, sentQuoteId, inList, onSent }: { id: number; sentQuoteId: number | null; inList: boolean; onSent: () => void }) {
   const detail = useLoad(() => getServiceRequest(id), [id]);
-  const [writing, setWriting] = useState(false);
 
   if (detail.state.kind === 'loading') return <div className="card"><LoadingView label="요청서를 불러오는 중이에요" /></div>;
   if (detail.state.kind === 'error') {
@@ -98,34 +97,55 @@ function ReceivedDetail({ id, sentQuoteId, inList, onSent }: { id: number; sentQ
   const r = detail.state.data;
   const deadline = requestDeadline(r.createdAt);
   const expired = deadline.getTime() <= Date.now();
+  // 견적을 보낼 수 있으면 요청 내용 옆(좁은 화면은 바로 아래)에 견적 입력을 바로 펼친다
+  const canQuote = !sentQuoteId && !expired && inList;
+  const answered = r.answers.filter((a) => a.content?.trim());
 
   return (
-    <div className="col gap">
+    <div className="received-detail">
       <a className="back show-m" href="#/received">‹ 받은 요청서</a>
-      <div className="card">
-        <span className="sec-title">요청서 상세</span>
-        <span className="row detail-head"><CategoryIcon secondName={r.secondCategoryName} size={56} /><b className="card-title">{r.secondCategoryName} · {r.secondRegionName}</b></span>
-        <div className="answers">
-          {r.answers.map((a) => <div className="cell" key={a.questionId}><small>{a.questionContent}</small><span>{a.content}</span></div>)}
-          <div className="cell"><small>접수 마감</small><span>{shortDateTime(deadline.toISOString())}</span></div>
+      {/* 요청 내용(위)과 견적 보내기(아래)를 한 카드 안에 두어 읽고 바로 쓴다 */}
+      <div className={`card received-card${canQuote ? ' with-form' : ''}`}>
+      <section className="req-summary" aria-labelledby="req-summary-title">
+        <div className="req-summary-head">
+          <CategoryIcon secondName={r.secondCategoryName} size={48} />
+          <div className="col">
+            <span className="row wrap">
+              <b id="req-summary-title" className="card-title">{r.secondCategoryName}</b>
+              {!expired && <span className="badge blue">마감까지 {remainText(deadline)}</span>}
+            </span>
+            <small className="sub">{r.secondRegionName} · {r.customerNickname}님 · {shortDateTime(r.createdAt)} 요청</small>
+          </div>
         </div>
+        {answered.length > 0 ? (
+          <dl className="req-answers">
+            {answered.map((a) => (
+              <div key={a.questionId}>
+                <dt>{a.questionContent}</dt>
+                <dd>{a.content}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : <p className="sub">고객이 남긴 요청 내용이 없어요.</p>}
+        <small className="sub">접수 마감 {shortDateTime(deadline.toISOString())}</small>
         {sentQuoteId ? (
-          <Banner kind="info"><Lines text={'이 요청서에는 이미 견적을 보냈어요.\n보낸 견적에서 확인하거나 매칭 전이라면 회수할 수 있어요.'} /></Banner>
+          <>
+            <Banner kind="info"><Lines text={'이 요청서에는 이미 견적을 보냈어요.\n보낸 견적에서 확인하거나 매칭 전이라면 회수할 수 있어요.'} /></Banner>
+            <a className="btn self-start" href="#/quotes">보낸 견적 보기</a>
+          </>
         ) : expired ? (
           <Banner kind="warn">견적 접수 기간이 끝난 요청서예요.</Banner>
         ) : !inList ? (
           <Banner kind="warn"><Lines text={'지금은 견적을 보낼 수 없는 요청서예요.\n취소되었거나 내 서비스·지역 조건과 맞지 않아요.'} /></Banner>
-        ) : !writing ? (
-          <button type="button" className="btn primary m-block" onClick={() => setWriting(true)}>견적 보내기 · 2크레딧 예약</button>
         ) : null}
-        {sentQuoteId && <a className="btn" href="#/quotes">보낸 견적 보기</a>}
+      </section>
+      {canQuote && <QuoteForm key={id} requestId={id} title={`${r.secondCategoryName} · ${r.secondRegionName}`} onSent={onSent} />}
       </div>
-      {writing && !sentQuoteId && !expired && inList && <QuoteForm requestId={id} title={`${r.secondCategoryName} · ${r.secondRegionName}`} onCancel={() => setWriting(false)} onSent={() => { setWriting(false); onSent(); }} />}
     </div>
   );
 }
 
-function QuoteForm({ requestId, title, onCancel, onSent }: { requestId: number; title: string; onCancel: () => void; onSent: () => void }) {
+function QuoteForm({ requestId, title, onSent }: { requestId: number; title: string; onSent: () => void }) {
   const toast = useToast();
   const wallet = useLoad<CreditBalance>(() => getCredit(), []);
   const [price, setPrice] = useState('');
@@ -162,9 +182,11 @@ function QuoteForm({ requestId, title, onCancel, onSent }: { requestId: number; 
   });
 
   return (
-    <form className="card" onSubmit={check} noValidate>
-      <div className="row between"><b className="card-title">견적 보내기</b><small className="sub">{title}</small></div>
-      <small className="sub">서비스와 지역은 요청서 내용으로 정해져요.</small>
+    <form className="quote-form" onSubmit={check} noValidate aria-label={`${title} 견적 보내기`}>
+      <div className="col">
+        <b className="card-title">견적 보내기</b>
+        <small className="sub">요청 내용을 보고 금액과 설명을 적어 주세요. 서비스와 지역은 요청서 내용으로 정해져요.</small>
+      </div>
       <fieldset className="col gap" disabled={busy} style={{ border: 0, padding: 0, margin: 0 }}>
         <Field label="제안 가격" htmlFor="qf-price" error={errs.price}>
           <span className="row"><input id="qf-price" className={`input${errs.price ? ' bad' : ''}`} inputMode="numeric" value={price}
@@ -190,10 +212,9 @@ function QuoteForm({ requestId, title, onCancel, onSent }: { requestId: number; 
       )}
       {fail && <Banner><Lines text={fail} /></Banner>}
       <div className="row end-row m-actions">
-        <button type="button" className="btn" disabled={busy} onClick={onCancel}>취소</button>
         {wallet.state.kind === 'ok' && !enough
           ? <a className="btn primary" href="#/credit">크레딧 충전</a>
-          : <button type="submit" className="btn primary" disabled={busy || wallet.state.kind !== 'ok'}>견적 발송</button>}
+          : <button type="submit" className="btn primary block" disabled={busy || wallet.state.kind !== 'ok'}>견적 발송 · {wallet.state.kind === 'ok' ? wallet.state.data.creditPerQuote : 2}크레딧 예약</button>}
       </div>
       {confirm && (
         <Modal title="견적을 발송할까요?" onClose={() => !busy && setConfirm(false)}

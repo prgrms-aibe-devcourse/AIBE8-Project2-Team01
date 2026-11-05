@@ -76,7 +76,13 @@ export interface WorkImageRequest { fileId: number; description?: string }
 export type PublicExpertSummary = Pick<ExpertProfile,
   'id' | 'nickname' | 'shortIntro' | 'careerYears' | 'imageUrl' |
   'primaryCategory' | 'nationwide' | 'wholeRegions' | 'regions'
-> & { representativeWorkImageUrl?: string | null };
+> & {
+  representativeWorkImageUrl?: string | null;
+  // 홈의 '새로 합류한 고수'와 '찜이 빠르게 늘고 있는 고수'용 값. 아직 백엔드 응답에 없어서 없으면 두 섹션을 숨긴다
+  createdAt?: string | null; // 고수 프로필 등록 시각 (ISO)
+  bookmarkCount?: number | null; // 누적 찜 수
+  weeklyBookmarkCount?: number | null; // 이번 주 찜 증가량
+};
 
 export interface ExpertProfileCreateRequest {
   shortIntro: string;
