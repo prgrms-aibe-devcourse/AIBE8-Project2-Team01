@@ -574,18 +574,18 @@ VALUES (1, 2, 101, 39, 'OPEN', DATE_SUB(@seed_now, INTERVAL 50 MINUTE)),
        (18, 5, 139, 30, 'OPEN', DATE_SUB(@seed_now, INTERVAL 390 MINUTE));
 
 INSERT INTO request_answer (service_request_id, question_id, question_content, content)
-VALUES (1, 1, '어떤 서비스가 필요하신가요?', '원룸 이사를 요청합니다.'),
-       (1, 2, '언제 서비스를 받고 싶으신가요?', '11월 10일 오전을 희망합니다.'),
-       (1, 3, '생각하고 계신 예산이 있나요?', '예산은 30만 원입니다.'),
-       (1, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '침대와 책상 운반이 필요합니다.'),
-       (2, 1, '어떤 서비스가 필요하신가요?', '20평 아파트 입주 청소가 필요합니다.'),
-       (2, 2, '언제 서비스를 받고 싶으신가요?', '11월 15일 오후를 희망합니다.'),
-       (2, 3, '생각하고 계신 예산이 있나요?', '예산은 25만 원입니다.'),
-       (2, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '창틀과 화장실을 집중적으로 청소해 주세요.'),
-       (3, 1, '어떤 서비스가 필요하신가요?', 'Spring Boot 기반 REST API 개발이 필요합니다.'),
-       (3, 2, '언제 서비스를 받고 싶으신가요?', '11월 말까지 완료하고 싶습니다.'),
-       (3, 3, '생각하고 계신 예산이 있나요?', '예산은 100만 원입니다.'),
-       (3, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', 'JPA와 MySQL을 사용해 주세요.'),
+VALUES (1, 1, '어떤 서비스가 필요하신가요?', '반려묘와 함께 사는 원룸에서 짐을 옮기려 합니다.'),
+       (1, 2, '언제 서비스를 받고 싶으신가요?', '다음 주 화요일 오전 9시쯤 출발하고 싶습니다.'),
+       (1, 3, '생각하고 계신 예산이 있나요?', '차량과 운반을 포함해 27만 원을 생각하고 있습니다.'),
+       (1, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '고양이 이동장과 사료는 제가 직접 가져갈게요.'),
+       (2, 1, '어떤 서비스가 필요하신가요?', '새집 거실과 베란다 위주로 입주 청소를 부탁드립니다.'),
+       (2, 2, '언제 서비스를 받고 싶으신가요?', '가구가 들어오기 이틀 전 오후에 가능합니다.'),
+       (2, 3, '생각하고 계신 예산이 있나요?', '기본 청소에 22만 원 정도를 잡았습니다.'),
+       (2, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '베란다 유리 안쪽에 남은 테이프 자국도 확인해 주세요.'),
+       (3, 1, '어떤 서비스가 필요하신가요?', '동네 베이커리의 예약 픽업 신청 API가 필요합니다.'),
+       (3, 2, '언제 서비스를 받고 싶으신가요?', '다음 달 첫 영업일 전에 시험 운영하고 싶습니다.'),
+       (3, 3, '생각하고 계신 예산이 있나요?', '픽업 신청과 관리자 조회까지 110만 원 내외입니다.'),
+       (3, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '픽업 시간대별 주문 수를 제한하고 싶어요.'),
        (4, 1, '어떤 서비스가 필요하신가요?', '원룸 이사를 요청합니다.'),
        (4, 2, '언제 서비스를 받고 싶으신가요?', '11월 10일 오전을 희망합니다.'),
        (4, 3, '생각하고 계신 예산이 있나요?', '예산은 30만 원입니다.'),
@@ -598,54 +598,54 @@ VALUES (1, 1, '어떤 서비스가 필요하신가요?', '원룸 이사를 요�
        (6, 2, '언제 서비스를 받고 싶으신가요?', '11월 말까지 완료하고 싶습니다.'),
        (6, 3, '생각하고 계신 예산이 있나요?', '예산은 100만 원입니다.'),
        (6, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', 'JPA와 MySQL을 사용해 주세요.'),
-       (7, 1, '어떤 서비스가 필요하신가요?', '원룸 이사를 요청합니다.'),
-       (7, 2, '언제 서비스를 받고 싶으신가요?', '11월 10일 오전을 희망합니다.'),
-       (7, 3, '생각하고 계신 예산이 있나요?', '예산은 30만 원입니다.'),
-       (7, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '침대와 책상 운반이 필요합니다.'),
-       (8, 1, '어떤 서비스가 필요하신가요?', '20평 아파트 입주 청소가 필요합니다.'),
-       (8, 2, '언제 서비스를 받고 싶으신가요?', '11월 15일 오후를 희망합니다.'),
-       (8, 3, '생각하고 계신 예산이 있나요?', '예산은 25만 원입니다.'),
-       (8, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '창틀과 화장실을 집중적으로 청소해 주세요.'),
-       (9, 1, '어떤 서비스가 필요하신가요?', 'Spring Boot 기반 REST API 개발이 필요합니다.'),
-       (9, 2, '언제 서비스를 받고 싶으신가요?', '11월 말까지 완료하고 싶습니다.'),
-       (9, 3, '생각하고 계신 예산이 있나요?', '예산은 100만 원입니다.'),
-       (9, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', 'JPA와 MySQL을 사용해 주세요.'),
-       (10, 1, '어떤 서비스가 필요하신가요?', '원룸 이사를 요청합니다.'),
-       (10, 2, '언제 서비스를 받고 싶으신가요?', '11월 10일 오전을 희망합니다.'),
-       (10, 3, '생각하고 계신 예산이 있나요?', '예산은 30만 원입니다.'),
-       (10, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '침대와 책상 운반이 필요합니다.'),
-       (11, 1, '어떤 서비스가 필요하신가요?', '20평 아파트 입주 청소가 필요합니다.'),
-       (11, 2, '언제 서비스를 받고 싶으신가요?', '11월 15일 오후를 희망합니다.'),
-       (11, 3, '생각하고 계신 예산이 있나요?', '예산은 25만 원입니다.'),
-       (11, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '창틀과 화장실을 집중적으로 청소해 주세요.'),
-       (12, 1, '어떤 서비스가 필요하신가요?', 'Spring Boot 기반 REST API 개발이 필요합니다.'),
-       (12, 2, '언제 서비스를 받고 싶으신가요?', '11월 말까지 완료하고 싶습니다.'),
-       (12, 3, '생각하고 계신 예산이 있나요?', '예산은 100만 원입니다.'),
-       (12, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', 'JPA와 MySQL을 사용해 주세요.'),
-       (13, 1, '어떤 서비스가 필요하신가요?', '원룸 이사를 요청합니다.'),
-       (13, 2, '언제 서비스를 받고 싶으신가요?', '11월 10일 오전을 희망합니다.'),
-       (13, 3, '생각하고 계신 예산이 있나요?', '예산은 30만 원입니다.'),
-       (13, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '침대와 책상 운반이 필요합니다.'),
-       (14, 1, '어떤 서비스가 필요하신가요?', '20평 아파트 입주 청소가 필요합니다.'),
-       (14, 2, '언제 서비스를 받고 싶으신가요?', '11월 15일 오후를 희망합니다.'),
-       (14, 3, '생각하고 계신 예산이 있나요?', '예산은 25만 원입니다.'),
-       (14, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '창틀과 화장실을 집중적으로 청소해 주세요.'),
-       (15, 1, '어떤 서비스가 필요하신가요?', 'Spring Boot 기반 REST API 개발이 필요합니다.'),
-       (15, 2, '언제 서비스를 받고 싶으신가요?', '11월 말까지 완료하고 싶습니다.'),
-       (15, 3, '생각하고 계신 예산이 있나요?', '예산은 100만 원입니다.'),
-       (15, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', 'JPA와 MySQL을 사용해 주세요.'),
-       (16, 1, '어떤 서비스가 필요하신가요?', '원룸 이사를 요청합니다.'),
-       (16, 2, '언제 서비스를 받고 싶으신가요?', '11월 10일 오전을 희망합니다.'),
-       (16, 3, '생각하고 계신 예산이 있나요?', '예산은 30만 원입니다.'),
-       (16, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '침대와 책상 운반이 필요합니다.'),
-       (17, 1, '어떤 서비스가 필요하신가요?', '20평 아파트 입주 청소가 필요합니다.'),
-       (17, 2, '언제 서비스를 받고 싶으신가요?', '11월 15일 오후를 희망합니다.'),
-       (17, 3, '생각하고 계신 예산이 있나요?', '예산은 25만 원입니다.'),
-       (17, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '창틀과 화장실을 집중적으로 청소해 주세요.'),
-       (18, 1, '어떤 서비스가 필요하신가요?', 'Spring Boot 기반 REST API 개발이 필요합니다.'),
-       (18, 2, '언제 서비스를 받고 싶으신가요?', '11월 말까지 완료하고 싶습니다.'),
-       (18, 3, '생각하고 계신 예산이 있나요?', '예산은 100만 원입니다.'),
-       (18, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', 'JPA와 MySQL을 사용해 주세요.');
+       (7, 1, '어떤 서비스가 필요하신가요?', '원룸에서 침대와 책상을 옮기고 큰 가전도 추가할지 상담하고 싶습니다.'),
+       (7, 2, '언제 서비스를 받고 싶으신가요?', '다음 주 토요일 오후에 짐을 빼야 합니다.'),
+       (7, 3, '생각하고 계신 예산이 있나요?', '가전 운반 여부에 따라 최대 35만 원까지 가능합니다.'),
+       (7, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '건물 앞 주차 공간이 좁아서 진입 가능한 차량을 알려 주세요.'),
+       (8, 1, '어떤 서비스가 필요하신가요?', '가구 배송이 잡힌 아파트의 창틀과 욕실을 청소하고 싶습니다.'),
+       (8, 2, '언제 서비스를 받고 싶으신가요?', '이삿짐이 들어오기 전 평일 오전을 희망합니다.'),
+       (8, 3, '생각하고 계신 예산이 있나요?', '욕실 배수구와 창틀을 포함해 26만 원을 예상합니다.'),
+       (8, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '먼저 들어오는 침대 주변을 작업할 수 있는지 알려 주세요.'),
+       (9, 1, '어떤 서비스가 필요하신가요?', '준비된 화면에 회원가입과 로그인을 연결할 REST API가 필요합니다.'),
+       (9, 2, '언제 서비스를 받고 싶으신가요?', '이번 달 안에 인증 기능부터 연결하고 싶습니다.'),
+       (9, 3, '생각하고 계신 예산이 있나요?', '인증과 기본 회원 정보 기능에 120만 원을 잡았습니다.'),
+       (9, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '입력 항목과 화면 흐름은 자료로 보내 드릴 수 있어요.'),
+       (10, 1, '어떤 서비스가 필요하신가요?', '원룸 이사에 조립식 침대와 다리 분리가 되는 책상도 포함하고 싶습니다.'),
+       (10, 2, '언제 서비스를 받고 싶으신가요?', '계약 종료일인 다음 주 월요일 오전에 옮기고 싶습니다.'),
+       (10, 3, '생각하고 계신 예산이 있나요?', '침대 분해와 조립까지 포함해 31만 원을 생각합니다.'),
+       (10, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '출발지에 엘리베이터가 있습니다. 가구 사진도 보낼게요.'),
+       (11, 1, '어떤 서비스가 필요하신가요?', '20평 빈집 입주 청소를 부탁드립니다. 창틀과 욕실 두 곳이 특히 걱정됩니다.'),
+       (11, 2, '언제 서비스를 받고 싶으신가요?', '입주 전날인 다음 주 금요일 점심 이후면 됩니다.'),
+       (11, 3, '생각하고 계신 예산이 있나요?', '후드 상태를 확인한 뒤 24만 원 전후로 협의하고 싶습니다.'),
+       (11, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '짐이 없는 상태이고 주방 후드 사진을 보내 드릴 수 있어요.'),
+       (12, 1, '어떤 서비스가 필요하신가요?', '도자기 공방의 수업 예약과 관리자 예약 목록을 위한 API가 필요합니다.'),
+       (12, 2, '언제 서비스를 받고 싶으신가요?', '예약 일정과 취소 규칙을 먼저 정한 뒤 3주 안에 시작하고 싶습니다.'),
+       (12, 3, '생각하고 계신 예산이 있나요?', '예약 관리와 관리자 조회를 포함해 130만 원 내외입니다.'),
+       (12, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '회원 정보와 예약 날짜를 저장하고 관리자가 확인할 수 있어야 합니다.'),
+       (13, 1, '어떤 서비스가 필요하신가요?', '비 오는 날 책장과 컴퓨터를 포함해 이사할 계획이었습니다.'),
+       (13, 2, '언제 서비스를 받고 싶으신가요?', '금요일 오전에 출발하는 일정으로 문의했습니다.'),
+       (13, 3, '생각하고 계신 예산이 있나요?', '방수 포장을 포함해 33만 원을 생각했습니다.'),
+       (13, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '입주일이 바뀌어 이 요청은 취소했습니다.'),
+       (14, 1, '어떤 서비스가 필요하신가요?', '빈집의 주방과 바닥을 청소하려고 문의했습니다.'),
+       (14, 2, '언제 서비스를 받고 싶으신가요?', '가구 배송 직전인 수요일에 작업을 원했습니다.'),
+       (14, 3, '생각하고 계신 예산이 있나요?', '수납장 안쪽 청소까지 21만 원을 잡았습니다.'),
+       (14, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '배송 일정 변경으로 청소 요청을 취소했습니다.'),
+       (15, 1, '어떤 서비스가 필요하신가요?', '공방 작품 소개 페이지에 문의 내역을 저장하는 API가 필요합니다.'),
+       (15, 2, '언제 서비스를 받고 싶으신가요?', '작품 사진 촬영을 마치고 다음 달 중순에 공개하고 싶습니다.'),
+       (15, 3, '생각하고 계신 예산이 있나요?', '문의 접수와 관리자 목록에 95만 원을 예상합니다.'),
+       (15, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '주문이나 결제 기능은 없고 휴대폰 문의가 쉬우면 좋겠습니다.'),
+       (16, 1, '어떤 서비스가 필요하신가요?', '소형 이사로 책장 하나와 접이식 테이블을 옮기고 싶어요.'),
+       (16, 2, '언제 서비스를 받고 싶으신가요?', '평일 저녁 6시 이후에 출발할 수 있습니다.'),
+       (16, 3, '생각하고 계신 예산이 있나요?', '짐이 많지 않아 20만 원 선에서 찾고 있습니다.'),
+       (16, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '현관 폭이 좁아서 책장 분해가 필요한지 봐 주세요.'),
+       (17, 1, '어떤 서비스가 필요하신가요?', '이사 전 집을 비우고 주방 후드와 다용도실을 청소하고 싶습니다.'),
+       (17, 2, '언제 서비스를 받고 싶으신가요?', '열쇠를 반납하기 전 목요일 오전에 부탁드립니다.'),
+       (17, 3, '생각하고 계신 예산이 있나요?', '후드와 다용도실 위주로 18만 원을 예상합니다.'),
+       (17, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '후드 필터 재질을 모르니 분리 전에 확인 부탁드려요.'),
+       (18, 1, '어떤 서비스가 필요하신가요?', '공방 수업 대기 신청과 빈자리 알림 기능을 만들고 싶습니다.'),
+       (18, 2, '언제 서비스를 받고 싶으신가요?', '다음 달 수강 모집을 시작하기 전에 테스트하고 싶습니다.'),
+       (18, 3, '생각하고 계신 예산이 있나요?', '대기 등록과 자리 안내에 140만 원까지 가능합니다.'),
+       (18, 4, '고수에게 전달하고 싶은 추가 요청사항이 있나요?', '수업당 최대 인원과 취소 시 처리 순서를 함께 정하고 싶어요.');
 
 -- 5. 견적 27개. 사용자2는 비교 중이고 사용자3은 4건을 의뢰하여 채팅할 수 있습니다.
 
@@ -1119,14 +1119,14 @@ INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visib
 INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='담다 스냅')),(SELECT id FROM file WHERE storage_path='seed/expert-work/e5d6e1eaa9c945df8921783233acafee-108-1.jpg'),'인물 촬영 작업 사례',1);
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='정리하는 하루'),'seed/expert-work/692893d76be445e26009371fd2909ae9-109-0.jpg','promo-aircon-1.jpg','image/jpeg',175712,'PUBLIC',CURRENT_TIMESTAMP);
 INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='정리하는 하루')),(SELECT id FROM file WHERE storage_path='seed/expert-work/692893d76be445e26009371fd2909ae9-109-0.jpg'),'에어컨 청소 작업 사례',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='해운대 이사짐센터'),'seed/expert-work/16de8671c1456f24e95274b607c9bbbe-112-0.jpg','promo-moving-1.jpg','image/jpeg',194916,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='해운대 이사짐센터')),(SELECT id FROM file WHERE storage_path='seed/expert-work/16de8671c1456f24e95274b607c9bbbe-112-0.jpg'),'포장이사 작업 사례',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='해운대 이사짐센터'),'seed/expert-work/008a9a87a2c15102ef303eb2c31bf770-112-1.jpg','promo-moving-2.jpg','image/jpeg',183928,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='해운대 이사짐센터')),(SELECT id FROM file WHERE storage_path='seed/expert-work/008a9a87a2c15102ef303eb2c31bf770-112-1.jpg'),'이삿짐 운반 작업 사례',1);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='맑은창 줄눈'),'seed/expert-work/3d3327ec26e5d74025e457aeca358912-118-0.jpg','promo-interior-1.jpg','image/jpeg',209409,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='맑은창 줄눈')),(SELECT id FROM file WHERE storage_path='seed/expert-work/3d3327ec26e5d74025e457aeca358912-118-0.jpg'),'부분 인테리어 작업 사례',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='맑은창 줄눈'),'seed/expert-work/fe32925474575a143b11465fc473b193-118-1.jpg','promo-interior-2.jpg','image/jpeg',126840,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='맑은창 줄눈')),(SELECT id FROM file WHERE storage_path='seed/expert-work/fe32925474575a143b11465fc473b193-118-1.jpg'),'실내 시공 작업 사례',1);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='해운대 이사짐센터'),'seed/expert-work-unique/935bcd6e53bec7cd72d83abde70d400198439883cf8d20c43456b3e0b73dab22.jpg','work-sample.jpg','image/jpeg',310290,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='해운대 이사짐센터')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/935bcd6e53bec7cd72d83abde70d400198439883cf8d20c43456b3e0b73dab22.jpg'),'포장이사 작업 사례',0);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='해운대 이사짐센터'),'seed/expert-work-unique/e5e6307ab94965163035be298cdc3a4e099be80a53f6db10a8488ddd9cd46fb9.jpg','work-sample.jpg','image/jpeg',219479,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='해운대 이사짐센터')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/e5e6307ab94965163035be298cdc3a4e099be80a53f6db10a8488ddd9cd46fb9.jpg'),'이삿짐 운반 작업 사례',1);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='맑은창 줄눈'),'seed/expert-work-unique/b2f897a6bb06a2d127b15441aae502411f452df125cb5e1ff0c39226408898e9.jpg','work-sample.jpg','image/jpeg',195259,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='맑은창 줄눈')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/b2f897a6bb06a2d127b15441aae502411f452df125cb5e1ff0c39226408898e9.jpg'),'부분 인테리어 작업 사례',0);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='맑은창 줄눈'),'seed/expert-work-unique/6ceda3fa6b8c372648d5f501996672bf4208ac797ac528602642f10cc1cf2e2f.jpg','work-sample.jpg','image/jpeg',228373,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='맑은창 줄눈')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/6ceda3fa6b8c372648d5f501996672bf4208ac797ac528602642f10cc1cf2e2f.jpg'),'실내 시공 작업 사례',1);
 
 
 
@@ -1134,64 +1134,74 @@ INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VAL
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert1@demo.efy.example'),'seed/presentation-profiles/d09431ee697649ae6a059995d9b03eb0069d86a3cd788b5e83c28ac8be9c1cee.png','expert01.png','image/png',2516830,'PUBLIC',CURRENT_TIMESTAMP);
 UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/presentation-profiles/d09431ee697649ae6a059995d9b03eb0069d86a3cd788b5e83c28ac8be9c1cee.png') WHERE id=(SELECT id FROM member WHERE email='expert1@demo.efy.example') AND image_id IS NULL;
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert1@demo.efy.example'),'seed/accounts/b012c926b84cf2ee2a937c177623ab226b4488a88bfdc3c6c56beea9758a996a.jpg','promo-moving-1.jpg','image/jpeg',194916,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert1@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/b012c926b84cf2ee2a937c177623ab226b4488a88bfdc3c6c56beea9758a996a.jpg'),'서비스 작업 사례 사진',0);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert1@demo.efy.example'),'seed/expert-work-unique/208aa489a65c8d31765f3e869084eadebfac042c8fcde548934d7c0fbed36720.jpg','work-sample.jpg','image/jpeg',243165,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert1@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/208aa489a65c8d31765f3e869084eadebfac042c8fcde548934d7c0fbed36720.jpg'),'서비스 작업 사례 사진',0);
 INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/b012c926b84cf2ee2a937c177623ab226b4488a88bfdc3c6c56beea9758a996a.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert1@demo.efy.example') AND p.second_category_id=101 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert1@demo.efy.example'),'seed/accounts/b6e088cfef152f5ec185163f26e75a3d76f716d10f4056e84d994187b77aa6c7.jpg','promo-moving-2.jpg','image/jpeg',183928,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert1@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/b6e088cfef152f5ec185163f26e75a3d76f716d10f4056e84d994187b77aa6c7.jpg'),'서비스 작업 사례 사진',1);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert1@demo.efy.example'),'seed/expert-work-unique/a385a7cd9ad29450c36589e036a39855429726fcd8e14fe11686c9f6af366f90.jpg','work-sample.jpg','image/jpeg',214866,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert1@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/a385a7cd9ad29450c36589e036a39855429726fcd8e14fe11686c9f6af366f90.jpg'),'서비스 작업 사례 사진',1);
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert2@demo.efy.example'),'seed/presentation-profiles/816310cf78c8685bc578edcce6dbfa93006ca553ec39927d11adc18f3329e688.png','expert02.png','image/png',3121523,'PUBLIC',CURRENT_TIMESTAMP);
 UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/presentation-profiles/816310cf78c8685bc578edcce6dbfa93006ca553ec39927d11adc18f3329e688.png') WHERE id=(SELECT id FROM member WHERE email='expert2@demo.efy.example') AND image_id IS NULL;
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert2@demo.efy.example'),'seed/accounts/9aa6442eda00a350e89f8c1dede7dfa374ccc7be0121f79e38866d076eeb5550.jpg','promo-moving-1.jpg','image/jpeg',194916,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert2@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/9aa6442eda00a350e89f8c1dede7dfa374ccc7be0121f79e38866d076eeb5550.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/9aa6442eda00a350e89f8c1dede7dfa374ccc7be0121f79e38866d076eeb5550.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert2@demo.efy.example') AND p.second_category_id=101 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert2@demo.efy.example'),'seed/accounts/de9119d5860ef6201aa97df9dd2712c92f03bfd8bf9c2da8cfa55a80fbcd26ff.jpg','promo-moving-2.jpg','image/jpeg',183928,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert2@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/de9119d5860ef6201aa97df9dd2712c92f03bfd8bf9c2da8cfa55a80fbcd26ff.jpg'),'서비스 작업 사례 사진',1);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert2@demo.efy.example'),'seed/expert-work-unique/8baa916c04312b270abd834cb04e04fd9939689a3b0b4fdfc088a52d62811267.jpg','work-sample.jpg','image/jpeg',254022,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert2@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/8baa916c04312b270abd834cb04e04fd9939689a3b0b4fdfc088a52d62811267.jpg'),'서비스 작업 사례 사진',0);
+INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/8baa916c04312b270abd834cb04e04fd9939689a3b0b4fdfc088a52d62811267.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert2@demo.efy.example') AND p.second_category_id=101 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert2@demo.efy.example'),'seed/expert-work-unique/4fd88797ec38287671489b986362af74ac99d64980479305106d1843685d16ee.jpg','work-sample.jpg','image/jpeg',280625,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert2@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/4fd88797ec38287671489b986362af74ac99d64980479305106d1843685d16ee.jpg'),'서비스 작업 사례 사진',1);
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert3@demo.efy.example'),'seed/presentation-profiles/c002942b04c1c93a16833549018ac701f37ab755b019724cc8939833b041f29c.png','expert03.png','image/png',2579092,'PUBLIC',CURRENT_TIMESTAMP);
 UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/presentation-profiles/c002942b04c1c93a16833549018ac701f37ab755b019724cc8939833b041f29c.png') WHERE id=(SELECT id FROM member WHERE email='expert3@demo.efy.example') AND image_id IS NULL;
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert3@demo.efy.example'),'seed/accounts/635432912a9746c58549034e8731f640cad6edf99d75487d1904da587f8bb18b.jpg','promo-moving-1.jpg','image/jpeg',194916,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert3@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/635432912a9746c58549034e8731f640cad6edf99d75487d1904da587f8bb18b.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/635432912a9746c58549034e8731f640cad6edf99d75487d1904da587f8bb18b.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert3@demo.efy.example') AND p.second_category_id=101 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert3@demo.efy.example'),'seed/accounts/210cc985df03b8cab78690e5f80c51d93cea536a526e533d31024db98b9faf95.jpg','promo-moving-2.jpg','image/jpeg',183928,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert3@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/210cc985df03b8cab78690e5f80c51d93cea536a526e533d31024db98b9faf95.jpg'),'서비스 작업 사례 사진',1);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert3@demo.efy.example'),'seed/expert-work-unique/3e5b40b57b1ec930648f317cdadd0edbe18548ddfa0883c32fb223db63c9728a.jpg','work-sample.jpg','image/jpeg',236663,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert3@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/3e5b40b57b1ec930648f317cdadd0edbe18548ddfa0883c32fb223db63c9728a.jpg'),'서비스 작업 사례 사진',0);
+INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/3e5b40b57b1ec930648f317cdadd0edbe18548ddfa0883c32fb223db63c9728a.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert3@demo.efy.example') AND p.second_category_id=101 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert3@demo.efy.example'),'seed/expert-work-unique/edb50e9fc989a8952632224d337c6bd70d3478ed7754f2c76a72b17794ad04b8.jpg','work-sample.jpg','image/jpeg',245013,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert3@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/edb50e9fc989a8952632224d337c6bd70d3478ed7754f2c76a72b17794ad04b8.jpg'),'서비스 작업 사례 사진',1);
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert4@demo.efy.example'),'seed/presentation-profiles/3a55a6d8ce7cd546f333debd38cd2c8b406bf5293b134b08011246c756c56a02.png','expert04.png','image/png',2116477,'PUBLIC',CURRENT_TIMESTAMP);
 UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/presentation-profiles/3a55a6d8ce7cd546f333debd38cd2c8b406bf5293b134b08011246c756c56a02.png') WHERE id=(SELECT id FROM member WHERE email='expert4@demo.efy.example') AND image_id IS NULL;
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert4@demo.efy.example'),'seed/accounts/549fa5cdae210603006333b0e15da64284deea0779ef56315d62bda8439eebd0.jpg','promo-clean-1.jpg','image/jpeg',142658,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert4@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/549fa5cdae210603006333b0e15da64284deea0779ef56315d62bda8439eebd0.jpg'),'서비스 작업 사례 사진',0);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert4@demo.efy.example'),'seed/expert-work-unique/3f9287e72e785ca47bdfc5db2cdb51ab636cc202fca638df0bf3bdd9e6a45ab1.jpg','work-sample.jpg','image/jpeg',177486,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert4@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/3f9287e72e785ca47bdfc5db2cdb51ab636cc202fca638df0bf3bdd9e6a45ab1.jpg'),'서비스 작업 사례 사진',0);
 INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/549fa5cdae210603006333b0e15da64284deea0779ef56315d62bda8439eebd0.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert4@demo.efy.example') AND p.second_category_id=102 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert4@demo.efy.example'),'seed/accounts/54cee6db588cb25f542ddef6f875e5ccaae9af6c539b632d3a8919eb81ba1795.jpg','promo-clean-2.jpg','image/jpeg',138881,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert4@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/54cee6db588cb25f542ddef6f875e5ccaae9af6c539b632d3a8919eb81ba1795.jpg'),'서비스 작업 사례 사진',1);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert4@demo.efy.example'),'seed/expert-work-unique/537548145606b91354fed98f154950449fc41802ed78935984a38a069beb3f14.jpg','work-sample.jpg','image/jpeg',262222,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert4@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/537548145606b91354fed98f154950449fc41802ed78935984a38a069beb3f14.jpg'),'서비스 작업 사례 사진',1);
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert5@demo.efy.example'),'seed/presentation-profiles/4446b1ab54cd891731dd0f5b2b3f52296ba34bb249d1da53b5568d48e780340e.png','expert05.png','image/png',2352282,'PUBLIC',CURRENT_TIMESTAMP);
 UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/presentation-profiles/4446b1ab54cd891731dd0f5b2b3f52296ba34bb249d1da53b5568d48e780340e.png') WHERE id=(SELECT id FROM member WHERE email='expert5@demo.efy.example') AND image_id IS NULL;
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert5@demo.efy.example'),'seed/accounts/b3feea8bc591fc46962067a6d9af6da5f65a90d6a4aa2da601c968ed25e7d3be.jpg','promo-clean-1.jpg','image/jpeg',142658,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert5@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/b3feea8bc591fc46962067a6d9af6da5f65a90d6a4aa2da601c968ed25e7d3be.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/b3feea8bc591fc46962067a6d9af6da5f65a90d6a4aa2da601c968ed25e7d3be.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert5@demo.efy.example') AND p.second_category_id=102 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert5@demo.efy.example'),'seed/accounts/016609033f8011e1203ebd6343ad395e636b110bd68aba4b5da17326d31e7532.jpg','promo-clean-2.jpg','image/jpeg',138881,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert5@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/016609033f8011e1203ebd6343ad395e636b110bd68aba4b5da17326d31e7532.jpg'),'서비스 작업 사례 사진',1);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert5@demo.efy.example'),'seed/expert-work-unique/15551fe6277a9ce36ca0ffc12fb08d5ca5578a1bd0d746e74b9f8a523eaefa83.jpg','work-sample.jpg','image/jpeg',257408,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert5@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/15551fe6277a9ce36ca0ffc12fb08d5ca5578a1bd0d746e74b9f8a523eaefa83.jpg'),'서비스 작업 사례 사진',0);
+INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/15551fe6277a9ce36ca0ffc12fb08d5ca5578a1bd0d746e74b9f8a523eaefa83.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert5@demo.efy.example') AND p.second_category_id=102 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert5@demo.efy.example'),'seed/expert-work-unique/57f8a45cf6abec6a3a1d7a7cd7916b2e318edcc3bc9a7dc48e516b3b3f54bf09.jpg','work-sample.jpg','image/jpeg',216604,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert5@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/57f8a45cf6abec6a3a1d7a7cd7916b2e318edcc3bc9a7dc48e516b3b3f54bf09.jpg'),'서비스 작업 사례 사진',1);
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert6@demo.efy.example'),'seed/presentation-profiles/e550aedb1375b19f2a9a3adf6ac87333c3368d11938456a6ac2932837773be23.png','expert06.png','image/png',2258333,'PUBLIC',CURRENT_TIMESTAMP);
 UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/presentation-profiles/e550aedb1375b19f2a9a3adf6ac87333c3368d11938456a6ac2932837773be23.png') WHERE id=(SELECT id FROM member WHERE email='expert6@demo.efy.example') AND image_id IS NULL;
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert6@demo.efy.example'),'seed/accounts/3961ddbd344a2fce7e47d282672f39282c303ade835c7bc3bfb7c068c0550fc0.jpg','promo-clean-1.jpg','image/jpeg',142658,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert6@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/3961ddbd344a2fce7e47d282672f39282c303ade835c7bc3bfb7c068c0550fc0.jpg'),'서비스 작업 사례 사진',0);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert6@demo.efy.example'),'seed/expert-work-unique/7e1b09714dc95e373ab562b8c6bd0fc9b0375436a1eddc53d69d40390ec9d503.jpg','work-sample.jpg','image/jpeg',237581,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert6@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/7e1b09714dc95e373ab562b8c6bd0fc9b0375436a1eddc53d69d40390ec9d503.jpg'),'서비스 작업 사례 사진',0);
 INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/3961ddbd344a2fce7e47d282672f39282c303ade835c7bc3bfb7c068c0550fc0.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert6@demo.efy.example') AND p.second_category_id=102 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert6@demo.efy.example'),'seed/accounts/2c3ae4a8b6be8e0507f61a7fb968c11d56c9401d924050cc73c1f8bc6772964e.jpg','promo-clean-2.jpg','image/jpeg',138881,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert6@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/2c3ae4a8b6be8e0507f61a7fb968c11d56c9401d924050cc73c1f8bc6772964e.jpg'),'서비스 작업 사례 사진',1);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert6@demo.efy.example'),'seed/expert-work-unique/e3084c11755d3d3fea76fd9a2c6b2cefc6af762ea913209ca4c8686614537157.jpg','work-sample.jpg','image/jpeg',191713,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert6@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/e3084c11755d3d3fea76fd9a2c6b2cefc6af762ea913209ca4c8686614537157.jpg'),'서비스 작업 사례 사진',1);
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert7@demo.efy.example'),'seed/presentation-profiles/ac87b492952a1e806cfd07c8b34d28036c3eaac9882f10ed109eb4c1ee12cd4e.png','expert07.png','image/png',2218128,'PUBLIC',CURRENT_TIMESTAMP);
 UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/presentation-profiles/ac87b492952a1e806cfd07c8b34d28036c3eaac9882f10ed109eb4c1ee12cd4e.png') WHERE id=(SELECT id FROM member WHERE email='expert7@demo.efy.example') AND image_id IS NULL;
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert7@demo.efy.example'),'seed/accounts/fdd784d615f30ce8fd509a65507304a5faafbb180b686f2d188c4ec0343b406f.jpg','promo-dev-1.jpg','image/jpeg',139255,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert7@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/fdd784d615f30ce8fd509a65507304a5faafbb180b686f2d188c4ec0343b406f.jpg'),'서비스 작업 사례 사진',0);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert7@demo.efy.example'),'seed/expert-work-unique/c204c6128d004ad31a093562e386db82fdf5809ceebada62891cd1d2406e9415.jpg','work-sample.jpg','image/jpeg',185168,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert7@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/c204c6128d004ad31a093562e386db82fdf5809ceebada62891cd1d2406e9415.jpg'),'서비스 작업 사례 사진',0);
 INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/fdd784d615f30ce8fd509a65507304a5faafbb180b686f2d188c4ec0343b406f.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert7@demo.efy.example') AND p.second_category_id=139 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert8@demo.efy.example'),'seed/presentation-profiles/eb98873dad0c9294e1e20be39ad20bfe1221e64fb07bab9d478455f71f412833.png','expert08.png','image/png',2033824,'PUBLIC',CURRENT_TIMESTAMP);
 UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/presentation-profiles/eb98873dad0c9294e1e20be39ad20bfe1221e64fb07bab9d478455f71f412833.png') WHERE id=(SELECT id FROM member WHERE email='expert8@demo.efy.example') AND image_id IS NULL;
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert8@demo.efy.example'),'seed/accounts/2fc29d0f0ea4964e0500616fd9683dedbf5dfbb1f2188a70d973cddae6bf92b8.jpg','promo-dev-1.jpg','image/jpeg',139255,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert8@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/2fc29d0f0ea4964e0500616fd9683dedbf5dfbb1f2188a70d973cddae6bf92b8.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/2fc29d0f0ea4964e0500616fd9683dedbf5dfbb1f2188a70d973cddae6bf92b8.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert8@demo.efy.example') AND p.second_category_id=139 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert8@demo.efy.example'),'seed/expert-work-unique/adb74d604c4dce9b51ef916eead95aec9c4628c0ff800ba2dbee0f33dbc3d9fa.jpg','work-sample.jpg','image/jpeg',209699,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert8@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/adb74d604c4dce9b51ef916eead95aec9c4628c0ff800ba2dbee0f33dbc3d9fa.jpg'),'서비스 작업 사례 사진',0);
+INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/adb74d604c4dce9b51ef916eead95aec9c4628c0ff800ba2dbee0f33dbc3d9fa.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert8@demo.efy.example') AND p.second_category_id=139 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert9@demo.efy.example'),'seed/presentation-profiles/ba4360ddbbd45220d6b76ae0bf036a745fc9e5209880534584c5b2733d112b68.png','expert09.png','image/png',2184096,'PUBLIC',CURRENT_TIMESTAMP);
 UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/presentation-profiles/ba4360ddbbd45220d6b76ae0bf036a745fc9e5209880534584c5b2733d112b68.png') WHERE id=(SELECT id FROM member WHERE email='expert9@demo.efy.example') AND image_id IS NULL;
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert9@demo.efy.example'),'seed/accounts/29dbe8f14c71b14762bab6d01ec486000ac2ea1c4efdb13c2c935afc45100b6f.jpg','promo-dev-1.jpg','image/jpeg',139255,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert9@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/29dbe8f14c71b14762bab6d01ec486000ac2ea1c4efdb13c2c935afc45100b6f.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/29dbe8f14c71b14762bab6d01ec486000ac2ea1c4efdb13c2c935afc45100b6f.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert9@demo.efy.example') AND p.second_category_id=139 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert9@demo.efy.example'),'seed/expert-work-unique/7b2a69c91d454e2f1e78882c76270e79cd7886f02e9b3b896b7524a06d53908b.jpg','work-sample.jpg','image/jpeg',173401,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert9@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/7b2a69c91d454e2f1e78882c76270e79cd7886f02e9b3b896b7524a06d53908b.jpg'),'서비스 작업 사례 사진',0);
+INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/7b2a69c91d454e2f1e78882c76270e79cd7886f02e9b3b896b7524a06d53908b.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert9@demo.efy.example') AND p.second_category_id=139 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert10@demo.efy.example'),'seed/presentation-profiles/710d56a3e6311981449bab84ec340139a77e7a6d6813c2d00282c72e2a65c032.png','expert10.png','image/png',2582851,'PUBLIC',CURRENT_TIMESTAMP);
 UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/presentation-profiles/710d56a3e6311981449bab84ec340139a77e7a6d6813c2d00282c72e2a65c032.png') WHERE id=(SELECT id FROM member WHERE email='expert10@demo.efy.example') AND image_id IS NULL;
 INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert10@demo.efy.example'),'seed/accounts/7cd1d484abf3836fe0041ff7085555aa73b2bcfbab3a7039672952eb567e4b23.jpg','promo-dev-1.jpg','image/jpeg',139255,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert10@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/accounts/7cd1d484abf3836fe0041ff7085555aa73b2bcfbab3a7039672952eb567e4b23.jpg'),'서비스 작업 사례 사진',0);
+INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert10@demo.efy.example'),'seed/expert-work-unique/d352153f336bd09551c15d2afae46c0497c9e55ed163354a34b34b6bcaae0ae9.jpg','work-sample.jpg','image/jpeg',192486,'PUBLIC',CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert10@demo.efy.example')),(SELECT id FROM file WHERE storage_path='seed/expert-work-unique/d352153f336bd09551c15d2afae46c0497c9e55ed163354a34b34b6bcaae0ae9.jpg'),'서비스 작업 사례 사진',0);
 INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/7cd1d484abf3836fe0041ff7085555aa73b2bcfbab3a7039672952eb567e4b23.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert10@demo.efy.example') AND p.second_category_id=139 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
 
 COMMIT;

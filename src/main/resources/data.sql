@@ -2908,16 +2908,6 @@ WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert21@example.com')
   AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
 INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'expert22@example.com'),
-        'seed/accounts/2319b7f87ff6decd4cb119215d4c8d2724f1328d2be11374aafbd23461e3197e.jpg', 'expert-105.jpg',
-        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
-UPDATE member
-SET image_id=(SELECT id
-              FROM file
-              WHERE storage_path = 'seed/accounts/2319b7f87ff6decd4cb119215d4c8d2724f1328d2be11374aafbd23461e3197e.jpg')
-WHERE id = (SELECT id FROM member WHERE email = 'expert22@example.com')
-  AND image_id IS NULL;
-INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
-VALUES ((SELECT id FROM member WHERE email = 'expert22@example.com'),
         'seed/accounts/fc86f1b5a60b0d8faa97de25dfc583048d6de10815722587cb2961fe69ed81e6.jpg', 'promo-dev-1.jpg',
         'image/jpeg', 139255, 'PUBLIC', CURRENT_TIMESTAMP);
 INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
@@ -2978,16 +2968,6 @@ WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert31@example.com')
   AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
 INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'expert32@example.com'),
-        'seed/accounts/a0ec1c0db10d72d255d24964764910c4b87dd46f87cbd3c39aec31fa6e8dd7ed.jpg', 'expert-105.jpg',
-        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
-UPDATE member
-SET image_id=(SELECT id
-              FROM file
-              WHERE storage_path = 'seed/accounts/a0ec1c0db10d72d255d24964764910c4b87dd46f87cbd3c39aec31fa6e8dd7ed.jpg')
-WHERE id = (SELECT id FROM member WHERE email = 'expert32@example.com')
-  AND image_id IS NULL;
-INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
-VALUES ((SELECT id FROM member WHERE email = 'expert32@example.com'),
         'seed/accounts/8b86c275ce6b7ad07e155462ffa33b672553fb4dad2910535f0349c61fb3abdd.jpg', 'promo-dev-1.jpg',
         'image/jpeg', 139255, 'PUBLIC', CURRENT_TIMESTAMP);
 INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
@@ -3046,16 +3026,6 @@ FROM post p
 WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert41@example.com')
   AND p.second_category_id = 102
   AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
-INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
-VALUES ((SELECT id FROM member WHERE email = 'expert42@example.com'),
-        'seed/accounts/fd31c6d9904f7977af33c34b65ad09e898c64894178dc942773ae4d38f649594.jpg', 'expert-105.jpg',
-        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
-UPDATE member
-SET image_id=(SELECT id
-              FROM file
-              WHERE storage_path = 'seed/accounts/fd31c6d9904f7977af33c34b65ad09e898c64894178dc942773ae4d38f649594.jpg')
-WHERE id = (SELECT id FROM member WHERE email = 'expert42@example.com')
-  AND image_id IS NULL;
 INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'expert42@example.com'),
         'seed/accounts/d2398d0ca1f40c7d45fe00ccea3cc3b86e8a6ea76f1982292f94fe0d55a2c1d8.jpg', 'promo-dev-1.jpg',
@@ -3120,16 +3090,6 @@ FROM post p
 WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert51@example.com')
   AND p.second_category_id = 102
   AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
-INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
-VALUES ((SELECT id FROM member WHERE email = 'expert52@example.com'),
-        'seed/accounts/57834dd3f824816583300b0d7b594d79cf4de16512d96d99cbb93fa26ee4c820.jpg', 'expert-105.jpg',
-        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
-UPDATE member
-SET image_id=(SELECT id
-              FROM file
-              WHERE storage_path = 'seed/accounts/57834dd3f824816583300b0d7b594d79cf4de16512d96d99cbb93fa26ee4c820.jpg')
-WHERE id = (SELECT id FROM member WHERE email = 'expert52@example.com')
-  AND image_id IS NULL;
 INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'expert52@example.com'),
         'seed/accounts/c91458d9ec331ccac201adcde487fff49023e92275c39ae7d9d23bae11f2fd19.jpg', 'promo-dev-1.jpg',
