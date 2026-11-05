@@ -94,6 +94,24 @@ class ExpertProfileUpdateTests {
     }
 
     @Test
+    void 등록일은_공개목록에_표시되고_프로필을_수정해도_유지된다() throws Exception {
+        String token = token(createMember());
+        Long profileId = createProfile(token);
+        String path = "$[?(@.id == " + profileId + ")].createdAt";
+        String before = mockMvc.perform(get("/api/public/expert-profiles"))
+                .andExpect(status().isOk()).andExpect(jsonPath(path).isNotEmpty())
+                .andReturn().getResponse().getContentAsString();
+
+        mockMvc.perform(patch(URL).header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"shortIntro\":\"등록일 유지 확인\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/public/expert-profiles"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(path).value((Object) com.jayway.jsonpath.JsonPath.read(before, path)));
+    }
+
+    @Test
     void 서비스와_대표서비스는_최종조합으로_검사() throws Exception {
         Long memberId = createMember();
         String token = token(memberId);

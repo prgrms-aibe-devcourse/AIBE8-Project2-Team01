@@ -191,21 +191,21 @@ INSERT INTO expert_profile (member_id,
                             career_years,
                             career_description,
                             primary_category_id,
-                            is_nationwide)
+                            is_nationwide, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'expert1@example.com'),
         '원룸 이사 전문 고수입니다.',
         '강남구에서 원룸 이사와 소형 이사 서비스를 제공합니다.',
         5,
         '이사 서비스 경력 5년',
         101,
-        FALSE),
+        FALSE, DATEADD('DAY', -3, CURRENT_TIMESTAMP)),
        ((SELECT id FROM member WHERE email = 'expert2@example.com'),
         '백엔드 개발 전문 고수입니다.',
         '서초구에서 Spring Boot 기반 개발 외주 서비스를 제공합니다.',
         3,
         'Java/Spring 백엔드 개발 경력 3년',
         139,
-        FALSE);
+        FALSE, DATEADD('DAY', -7, CURRENT_TIMESTAMP));
 
 -- 기존 고수 제공 서비스: expert1 이사(101)·입주 청소(102), expert2 개발 외주(139)·이사(101)
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -777,27 +777,27 @@ VALUES ('customer11@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7e
 
 -- 팀원별 지역을 분리합니다. 끝자리 1번은 개별 시군구 이사·입주 청소. 2번은 해당 시도 전체 이사·개발 외주.
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
+                            is_nationwide, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'expert11@example.com'), '서울 강남구 테스트 고수입니다.',
-        '서울 강남구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+        '서울 강남구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE, DATEADD('DAY', -12, CURRENT_TIMESTAMP)),
        ((SELECT id FROM member WHERE email = 'expert12@example.com'), '서울 강남구 테스트 고수입니다.',
-        '서울 강남구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
+        '서울 강남구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)),
        ((SELECT id FROM member WHERE email = 'expert21@example.com'), '부산 중구 테스트 고수입니다.',
-        '부산 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+        '부산 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)),
        ((SELECT id FROM member WHERE email = 'expert22@example.com'), '부산 중구 테스트 고수입니다.',
-        '부산 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
+        '부산 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)),
        ((SELECT id FROM member WHERE email = 'expert31@example.com'), '대구 중구 테스트 고수입니다.',
-        '대구 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+        '대구 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)),
        ((SELECT id FROM member WHERE email = 'expert32@example.com'), '대구 중구 테스트 고수입니다.',
-        '대구 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
+        '대구 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)),
        ((SELECT id FROM member WHERE email = 'expert41@example.com'), '인천 제물포구 테스트 고수입니다.',
-        '인천 제물포구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+        '인천 제물포구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)),
        ((SELECT id FROM member WHERE email = 'expert42@example.com'), '인천 제물포구 테스트 고수입니다.',
-        '인천 제물포구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
+        '인천 제물포구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)),
        ((SELECT id FROM member WHERE email = 'expert51@example.com'), '대전 동구 테스트 고수입니다.',
-        '대전 동구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+        '대전 동구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)),
        ((SELECT id FROM member WHERE email = 'expert52@example.com'), '대전 동구 테스트 고수입니다.',
-        '대전 동구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE);
+        '대전 동구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP));
 
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
 VALUES ((SELECT ep.id
@@ -1718,8 +1718,8 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile101@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '한결이사', '01080000101',
         'EXPERT', DATEADD('DAY', -41, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
-SELECT id, '원룸부터 쓰리룸까지 포장이사 전문', '원룸부터 쓰리룸까지 포장이사 전문. 작업 범위와 일정은 상담 후 안내해 드립니다.', 9, '관련 서비스 경력 9년입니다.', 101, FALSE
+                            is_nationwide, created_at)
+SELECT id, '원룸부터 쓰리룸까지 포장이사 전문', '원룸부터 쓰리룸까지 포장이사 전문. 작업 범위와 일정은 상담 후 안내해 드립니다.', 9, '관련 서비스 경력 9년입니다.', 101, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile101@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -1770,14 +1770,14 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile102@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '반짝홈케어',
         '01080000102', 'EXPERT', DATEADD('DAY', -20, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
+                            is_nationwide, created_at)
 SELECT id,
        '입주 청소와 이사 청소를 하루에 끝내 드려요',
        '입주 청소와 이사 청소를 하루에 끝내 드려요. 작업 범위와 일정은 상담 후 안내해 드립니다.',
        6,
        '관련 서비스 경력 6년입니다.',
        102,
-       FALSE
+       FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile102@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -1821,14 +1821,14 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile103@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '윤선생 영어',
         '01080000103', 'EXPERT', DATEADD('DAY', -120, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
+                            is_nationwide, created_at)
 SELECT id,
        '중고등 내신과 수능 영어를 1:1로 봐 드립니다',
        '중고등 내신과 수능 영어를 1:1로 봐 드립니다. 작업 범위와 일정은 상담 후 안내해 드립니다.',
        11,
        '관련 서비스 경력 11년입니다.',
        129,
-       FALSE
+       FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile103@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -1870,14 +1870,14 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile104@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '소리공방', '01080000104',
         'EXPERT', DATEADD('DAY', -5, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
+                            is_nationwide, created_at)
 SELECT id,
        '취미 피아노와 기타를 처음부터 차근차근',
        '취미 피아노와 기타를 처음부터 차근차근. 작업 범위와 일정은 상담 후 안내해 드립니다.',
        7,
        '관련 서비스 경력 7년입니다.',
        165,
-       FALSE
+       FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile104@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -1911,14 +1911,14 @@ SET image_id=(SELECT id
                     'seed/expert-portraits/d01c2618fe2ab4a4b3e5a4788a830ea6cd49651d876de7fea68e776e75397b43.jpg')
 WHERE email = 'profile104@example.com';
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
+                            is_nationwide, created_at)
 SELECT id,
        '쇼핑몰과 예약 서비스 웹을 기획부터 배포까지',
        '쇼핑몰과 예약 서비스 웹을 기획부터 배포까지. 작업 범위와 일정은 상담 후 안내해 드립니다.',
        8,
        '관련 서비스 경력 8년입니다.',
        139,
-       TRUE
+       TRUE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'seed-dev@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -1945,14 +1945,14 @@ SET image_id=(SELECT id
                     'seed/expert-portraits/8706e1fa2982c383584d4f8f45cc67a854e272943b2fdbbb4a1948b697389102.jpg')
 WHERE email = 'seed-dev@example.com';
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
+                            is_nationwide, created_at)
 SELECT id,
        '누수 탐지와 보일러 교체를 당일에 확인합니다',
        '누수 탐지와 보일러 교체를 당일에 확인합니다. 작업 범위와 일정은 상담 후 안내해 드립니다.',
        15,
        '관련 서비스 경력 15년입니다.',
        109,
-       FALSE
+       FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'seed-plumb@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -1998,8 +1998,8 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile107@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '온집 인테리어',
         '01080000107', 'EXPERT', DATEADD('DAY', -8, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
-SELECT id, '욕실과 주방 부분 시공을 깔끔하게', '욕실과 주방 부분 시공을 깔끔하게. 작업 범위와 일정은 상담 후 안내해 드립니다.', 12, '관련 서비스 경력 12년입니다.', 113, FALSE
+                            is_nationwide, created_at)
+SELECT id, '욕실과 주방 부분 시공을 깔끔하게', '욕실과 주방 부분 시공을 깔끔하게. 작업 범위와 일정은 상담 후 안내해 드립니다.', 12, '관련 서비스 경력 12년입니다.', 113, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile107@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -2043,14 +2043,14 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile108@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '담다 스냅',
         '01080000108', 'EXPERT', DATEADD('DAY', -1, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
+                            is_nationwide, created_at)
 SELECT id,
        '웨딩 스냅과 가족 사진을 자연광으로 담아요',
        '웨딩 스냅과 가족 사진을 자연광으로 담아요. 작업 범위와 일정은 상담 후 안내해 드립니다.',
        5,
        '관련 서비스 경력 5년입니다.',
        120,
-       TRUE
+       TRUE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile108@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -2082,14 +2082,14 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile109@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '정리하는 하루',
         '01080000109', 'EXPERT', DATEADD('DAY', -6, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
+                            is_nationwide, created_at)
 SELECT id,
        '가전 분해 세척과 가구 청소를 함께 맡겨 주세요',
        '가전 분해 세척과 가구 청소를 함께 맡겨 주세요. 작업 범위와 일정은 상담 후 안내해 드립니다.',
        4,
        '관련 서비스 경력 4년입니다.',
        103,
-       FALSE
+       FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile109@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -2131,14 +2131,14 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile110@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '김코치 피트니스',
         '01080000110', 'EXPERT', DATEADD('DAY', -60, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
+                            is_nationwide, created_at)
 SELECT id,
        '체형 교정 중심의 1:1 퍼스널 트레이닝',
        '체형 교정 중심의 1:1 퍼스널 트레이닝. 작업 범위와 일정은 상담 후 안내해 드립니다.',
        10,
        '관련 서비스 경력 10년입니다.',
        174,
-       FALSE
+       FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile110@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -2171,8 +2171,8 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile111@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '문고리 수리',
         '01080000111', 'EXPERT', DATEADD('DAY', -4, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
-SELECT id, '도어락 교체와 방충망, 창문 수리', '도어락 교체와 방충망, 창문 수리. 작업 범위와 일정은 상담 후 안내해 드립니다.', 8, '관련 서비스 경력 8년입니다.', 108, FALSE
+                            is_nationwide, created_at)
+SELECT id, '도어락 교체와 방충망, 창문 수리', '도어락 교체와 방충망, 창문 수리. 작업 범위와 일정은 상담 후 안내해 드립니다.', 8, '관련 서비스 경력 8년입니다.', 108, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile111@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -2218,8 +2218,8 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile112@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '해운대 이사짐센터',
         '01080000112', 'EXPERT', DATEADD('DAY', -300, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
-SELECT id, '부산 전 지역 소형 이사와 용달', '부산 전 지역 소형 이사와 용달. 작업 범위와 일정은 상담 후 안내해 드립니다.', 18, '관련 서비스 경력 18년입니다.', 101, FALSE
+                            is_nationwide, created_at)
+SELECT id, '부산 전 지역 소형 이사와 용달', '부산 전 지역 소형 이사와 용달. 작업 범위와 일정은 상담 후 안내해 드립니다.', 18, '관련 서비스 경력 18년입니다.', 101, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile112@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -2255,14 +2255,14 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile113@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '커리어노트',
         '01080000113', 'EXPERT', DATEADD('DAY', -90, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
+                            is_nationwide, created_at)
 SELECT id,
        '자소서 첨삭과 직무 면접 준비를 1:1로',
        '자소서 첨삭과 직무 면접 준비를 1:1로. 작업 범위와 일정은 상담 후 안내해 드립니다.',
        9,
        '관련 서비스 경력 9년입니다.',
        150,
-       FALSE
+       FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile113@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -2299,8 +2299,8 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile114@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '그림숲 아틀리에',
         '01080000114', 'EXPERT', DATEADD('DAY', -9, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
-SELECT id, '성인 취미 드로잉과 수채화 클래스', '성인 취미 드로잉과 수채화 클래스. 작업 범위와 일정은 상담 후 안내해 드립니다.', 6, '관련 서비스 경력 6년입니다.', 167, FALSE
+                            is_nationwide, created_at)
+SELECT id, '성인 취미 드로잉과 수채화 클래스', '성인 취미 드로잉과 수채화 클래스. 작업 범위와 일정은 상담 후 안내해 드립니다.', 6, '관련 서비스 경력 6년입니다.', 167, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile114@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -2337,14 +2337,14 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile115@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '새길 노무',
         '01080000115', 'EXPERT', DATEADD('DAY', -2, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
+                            is_nationwide, created_at)
 SELECT id,
        '임금 체불과 근로계약 상담을 쉽게 풀어 드려요',
        '임금 체불과 근로계약 상담을 쉽게 풀어 드려요. 작업 범위와 일정은 상담 후 안내해 드립니다.',
        13,
        '관련 서비스 경력 13년입니다.',
        187,
-       TRUE
+       TRUE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile115@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -2376,8 +2376,8 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile116@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '마음쉼표 상담',
         '01080000116', 'EXPERT', DATEADD('DAY', -30, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
-SELECT id, '직장인 스트레스와 관계 고민 상담', '직장인 스트레스와 관계 고민 상담. 작업 범위와 일정은 상담 후 안내해 드립니다.', 10, '관련 서비스 경력 10년입니다.', 190, FALSE
+                            is_nationwide, created_at)
+SELECT id, '직장인 스트레스와 관계 고민 상담', '직장인 스트레스와 관계 고민 상담. 작업 범위와 일정은 상담 후 안내해 드립니다.', 10, '관련 서비스 경력 10년입니다.', 190, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile116@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -2413,14 +2413,14 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile117@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '한빛 카케어',
         '01080000117', 'EXPERT', DATEADD('DAY', -150, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
+                            is_nationwide, created_at)
 SELECT id,
        '출장 세차와 실내 클리닝, 소모품 교체',
        '출장 세차와 실내 클리닝, 소모품 교체. 작업 범위와 일정은 상담 후 안내해 드립니다.',
        16,
        '관련 서비스 경력 16년입니다.',
        184,
-       FALSE
+       FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile117@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -2458,8 +2458,8 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile118@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '맑은창 줄눈',
         '01080000118', 'EXPERT', DATEADD('DAY', -75, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
-SELECT id, '욕실 줄눈과 실리콘 재시공을 반나절에', '욕실 줄눈과 실리콘 재시공을 반나절에. 작업 범위와 일정은 상담 후 안내해 드립니다.', 9, '관련 서비스 경력 9년입니다.', 113, FALSE
+                            is_nationwide, created_at)
+SELECT id, '욕실 줄눈과 실리콘 재시공을 반나절에', '욕실 줄눈과 실리콘 재시공을 반나절에. 작업 범위와 일정은 상담 후 안내해 드립니다.', 9, '관련 서비스 경력 9년입니다.', 113, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile118@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -2501,8 +2501,8 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile119@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '하늘 웨딩플래너',
         '01080000119', 'EXPERT', DATEADD('DAY', -200, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
-SELECT id, '스드메 견적 비교부터 본식 진행까지', '스드메 견적 비교부터 본식 진행까지. 작업 범위와 일정은 상담 후 안내해 드립니다.', 8, '관련 서비스 경력 8년입니다.', 118, FALSE
+                            is_nationwide, created_at)
+SELECT id, '스드메 견적 비교부터 본식 진행까지', '스드메 견적 비교부터 본식 진행까지. 작업 범위와 일정은 상담 후 안내해 드립니다.', 8, '관련 서비스 경력 8년입니다.', 118, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile119@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -2542,8 +2542,8 @@ INSERT INTO member (email, password, nickname, phone, role, created_at, token_ve
 VALUES ('profile120@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '오늘의 요가',
         '01080000120', 'EXPERT', DATEADD('DAY', -45, CURRENT_TIMESTAMP), 0);
 INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
-                            is_nationwide)
-SELECT id, '소규모 그룹과 1:1 요가 수업', '소규모 그룹과 1:1 요가 수업. 작업 범위와 일정은 상담 후 안내해 드립니다.', 6, '관련 서비스 경력 6년입니다.', 174, FALSE
+                            is_nationwide, created_at)
+SELECT id, '소규모 그룹과 1:1 요가 수업', '소규모 그룹과 1:1 요가 수업. 작업 범위와 일정은 상담 후 안내해 드립니다.', 6, '관련 서비스 경력 6년입니다.', 174, FALSE, DATEADD('DAY', -30, CURRENT_TIMESTAMP)
 FROM member
 WHERE email = 'profile120@example.com';
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
@@ -2908,16 +2908,6 @@ WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert21@example.com')
   AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
 INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'expert22@example.com'),
-        'seed/accounts/2319b7f87ff6decd4cb119215d4c8d2724f1328d2be11374aafbd23461e3197e.jpg', 'expert-105.jpg',
-        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
-UPDATE member
-SET image_id=(SELECT id
-              FROM file
-              WHERE storage_path = 'seed/accounts/2319b7f87ff6decd4cb119215d4c8d2724f1328d2be11374aafbd23461e3197e.jpg')
-WHERE id = (SELECT id FROM member WHERE email = 'expert22@example.com')
-  AND image_id IS NULL;
-INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
-VALUES ((SELECT id FROM member WHERE email = 'expert22@example.com'),
         'seed/accounts/fc86f1b5a60b0d8faa97de25dfc583048d6de10815722587cb2961fe69ed81e6.jpg', 'promo-dev-1.jpg',
         'image/jpeg', 139255, 'PUBLIC', CURRENT_TIMESTAMP);
 INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
@@ -2978,16 +2968,6 @@ WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert31@example.com')
   AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
 INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'expert32@example.com'),
-        'seed/accounts/a0ec1c0db10d72d255d24964764910c4b87dd46f87cbd3c39aec31fa6e8dd7ed.jpg', 'expert-105.jpg',
-        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
-UPDATE member
-SET image_id=(SELECT id
-              FROM file
-              WHERE storage_path = 'seed/accounts/a0ec1c0db10d72d255d24964764910c4b87dd46f87cbd3c39aec31fa6e8dd7ed.jpg')
-WHERE id = (SELECT id FROM member WHERE email = 'expert32@example.com')
-  AND image_id IS NULL;
-INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
-VALUES ((SELECT id FROM member WHERE email = 'expert32@example.com'),
         'seed/accounts/8b86c275ce6b7ad07e155462ffa33b672553fb4dad2910535f0349c61fb3abdd.jpg', 'promo-dev-1.jpg',
         'image/jpeg', 139255, 'PUBLIC', CURRENT_TIMESTAMP);
 INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
@@ -3046,16 +3026,6 @@ FROM post p
 WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert41@example.com')
   AND p.second_category_id = 102
   AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
-INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
-VALUES ((SELECT id FROM member WHERE email = 'expert42@example.com'),
-        'seed/accounts/fd31c6d9904f7977af33c34b65ad09e898c64894178dc942773ae4d38f649594.jpg', 'expert-105.jpg',
-        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
-UPDATE member
-SET image_id=(SELECT id
-              FROM file
-              WHERE storage_path = 'seed/accounts/fd31c6d9904f7977af33c34b65ad09e898c64894178dc942773ae4d38f649594.jpg')
-WHERE id = (SELECT id FROM member WHERE email = 'expert42@example.com')
-  AND image_id IS NULL;
 INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'expert42@example.com'),
         'seed/accounts/d2398d0ca1f40c7d45fe00ccea3cc3b86e8a6ea76f1982292f94fe0d55a2c1d8.jpg', 'promo-dev-1.jpg',
@@ -3120,16 +3090,6 @@ FROM post p
 WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert51@example.com')
   AND p.second_category_id = 102
   AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
-INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
-VALUES ((SELECT id FROM member WHERE email = 'expert52@example.com'),
-        'seed/accounts/57834dd3f824816583300b0d7b594d79cf4de16512d96d99cbb93fa26ee4c820.jpg', 'expert-105.jpg',
-        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
-UPDATE member
-SET image_id=(SELECT id
-              FROM file
-              WHERE storage_path = 'seed/accounts/57834dd3f824816583300b0d7b594d79cf4de16512d96d99cbb93fa26ee4c820.jpg')
-WHERE id = (SELECT id FROM member WHERE email = 'expert52@example.com')
-  AND image_id IS NULL;
 INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'expert52@example.com'),
         'seed/accounts/c91458d9ec331ccac201adcde487fff49023e92275c39ae7d9d23bae11f2fd19.jpg', 'promo-dev-1.jpg',
