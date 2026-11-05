@@ -29,6 +29,7 @@ public interface ExpertProfileMapper {
     @Mapping(target = "wholeRegions", ignore = true)
     @Mapping(target = "regions", ignore = true)
     @Mapping(target = "workImages", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
     ExpertProfile toEntity(ExpertProfileCreateRequest expertProfileRequest);
 
     @Mapping(target = "nickname", source = "expertProfile.member.nickname")

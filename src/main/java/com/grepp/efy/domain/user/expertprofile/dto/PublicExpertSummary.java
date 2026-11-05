@@ -4,6 +4,7 @@ import com.grepp.efy.domain.basedata.firstregion.dto.FirstRegionResponse;
 import com.grepp.efy.domain.basedata.secondcategory.dto.SecondCategoryResponse;
 import com.grepp.efy.domain.basedata.secondregion.dto.SecondRegionResponse;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 public record PublicExpertSummary(
@@ -17,6 +18,7 @@ public record PublicExpertSummary(
         boolean nationwide,
         Set<FirstRegionResponse> wholeRegions,
         Set<SecondRegionResponse> regions,
+        LocalDateTime createdAt,
         long bookmarkCount,       // 누적 찜 수
         long weeklyBookmarkCount  // 최근 7일 찜 수
 ) {

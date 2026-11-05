@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
@@ -27,6 +28,9 @@ public class ExpertProfile {
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "member_id", nullable = false, unique = true)
     private Member member;
+
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
     @Column(nullable = false, length = 100)
     private String shortIntro; // 한 줄 소개
@@ -58,4 +62,9 @@ public class ExpertProfile {
     @OneToMany(mappedBy = "expertProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder ASC")
     private List<WorkImage> workImages = new ArrayList<>();
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
 }
