@@ -1,4 +1,4 @@
-# 백엔드 빌드에 필요한 파일만 전달합니다. 프론트·Git·IDE·로컬 빌드 결과는 제외합니다.
+# 프론트와 백엔드 빌드에 필요한 파일만 전달합니다.
 **
 !Dockerfile
 !.dockerignore
@@ -10,6 +10,16 @@
 !src
 !src/main
 !src/main/**
+!frontend
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/index.html
+!frontend/tsconfig.json
+!frontend/vite.config.js
+!frontend/src
+!frontend/src/**
+!frontend/public
+!frontend/public/**
 
 # 로컬 비밀 파일과 수동 적용용 시드는 이미지에 넣지 않습니다.
 **/application-secret*
