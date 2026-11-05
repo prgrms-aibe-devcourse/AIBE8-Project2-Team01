@@ -13,8 +13,9 @@ import { useLoad } from '../hooks/useLoad';
 import { useSingleFlight } from '../hooks/useSingleFlight';
 import { friendly } from '../lib/messages';
 
-export function AdminNav({ current }: { current: 'members' | 'categories' | 'regions' }) {
-  const items = [['members', '회원 관리'], ['categories', '카테고리 관리'], ['regions', '지역 관리']] as const;
+export type AdminKey = 'members' | 'posts' | 'requests' | 'quotes' | 'categories' | 'regions';
+export function AdminNav({ current }: { current: AdminKey }) {
+  const items = [['members', '회원 관리'], ['posts', '게시글 관리'], ['requests', '요청서 현황'], ['quotes', '견적 현황'], ['categories', '카테고리 관리'], ['regions', '지역 관리']] as const;
   return (
     <nav className="card admin-nav" aria-label="관리 메뉴">
       <small className="sub">관리 메뉴</small>

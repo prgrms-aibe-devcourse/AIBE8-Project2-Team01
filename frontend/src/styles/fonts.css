@@ -1,0 +1,29 @@
+/* 서체: 강사님 피드백으로 팀원 저장소(personal_AIBE8-Project2-Team01_FE)와 같은 나눔스퀘어 네오로 바꾼다.
+   가변 woff2는 크롬이 읽지 못해서 굵기별 woff를 쓴다. 굵기는 400·700·800·900 네 가지만 있다. */
+@font-face {
+  font-family: 'NanumSquare Neo';
+  src: url(https://hangeul.pstatic.net/hangeul_static/webfont/NanumSquareNeo/NanumSquareNeoTTF-bRg.woff) format('woff');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'NanumSquare Neo';
+  src: url(https://hangeul.pstatic.net/hangeul_static/webfont/NanumSquareNeo/NanumSquareNeoTTF-cBd.woff) format('woff');
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'NanumSquare Neo';
+  src: url(https://hangeul.pstatic.net/hangeul_static/webfont/NanumSquareNeo/NanumSquareNeoTTF-dEb.woff) format('woff');
+  font-weight: 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'NanumSquare Neo';
+  src: url(https://hangeul.pstatic.net/hangeul_static/webfont/NanumSquareNeo/NanumSquareNeoTTF-eHv.woff) format('woff');
+  font-weight: 900;
+  font-display: swap;
+}

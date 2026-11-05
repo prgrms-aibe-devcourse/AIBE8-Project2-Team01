@@ -30,13 +30,14 @@ export function BookmarkButton({ expertProfileId, ownerMemberNickname }: { exper
     setCheckErr(false); setOn(null);
     findBookmarked(expertProfileId).then(setOn).catch(() => setCheckErr(true));
   };
-  useEffect(() => { if (status === 'member' && me?.role !== 'ADMIN') check(); }, [status, expertProfileId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (status === 'member' && me?.role === 'USER') check(); }, [status, expertProfileId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (status === 'loading') return null;
   if (status !== 'member') {
     return <button type="button" className="btn like" onClick={() => navigate('/login', { redirect: currentRedirect() })}>♡ 로그인하고 찜하기</button>;
   }
-  if (me?.role === 'ADMIN' || (ownerMemberNickname && me?.nickname === ownerMemberNickname)) return null;
+  // 찜은 고객 기능이다. 관리자·고수 상태·본인 프로필에서는 버튼을 보이지 않는다
+  if (me?.role === 'ADMIN' || me?.role === 'EXPERT' || (ownerMemberNickname && me?.nickname === ownerMemberNickname)) return null;
   if (checkErr) return <button type="button" className="btn like" onClick={check}>찜 상태 다시 확인</button>;
 
   const toggle = () => on !== null && run(async () => {

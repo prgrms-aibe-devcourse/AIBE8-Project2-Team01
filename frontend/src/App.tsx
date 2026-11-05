@@ -7,20 +7,21 @@ import { errorText } from './api/client';
 import type { MemberRole } from './api/types';
 import { useSession } from './auth/session';
 import { RoleNotice } from './components/common';
-import { Footer, showFooter } from './components/Footer';
-import { Header, MobileTabBar, showMobileTabs } from './components/Header';
+import Footer, { showFooter } from './components/Footer.jsx';
+import Header, { MobileTabBar, showMobileTabs } from './components/Header.jsx';
 import { ErrorView, Lines, LoadingView, Modal } from './components/ui';
 import { navigate, useHashRoute } from './hooks/useHashRoute';
 import { AdminCategoriesPage, AdminRegionsPage } from './pages/AdminBaseDataPages';
 import { AdminMembersPage } from './pages/AdminMembersPage';
+import { AdminPostsPage, AdminQuotesPage, AdminRequestsPage } from './pages/AdminActivityPages';
 import { BookmarksPage } from './pages/BookmarksPage';
 import { ChatListPage } from './pages/ChatListPage';
 import { CommunityPage, MyPostsPage } from './pages/CommunityPage';
 import { CreditHistoryPage, CreditPage } from './pages/CreditPages';
 import { ExpertFormPage } from './pages/ExpertFormPage';
 import { ExpertIntroPage } from './pages/ExpertIntroPage';
-import { MyExpertProfilePage, PublicExpertProfilePage } from './pages/ExpertProfilePages';
-import { HomePage } from './pages/HomePage';
+import { MyExpertProfilePage, PublicExpertProfilePage, SampleExpertProfilePage } from './pages/ExpertProfilePages';
+import HomePage from './pages/HomePage.jsx';
 import { LoginPage } from './pages/LoginPage';
 import { MyInfoPage } from './pages/MyInfoPage';
 import { MyPage } from './pages/MyPage';
@@ -42,8 +43,9 @@ interface Route {
 }
 
 const ROUTES: Route[] = [
-  { re: /^\/$/, access: 'public', render: () => <HomePage /> },
+  { re: /^\/$/, access: 'public', render: (_m, q) => <HomePage params={q} /> },
   { re: /^\/signup$/, access: 'public', render: (_m, q) => <SignupPage redirect={q.get('redirect')} /> },
+  { re: /^\/experts\/sample\/(\d+)$/, access: 'public', render: (m) => <SampleExpertProfilePage id={Number(m[1])} /> },
   { re: /^\/experts\/(\d+)$/, access: 'public', render: (m) => <PublicExpertProfilePage id={Number(m[1])} /> },
   { re: /^\/community$/, access: 'public', render: (_m, q) => <CommunityPage params={q} /> },
   { re: /^\/community\/mine$/, access: 'member', render: (_m, q) => <MyPostsPage params={q} /> },
@@ -67,9 +69,12 @@ const ROUTES: Route[] = [
   { re: /^\/credit\/result$/, access: ['EXPERT'], render: (_m, q) => <PaymentResultPage params={q} /> },
   { re: /^\/chats$/, access: ['USER', 'EXPERT'], render: () => <ChatListPage /> },
   { re: /^\/chats\/(\d+)$/, access: ['USER', 'EXPERT'], render: (m) => <ChatListPage roomId={Number(m[1])} /> },
-  { re: /^\/bookmarks$/, access: ['USER', 'EXPERT'], render: (_m, q) => <BookmarksPage params={q} /> },
+  { re: /^\/bookmarks$/, access: ['USER'], render: (_m, q) => <BookmarksPage params={q} /> },
 
   { re: /^\/admin\/members$/, access: ['ADMIN'], render: (_m, q) => <AdminMembersPage params={q} /> },
+  { re: /^\/admin\/posts$/, access: ['ADMIN'], render: (_m, q) => <AdminPostsPage params={q} /> },
+  { re: /^\/admin\/requests$/, access: ['ADMIN'], render: (_m, q) => <AdminRequestsPage params={q} /> },
+  { re: /^\/admin\/quotes$/, access: ['ADMIN'], render: (_m, q) => <AdminQuotesPage params={q} /> },
   { re: /^\/admin\/categories$/, access: ['ADMIN'], render: () => <AdminCategoriesPage /> },
   { re: /^\/admin\/regions$/, access: ['ADMIN'], render: () => <AdminRegionsPage /> }
 ];
@@ -88,7 +93,7 @@ function roleNotice(access: MemberRole[], role: MemberRole) {
   }
   if (access.includes('USER') && !access.includes('EXPERT')) {
     return role === 'EXPERT'
-      ? <RoleNotice title="고객 상태에서 이용할 수 있어요" desc={'요청서는 고객 상태에서 작성하고 관리해요.\n마이페이지에서 고객으로 전환할 수 있어요.'} href="#/mypage" label="마이페이지로" />
+      ? <RoleNotice title="고객 상태에서 이용할 수 있어요" desc={'요청서와 찜은 고객 상태에서 이용해요.\n마이페이지에서 고객으로 전환할 수 있어요.'} href="#/mypage" label="마이페이지로" />
       : <RoleNotice title="고객만 이용할 수 있어요" desc="이 화면은 고객 계정에서 이용해 주세요." href="#/" label="홈으로" />;
   }
   if (access.includes('ADMIN')) return <RoleNotice title="관리자만 볼 수 있어요" desc="관리자 계정으로 로그인해 주세요." href="#/" label="홈으로" />;
@@ -137,11 +142,14 @@ export function App() {
   // 모바일: 탭 첫 화면에만 하단 탭, 채팅방은 헤더 없이 전체 화면 (웹은 영향 없음)
   const tabs = showMobileTabs(path, params, status === 'member' && me ? me.role : null);
   const fullScreen = /^\/chats\/\d+$/.test(path);
+  // 메인 화면은 축약 검색창이 붙은 헤더와 예시 안내가 붙은 푸터를 직접 그린다
+  const isHome = path === '/' && !!found;
   return (
-    <div className={`app${tabs ? ' m-tabs' : ''}${fullScreen ? ' m-full' : ''}`}>
-      <Header path={path} />
+    <div className={`app${tabs ? ' m-tabs' : ''}${fullScreen ? ' m-full' : ''}${isHome ? ' is-home' : ''}`}>
+      <a className="skip-link" href="#main" onClick={(e) => { e.preventDefault(); const m = document.querySelector('main'); if (m) { m.setAttribute('tabindex', '-1'); m.focus(); } }}>본문으로 건너뛰기</a>
+      {!isHome && <Header path={path} />}
       {body}
-      {showFooter(path) && <Footer />}
+      {!isHome && showFooter(path) && <Footer />}
       {tabs && <MobileTabBar path={path} />}
       {expired && status === 'guest' && path !== '/login' && (
         <Modal

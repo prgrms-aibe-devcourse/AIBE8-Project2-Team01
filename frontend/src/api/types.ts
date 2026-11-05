@@ -64,9 +64,15 @@ export interface ExpertProfile {
   nationwide: boolean;
   wholeRegions: FirstRegion[];
   regions: SecondRegion[];
+  // 작업 사진 (WorkImageResponse). 공개 파일만 내려온다
+  workImages?: WorkImage[];
 }
 
-// ExpertProfileCreateRequest (imageId·workImages는 보내지 않음)
+export interface WorkImage { fileId: number; url: string; description: string | null }
+// WorkImageRequest: 업로드한 공개 파일 번호와 설명(200자 이내)
+export interface WorkImageRequest { fileId: number; description?: string }
+
+// ExpertProfileCreateRequest (imageId는 보내지 않음 · 프로필 사진은 회원 사진을 쓴다)
 export interface ExpertProfileCreateRequest {
   shortIntro: string;
   description: string;
@@ -77,11 +83,12 @@ export interface ExpertProfileCreateRequest {
   nationwide: boolean;
   wholeRegionIds: number[];
   regionIds: number[];
+  workImages?: WorkImageRequest[];
 }
 
 // ExpertProfileUpdateRequest
 // 경력: 생략하면 유지 · null이면 삭제 / 목록: null이면 유지 · 빈 목록이면 연결 삭제
-// workImages는 보내지 않는다 (빈 목록을 보내면 기존 작업 사진이 지워짐)
+// workImages: 생략하면 유지 · 빈 목록이면 모두 지움 · 목록이면 그 순서로 바꿈
 export interface ExpertProfileUpdateRequest {
   shortIntro?: string;
   description?: string;
@@ -92,4 +99,5 @@ export interface ExpertProfileUpdateRequest {
   nationwide?: boolean;
   wholeRegionIds?: number[];
   regionIds?: number[];
+  workImages?: WorkImageRequest[];
 }

@@ -103,7 +103,8 @@ export function MyPage() {
             </> : <a className="quick" href="#/requests">내 요청서</a>}
             <a className="quick" href="#/chats">채팅</a>
             <a className="quick" href="#/community/mine">내 글</a>
-            <a className="quick" href="#/bookmarks">찜한 고수</a>
+            {/* 찜은 고객이 고수를 고를 때 쓰는 기능이라 고수 상태에서는 보이지 않는다 */}
+            {!isExpert && <a className="quick" href="#/bookmarks">찜한 고수</a>}
           </div>
         </section>
       )}

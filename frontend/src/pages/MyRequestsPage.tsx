@@ -3,6 +3,7 @@
 // 의뢰 요청은 서버 단일 API(POST /api/chat-rooms) 한 번 호출로 차감·매칭·채팅방 생성을 처리한다
 import { useEffect, useState } from 'react';
 import { ApiError } from '../api/client';
+import CategoryIcon from '../components/CategoryIcon';
 import {
   cancelServiceRequest, getMyRequests, getRequestQuotes, getServiceRequest, requestQuote,
   type RequestQuote, type ServiceRequestDetail
@@ -59,9 +60,12 @@ export function MyRequestsPage({ selected, quote }: { selected: string | null; q
                   const b = requestBadge(r.requestStatus, r.createdAt);
                   return (
                     <a key={r.requestId} href={`#/requests?id=${r.requestId}`} className={`req-card${r.requestId === selId ? ' on' : ''}`}>
-                      <span className="row between"><b>{r.secondCategoryName}</b><Badge {...b} /></span>
-                      <span className="sub">{r.secondRegionName} · {shortDateTime(r.createdAt)}</span>
-                      {r.requestStatus !== 'CLOSED' && requestOpen(r.createdAt) && <span className="sub strong">마감까지 {remainText(requestDeadline(r.createdAt))}</span>}
+                      <CategoryIcon secondName={r.secondCategoryName} size={44} />
+                      <span className="req-card-body">
+                        <span className="row between"><b>{r.secondCategoryName}</b><Badge {...b} /></span>
+                        <span className="sub">{r.secondRegionName} · {shortDateTime(r.createdAt)}</span>
+                        {r.requestStatus !== 'CLOSED' && requestOpen(r.createdAt) && <span className="sub strong">마감까지 {remainText(requestDeadline(r.createdAt))}</span>}
+                      </span>
                     </a>
                   );
                 })}
@@ -113,9 +117,12 @@ function RequestDetail({ id, quoteId, onChanged, onCancelled }: { id: number; qu
       <a className="back show-m" href="#/requests">‹ 내 요청서</a>
       <div className="card">
         <div className="row between">
-          <div className="col">
+          <div className="row detail-head">
+            <CategoryIcon secondName={r.secondCategoryName} size={56} />
+            <div className="col">
             <span className="row"><b className="card-title">{r.secondCategoryName}</b><Badge {...b} /></span>
             <span className="sub">{r.secondRegionName} · 작성 {shortDateTime(r.createdAt)}</span>
+            </div>
           </div>
           {r.requestStatus === 'OPEN' && <button type="button" className="btn danger-ghost small" onClick={() => { setCancelErr(''); setAskCancel(true); }}>요청서 취소</button>}
         </div>

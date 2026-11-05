@@ -1,8 +1,10 @@
-// 채팅방 (W·06) · 텍스트 송수신 · 이전 메시지 스크롤 조회 · 읽음 · 나가기
-// 메시지 삭제 API가 없어 삭제는 제공하지 않는다. 이미지 전송은 MVP 후순위(CHAT-03)라 넣지 않았다
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+// 채팅방 (W·06) · 텍스트·사진 송수신 · 이전 메시지 스크롤 조회 · 읽음 · 나가기
+// 메시지 삭제 API가 없어 삭제는 제공하지 않는다
+// 사진: 파일 업로드 API(POST /api/files)에 PRIVATE으로 올리고 받은 fileId로 IMAGE 메시지를 보낸다
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
+import { ImagePlus } from 'lucide-react';
 import { ApiError, errorText, refreshAccessToken, tokenStore } from '../api/client';
-import { getChatMessages, getQuote, leaveChatRoom, readChatRoom, type ChatMessage, type ChatRoomSummary, type Quote } from '../api/mvp';
+import { getChatMessages, getQuote, leaveChatRoom, readChatRoom, uploadPrivateImage, type ChatMessage, type ChatRoomSummary, type Quote } from '../api/mvp';
 import { useSession } from '../auth/session';
 import { useToast } from '../components/toast';
 import { Avatar, Banner, ErrorView, Lines, LoadingView, Modal, Spinner } from '../components/ui';
@@ -10,6 +12,7 @@ import { navigate } from '../hooks/useHashRoute';
 import { useSingleFlight } from '../hooks/useSingleFlight';
 import { dotDate, timeOnly, won } from '../lib/labels';
 import { friendly } from '../lib/messages';
+import { POST_IMAGE_ACCEPT, checkPostImage } from '../lib/postPolicy';
 import { StompClient } from '../lib/stomp';
 
 const MAX = 500;
@@ -27,6 +30,13 @@ export function ChatRoomPanel({ roomId, summary, onActivity }: { roomId: number;
   const [quote, setQuote] = useState<Quote | null>(null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  // 같은 틱에 Enter가 두 번 눌려도 한 번만 보내도록 상태와 별도로 ref로 막는다
+  const sendingRef = useRef(false);
+  // 지금 서버 확인을 기다리는 메시지 종류 (TEXT면 확인 뒤 입력창을 비운다)
+  const pendingKind = useRef<'TEXT' | 'IMAGE' | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [sendErr, setSendErr] = useState('');
   const [conn, setConn] = useState<Conn>('connecting');
   const [askLeave, setAskLeave] = useState(false);
@@ -38,6 +48,10 @@ export function ChatRoomPanel({ roomId, summary, onActivity }: { roomId: number;
   const pendingTimer = useRef<number | null>(null);
   const retries = useRef(0);
   const partnerLeft = summary?.partnerLeft ?? false;
+  const partnerLeftRef = useRef(partnerLeft);
+  partnerLeftRef.current = partnerLeft;
+  const active = useRef(true);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
 
   // 최신 메시지 30개 (처음 열 때·재연결 후 놓친 메시지 보충)
   const loadLatest = useCallback(async (merge: boolean) => {
@@ -88,16 +102,19 @@ export function ChatRoomPanel({ roomId, summary, onActivity }: { roomId: number;
         try {
           const data = JSON.parse(body);
           if (dest.endsWith('/queue/errors')) {
-            clearPending();
-            setSending(false);
-            setSendErr(`메시지를 보내지 못했어요.\n${friendly(new ApiError(400, data.message ?? ''))}`);
+            const kind = pendingKind.current;
+            finishSend();
+            setSendErr(`${kind === 'IMAGE' ? '사진을' : '메시지를'} 보내지 못했어요.\n${friendly(new ApiError(400, data.message ?? ''))}`);
             return;
           }
           const m = data as ChatMessage;
           setMsgs((cur) => cur.some((x) => x.messageId === m.messageId) ? cur : [...cur, m]);
           const el = listRef.current;
           keepBottom.current = !el || el.scrollHeight - el.scrollTop - el.clientHeight < 120 || m.senderId === me?.id;
-          if (m.senderId === me?.id) { clearPending(); setSending(false); setText(''); }
+          if (m.senderId === me?.id && pendingKind.current === m.type) {
+            if (pendingKind.current === 'TEXT' && m.type === 'TEXT') setText('');
+            finishSend();
+          }
           else markRead();
         } catch { /* 형식이 다른 프레임은 무시 */ }
       },
@@ -124,6 +141,25 @@ export function ChatRoomPanel({ roomId, summary, onActivity }: { roomId: number;
   }, [state, partnerLeft, connect]);
 
   const clearPending = () => { if (pendingTimer.current) { clearTimeout(pendingTimer.current); pendingTimer.current = null; } };
+  // 전송이 끝나면(성공·실패 모두) 잠금을 풀고 입력창으로 포커스를 돌려준다
+  const focusInput = () => window.requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
+  const finishSend = () => {
+    clearPending();
+    pendingKind.current = null;
+    sendingRef.current = false;
+    setSending(false);
+    focusInput();
+  };
+  const waitConfirm = (kind: 'TEXT' | 'IMAGE') => {
+    pendingKind.current = kind;
+    sendingRef.current = true;
+    setSending(true);
+    // 서버에서 내 메시지가 돌아오면 끝난다. 오래 응답이 없으면 실패로 안내하고 입력값은 남긴다
+    pendingTimer.current = window.setTimeout(() => {
+      finishSend();
+      setSendErr(`${kind === 'IMAGE' ? '사진' : '메시지'} 전송을 확인하지 못했어요.\n잠시 후 다시 보내 주세요.`);
+    }, 8000);
+  };
   useEffect(() => clearPending, []);
 
   // 스크롤 위치: 새 메시지는 아래로, 이전 메시지를 붙이면 보던 위치 유지
@@ -150,17 +186,57 @@ export function ChatRoomPanel({ roomId, summary, onActivity }: { roomId: number;
   const send = (e?: FormEvent) => {
     e?.preventDefault();
     const content = text.trim();
-    if (!content || sending) return;
+    if (!content || sendingRef.current || uploading || partnerLeft || conn !== 'open') return;
     if (content.length > MAX) { setSendErr(`메시지는 ${MAX}자까지 보낼 수 있어요.`); return; }
     setSendErr('');
     if (!stomp.current?.send(`/pub/chat-rooms/${roomId}/messages`, { type: 'TEXT', content })) {
-      setSendErr('연결이 끊겨 보내지 못했어요.\n다시 연결되면 보내 주세요.'); return;
+      setSendErr('연결이 끊겨 보내지 못했어요.\n다시 연결되면 보내 주세요.'); focusInput(); return;
     }
-    setSending(true);
-    // 서버에서 내 메시지가 돌아오면 입력창을 비운다. 오래 응답이 없으면 실패로 안내하고 입력값은 남긴다
-    pendingTimer.current = window.setTimeout(() => { setSending(false); setSendErr('메시지 전송을 확인하지 못했어요.\n잠시 후 다시 보내 주세요.'); }, 8000);
+    waitConfirm('TEXT');
   };
-  const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } };
+  // Enter는 전송, Shift+Enter는 줄바꿈. 한글 조합 중(isComposing·keyCode 229)의 Enter는 조합 완료로 보고 보내지 않는다
+  const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+    e.preventDefault();
+    send();
+  };
+
+  // 사진: 비공개로 올린 뒤 IMAGE 메시지로 보낸다. 올리는 동안과 서버 확인 전에는 다시 보낼 수 없다
+  const pickImage = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || sendingRef.current || uploading || partnerLeft || conn !== 'open') return;
+    const bad = checkPostImage(file);
+    if (bad) { setSendErr(bad); focusInput(); return; }
+    setSendErr('');
+    sendingRef.current = true;
+    setUploading(true);
+    try {
+      const up = await uploadPrivateImage(file);
+      // 업로드 중 방을 나갔거나 상대방 퇴장이 확인되면 메시지를 보내지 않는다.
+      if (!active.current) return;
+      if (partnerLeftRef.current) {
+        sendingRef.current = false;
+        setSendErr('상대방이 나간 채팅방에는 사진을 보낼 수 없어요.');
+        return;
+      }
+      if (!stomp.current?.send(`/pub/chat-rooms/${roomId}/messages`, { type: 'IMAGE', fileId: up.fileId })) {
+        sendingRef.current = false;
+        setSendErr('연결이 끊겨 사진을 보내지 못했어요.\n다시 연결되면 보내 주세요.');
+        focusInput();
+        return;
+      }
+      waitConfirm('IMAGE');
+    } catch (err) {
+      if (!active.current) return;
+      sendingRef.current = false;
+      setSendErr(`사진을 올리지 못했어요.\n${friendly(err)}`);
+      focusInput();
+    } finally {
+      if (active.current) setUploading(false);
+    }
+  };
 
   const doLeave = () => leave.run(async () => {
     try {
@@ -208,7 +284,9 @@ export function ChatRoomPanel({ roomId, summary, onActivity }: { roomId: number;
             <div key={m.messageId}>
               {sep && <div className="chat-day">{day}</div>}
               <div className={`msg${mine ? ' mine' : ''}`}>
-                <div className="bubble">{m.type === 'TEXT' ? m.content : m.imageUrl ? <img src={m.imageUrl} alt="보낸 사진" className="msg-img" /> : '사진'}</div>
+                <div className={`bubble${m.type === 'IMAGE' ? ' is-image' : ''}`}>{m.type === 'TEXT' ? m.content : m.imageUrl
+                  ? <a href={m.imageUrl} target="_blank" rel="noreferrer" aria-label="사진 크게 보기"><img src={m.imageUrl} alt={mine ? '보낸 사진' : '받은 사진'} className="msg-img" loading="lazy" onLoad={() => { if (keepBottom.current && listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight; }} /></a>
+                  : '사진'}</div>
                 <small className="msg-time">{timeOnly(m.createdAt)}</small>
               </div>
             </div>
@@ -221,11 +299,16 @@ export function ChatRoomPanel({ roomId, summary, onActivity }: { roomId: number;
         <form className="chat-input" onSubmit={send}>
           {sendErr && <Banner><Lines text={sendErr} /></Banner>}
           <div className="row">
-            <textarea className={`input chat-ta${text.length > MAX ? ' bad' : ''}`} value={text} placeholder="메시지를 입력해 주세요" rows={1}
-              onChange={(e) => { setText(e.target.value); setSendErr(''); }} onKeyDown={onKey} disabled={sending} />
-            <button type="submit" className="btn primary" disabled={!text.trim() || sending || conn !== 'open' || text.length > MAX}>{sending ? <Spinner light /> : '전송'}</button>
+            <button type="button" className="btn chat-attach" aria-label="사진 보내기" title="사진 보내기" disabled={sending || uploading || conn !== 'open'} onClick={() => fileRef.current?.click()}>
+              {uploading ? <Spinner /> : <ImagePlus size={20} aria-hidden="true" />}
+            </button>
+            <input ref={fileRef} type="file" accept={POST_IMAGE_ACCEPT} hidden onChange={pickImage} />
+            {/* 보내는 동안에도 포커스가 빠지지 않도록 disabled 대신 readOnly로 잠근다 */}
+            <textarea ref={inputRef} className={`input chat-ta${text.length > MAX ? ' bad' : ''}`} value={text} placeholder="메시지를 입력해 주세요" rows={1}
+              aria-label="메시지" onChange={(e) => { setText(e.target.value); setSendErr(''); }} onKeyDown={onKey} readOnly={sending} aria-busy={sending} />
+            <button type="submit" className="btn primary" disabled={!text.trim() || sending || uploading || conn !== 'open' || text.length > MAX}>{sending && pendingKind.current === 'TEXT' ? <Spinner light /> : '전송'}</button>
           </div>
-          <small className={`sub right${text.length > MAX ? ' err-t' : ''}`}>{text.length}/{MAX}</small>
+          <small className={`sub right${text.length > MAX ? ' err-t' : ''}`}>{uploading ? '사진을 올리는 중이에요 · ' : sending && pendingKind.current === 'IMAGE' ? '사진을 보내는 중이에요 · ' : ''}{text.length}/{MAX}</small>
         </form>
       )}
       {askLeave && (

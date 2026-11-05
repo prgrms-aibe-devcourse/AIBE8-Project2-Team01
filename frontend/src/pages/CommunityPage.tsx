@@ -3,10 +3,12 @@
 import { useState, type FormEvent } from 'react';
 import { getMyPosts, getPosts, type BoardType, type PostSummary } from '../api/mvp';
 import { useSession } from '../auth/session';
+import * as api from '../api/endpoints';
 import { Empty, LoadBox, Pager } from '../components/common';
 import { navigate } from '../hooks/useHashRoute';
 import { useLoad } from '../hooks/useLoad';
 import { BOARDS, BOARD_LABEL, smartTime } from '../lib/labels';
+import CategoryIcon from '../components/CategoryIcon';
 
 const count = (n: number) => (n > 999 ? '999+' : n.toLocaleString('ko-KR'));
 
@@ -22,8 +24,8 @@ function PostRow({ p, showBoard }: { p: PostSummary; showBoard?: boolean }) {
           <span>조회 {count(p.viewCount)}</span><span>좋아요 {count(p.likeCount)}</span><span>댓글 {count(p.commentCount)}</span>
         </span>
       </div>
+      <small className="sub post-time">{smartTime(p.createdAt)}</small>
       {p.thumbnailUrl && <img className="post-thumb" src={p.thumbnailUrl} alt="" />}
-      <small className="sub">{smartTime(p.createdAt)}</small>
     </a>
   );
 }
@@ -31,7 +33,11 @@ function PostRow({ p, showBoard }: { p: PostSummary; showBoard?: boolean }) {
 function TipCard({ p }: { p: PostSummary }) {
   return (
     <a className="tip-card" href={`#/community/${p.postId}`}>
-      {p.thumbnailUrl ? <img src={p.thumbnailUrl} alt="" /> : <span className="tip-noimg">기본 이미지</span>}
+      {p.thumbnailUrl ? <img src={p.thumbnailUrl} alt="" /> : (
+        <span className="tip-noimg">
+          <CategoryIcon secondId={p.category?.secondCategoryId} firstName={p.category?.firstCategoryName} size={96} />
+        </span>
+      )}
       <b className="ellipsis">{p.title}</b>
       <small className="sub">{p.memberNickname} · 좋아요 {count(p.likeCount)}</small>
     </a>
@@ -53,10 +59,15 @@ export function CommunityPage({ params }: { params: URLSearchParams }) {
   const page = Math.max(1, Number(params.get('page') ?? 1) || 1);
   const keyword = params.get('q') ?? '';
   const [q, setQ] = useState(keyword);
-  const list = useLoad(() => getPosts(board, page, keyword || undefined), [board, page, keyword]);
+  // 분야·지역 필터 (백엔드 GET /api/public/posts의 firstCategoryId·firstRegionId)
+  const fcat = Number(params.get('fcat')) || undefined;
+  const freg = Number(params.get('freg')) || undefined;
+  const cats = useLoad(() => api.getFirstCategories(), []);
+  const regs = useLoad(() => api.getFirstRegions(), []);
+  const list = useLoad(() => getPosts(board, page, keyword || undefined, { firstCategoryId: fcat, firstRegionId: freg }), [board, page, keyword, fcat, freg]);
   const { status, me } = useSession();
   const canWrite = board === 'TIP' || board === 'PROMOTION' ? me?.role === 'EXPERT' : status !== 'member' || me?.role !== 'ADMIN';
-  const go = (p: number, kw = keyword) => navigate('/community', { board, page: p, ...(kw ? { q: kw } : {}) });
+  const go = (p: number, kw = keyword, fc = fcat, fr = freg) => navigate('/community', { board, page: p, ...(kw ? { q: kw } : {}), ...(fc ? { fcat: fc } : {}), ...(fr ? { freg: fr } : {}) });
   const search = (e: FormEvent) => { e.preventDefault(); const kw = q.trim(); if (kw.length > 50) return; go(1, kw); };
   const writeHref = status === 'member' ? `#/community/write?board=${board}` : `#/login?redirect=${encodeURIComponent(`/community/write?board=${board}`)}`;
 
@@ -68,6 +79,14 @@ export function CommunityPage({ params }: { params: URLSearchParams }) {
         <input className="input" placeholder="제목·본문 검색 (최대 50자)" value={q} maxLength={50} onChange={(e) => setQ(e.target.value)} aria-label="검색어" />
         <button className="btn" type="submit">검색</button>
         {keyword && <button className="btn" type="button" onClick={() => { setQ(''); go(1, ''); }}>초기화</button>}
+        <select className="input sm" aria-label="분야" value={fcat ?? ''} onChange={(e) => go(1, keyword, Number(e.target.value) || undefined, freg)}>
+          <option value="">분야 전체</option>
+          {cats.state.kind === 'ok' && cats.state.data.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <select className="input sm" aria-label="지역" value={freg ?? ''} onChange={(e) => go(1, keyword, fcat, Number(e.target.value) || undefined)}>
+          <option value="">지역 전체</option>
+          {regs.state.kind === 'ok' && regs.state.data.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+        </select>
       </form>
       <LoadBox load={list.state} title="게시글을 불러오지 못했어요" onRetry={() => list.reload()}>
         {(data) => data.content.length === 0 ? (

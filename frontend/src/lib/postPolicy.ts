@@ -8,6 +8,7 @@ export const TITLE_MIN = 2, TITLE_MAX = 30, CONTENT_MIN = 2, CONTENT_MAX = 5000;
 export function checkPostImage(f: File): string | null {
   const ext = f.name.split('.').pop()?.toLowerCase() ?? '';
   if (!POST_IMAGE_EXTS.includes(ext)) return '지원하지 않는 형식이에요.\nJPG·PNG·GIF·WebP 사진을 올려 주세요.';
+  if (f.size === 0) return '내용이 없는 파일은 올릴 수 없어요.';
   if (f.size > POST_IMAGE_BYTES) return '5MB를 넘는 사진은 올릴 수 없어요.';
   return null;
 }

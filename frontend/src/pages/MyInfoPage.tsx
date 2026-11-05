@@ -1,16 +1,19 @@
 // 내 정보 조회·수정 + 공통 프로필 사진 (와이어프레임 W·P11~P12 / M·P11~P12)
 // 사진 변경·연결 해제는 저장 버튼과 별개로 바로 반영된다
 // 회원 탈퇴는 이번 범위 밖이라 넣지 않는다
-import { useRef, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { ApiError, errorText } from '../api/client';
 import * as api from '../api/endpoints';
 import type { MemberUpdateRequest } from '../api/types';
 import { useSession } from '../auth/session';
 import { useToast } from '../components/toast';
-import { Avatar, Banner, Field, Lines, Modal, Spinner } from '../components/ui';
+import { Banner, Field, Lines, Spinner } from '../components/ui';
+import { ProfilePhotoCard } from '../components/ProfilePhotoCard';
+import { deleteMe } from '../api/mvp';
+import { Modal } from '../components/ui';
 import { useSingleFlight } from '../hooks/useSingleFlight';
 import { navigate } from '../hooks/useHashRoute';
-import { NICKNAME_MAX, PASSWORD_MAX, PASSWORD_MIN, PHONE_RE, PHOTO_ACCEPT, checkPhoto } from '../lib/policy';
+import { NICKNAME_MAX, PASSWORD_MAX, PASSWORD_MIN, PHONE_RE } from '../lib/policy';
 
 type Errs = Partial<Record<'nickname' | 'phone' | 'password' | 'password2', string>>;
 
@@ -18,49 +21,13 @@ export function MyInfoPage() {
   const { me, setMe, reloadMe } = useSession();
   const toast = useToast();
   const save = useSingleFlight();
-  const photo = useSingleFlight();
-  const fileRef = useRef<HTMLInputElement>(null);
   const [nickname, setNickname] = useState(me?.nickname ?? '');
   const [phone, setPhone] = useState(me?.phone ?? '');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
   const [errs, setErrs] = useState<Errs>({});
   const [saveFail, setSaveFail] = useState('');
-  const [photoMsg, setPhotoMsg] = useState<{ text: string; retry?: File } | null>(null);
-  const [askDelete, setAskDelete] = useState(false);
   if (!me) return null;
-
-  // ── 사진: 업로드 성공 → 회원 이미지 연결 성공까지 끝나야 변경 완료 ──
-  const changePhoto = (file: File) => photo.run(async () => {
-    setPhotoMsg(null);
-    const bad = checkPhoto(file);
-    if (bad === 'size') { setPhotoMsg({ text: '5MB를 넘는 사진은 올릴 수 없어요.\n기존 사진을 그대로 써요.' }); return; }
-    if (bad === 'type') { setPhotoMsg({ text: 'JPG·JPEG·PNG·WebP 사진만 올릴 수 있어요.\n기존 사진을 그대로 써요.' }); return; }
-    try {
-      const uploaded = await api.uploadPublicImage(file);
-      const updated = await api.setMyImage(uploaded.fileId);
-      setMe(updated);
-      toast('프로필 사진을 바꿨어요.');
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 413) setPhotoMsg({ text: '5MB를 넘는 사진은 올릴 수 없어요.\n기존 사진을 그대로 써요.' });
-      else if (e instanceof ApiError && e.status === 400) setPhotoMsg({ text: `${errorText(e)}\n기존 사진을 그대로 써요.` });
-      else setPhotoMsg({ text: '사진을 올리지 못했어요.\n기존 사진은 그대로예요.\n다시 시도해 주세요.', retry: file });
-      // 서버 상태와 화면을 맞춘다
-      reloadMe().catch(() => undefined);
-    }
-  });
-
-  const deletePhoto = () => photo.run(async () => {
-    try {
-      await api.unlinkMyImage();          // 204: 회원과 사진의 연결만 해제
-      await reloadMe();
-      setAskDelete(false);
-      toast('기본 이미지로 바꿨어요.');
-    } catch (e) {
-      setAskDelete(false);
-      setPhotoMsg({ text: `사진을 삭제하지 못했어요.\n기존 사진은 그대로예요.\n${errorText(e)}` });
-    }
-  });
 
   // ── 회원 정보 저장: 바뀐 필드만 보낸다 (비밀번호는 입력했을 때만) ──
   const submit = (e: FormEvent) => {
@@ -109,29 +76,7 @@ export function MyInfoPage() {
       <a className="back" href="#/mypage">‹ 마이페이지</a>
       <h1 className="page-title">내 정보 수정</h1>
 
-      <section className="card">
-        <div className="row between"><b className="card-title">프로필 사진</b><small className="sub">마이페이지·고수 프로필에 같은 사진이 보여요</small></div>
-        <div className="photo-row">
-          <span className="photo-wrap">
-            <Avatar url={me.imageUrl} size={96} alt="프로필 사진" />
-            {photo.busy && <span className="photo-busy"><Spinner light /></span>}
-          </span>
-          <div className="col">
-            <div className="row wrap">
-              <button className="btn" type="button" disabled={photo.busy} onClick={() => fileRef.current?.click()}>
-                {photo.busy ? <><Spinner />처리하는 중</> : (photoMsg?.retry ? '다른 사진 선택' : '사진 변경')}
-              </button>
-              {photoMsg?.retry && <button className="btn primary" type="button" disabled={photo.busy} onClick={() => changePhoto(photoMsg.retry!)}>다시 시도</button>}
-              {me.imageUrl && !photoMsg?.retry && <button className="btn danger-ghost" type="button" disabled={photo.busy} onClick={() => setAskDelete(true)}>사진 삭제</button>}
-            </div>
-            <small className="sub">JPG·JPEG·PNG·WebP · 5MB 이하</small>
-          </div>
-          <input ref={fileRef} type="file" accept={PHOTO_ACCEPT} hidden
-            onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) changePhoto(f); }} />
-        </div>
-        {photoMsg && <Banner><Lines text={photoMsg.text} /></Banner>}
-        <Banner kind="info">사진 변경·삭제는 바로 반영돼요.<br />아래의 저장·취소 버튼과는 별개예요.</Banner>
-      </section>
+      <ProfilePhotoCard title={<b className="card-title">프로필 사진</b>} desc="마이페이지·고수 프로필에 같은 사진이 보여요" />
 
       <form className="card" onSubmit={submit} noValidate id="info-form">
         <Field label="이메일" hint="변경할 수 없어요"><input className="input" value={me.email} readOnly disabled /></Field>
@@ -156,6 +101,8 @@ export function MyInfoPage() {
         {saveFail && <Banner><Lines text={saveFail} /></Banner>}
       </form>
 
+      <WithdrawCard />
+
       <div className="bottom-bar">
         <div className="bar-inner">
           <a className="btn" href="#/mypage" aria-disabled={locked} onClick={(e) => locked && e.preventDefault()}>취소</a>
@@ -165,15 +112,51 @@ export function MyInfoPage() {
         </div>
       </div>
 
-      {askDelete && (
-        <Modal title="사진을 삭제할까요?" onClose={() => !photo.busy && setAskDelete(false)}
+    </main>
+  );
+}
+
+// 회원 탈퇴 (DELETE /api/members/me · 204)
+// 서버가 리프레시 쿠키를 만료시키고 화면은 로그아웃 상태로 돌아간다
+function WithdrawCard() {
+  const { me, logout } = useSession();
+  const toast = useToast();
+  const { busy, run } = useSingleFlight();
+  const [ask, setAsk] = useState(false);
+  const [agree, setAgree] = useState(false);
+  const [fail, setFail] = useState('');
+  if (!me) return null;
+  const doIt = () => run(async () => {
+    setFail('');
+    try {
+      await deleteMe();
+      await logout().catch(() => undefined);
+      toast('탈퇴했어요.\n그동안 이용해 주셔서 고마워요.');
+      navigate('/', undefined, true);
+    } catch (e) {
+      setFail(`탈퇴하지 못했어요.\n${errorText(e)}`);
+    }
+  });
+  return (
+    <section className="card withdraw">
+      <div className="row between">
+        <div className="col">
+          <b className="card-title">회원 탈퇴</b>
+          <small className="sub">탈퇴하면 같은 계정으로 다시 로그인할 수 없어요.</small>
+        </div>
+        <button type="button" className="btn danger-ghost small" onClick={() => { setAgree(false); setFail(''); setAsk(true); }}>탈퇴하기</button>
+      </div>
+      {ask && (
+        <Modal title="정말 탈퇴할까요?" onClose={() => !busy && setAsk(false)}
           actions={<>
-            <button className="btn" disabled={photo.busy} onClick={() => setAskDelete(false)}>취소</button>
-            <button className="btn danger" disabled={photo.busy} onClick={deletePhoto}>{photo.busy ? <><Spinner light />삭제하는 중</> : '삭제'}</button>
+            <button type="button" className="btn" disabled={busy} onClick={() => setAsk(false)}>돌아가기</button>
+            <button type="button" className="btn danger" disabled={busy || !agree} onClick={doIt}>{busy ? <><Spinner light />탈퇴하는 중</> : '탈퇴'}</button>
           </>}>
-          <p>삭제하면 바로 기본 이미지로 바뀌어요.<br />고수 프로필에도 함께 반영돼요.</p>
+          <p><Lines text={`${me.nickname}님의 계정을 탈퇴 처리해요.\n탈퇴하면 되돌릴 수 없고 다시 로그인할 수 없어요.${me.role === 'EXPERT' ? '\n고수 프로필도 더 이상 보이지 않아요.' : ''}`} /></p>
+          <label className="check-row"><input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} /> 안내를 확인했고 탈퇴에 동의해요</label>
+          {fail && <Banner><Lines text={fail} /></Banner>}
         </Modal>
       )}
-    </main>
+    </section>
   );
 }
