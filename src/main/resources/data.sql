@@ -221,7 +221,9 @@ VALUES ((SELECT ep.id
          FROM expert_profile ep
                   JOIN member m ON ep.member_id = m.id
          WHERE m.email = 'expert2@example.com'), 139),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
          WHERE m.email = 'expert2@example.com'), 101);
 
 -- 지역 초기 데이터
@@ -654,17 +656,26 @@ VALUES ((SELECT id FROM member WHERE email = 'customer2@example.com'),
 
 -- 기존 견적 1~3: 발송 중·73시간 만료·크레딧 부족 조건을 유지합니다.
 INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-VALUES ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id
-         WHERE m.email='expert1@example.com'), 1, '이사 작업 전체 진행 가능합니다.', 300000, 'SENT', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id
-         WHERE m.email='expert1@example.com'), 10, '만료 테스트용 견적입니다.', 200000, 'SENT', DATEADD('HOUR', -73, CURRENT_TIMESTAMP)),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id
-         WHERE m.email='expert2@example.com'), 4, '서초구 이사 작업 가능합니다.', 280000, 'SENT', DATEADD('HOUR', -2, CURRENT_TIMESTAMP));
+VALUES ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert1@example.com'), 1, '이사 작업 전체 진행 가능합니다.', 300000, 'SENT',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert1@example.com'), 10, '만료 테스트용 견적입니다.', 200000, 'SENT',
+        DATEADD('HOUR', -73, CURRENT_TIMESTAMP)),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert2@example.com'), 4, '서초구 이사 작업 가능합니다.', 280000, 'SENT',
+        DATEADD('HOUR', -2, CURRENT_TIMESTAMP));
 
 -- 기존 지갑: expert1 보유 10·예약 4, expert2 보유 2·예약 2. 만료 처리 전 초기값입니다.
 INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
-VALUES ((SELECT id FROM member WHERE email='expert1@example.com'), 10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='expert2@example.com'), 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+VALUES ((SELECT id FROM member WHERE email = 'expert1@example.com'), 10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'expert2@example.com'), 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- 시드 견적의 크레딧 예약 (견적 발송 시 예약되는 규칙과 맞춤)
 INSERT INTO credit_reservation (credit_wallet_id, quote_id, amount, reservation_status, created_at)
@@ -683,324 +694,715 @@ ALTER TABLE first_region
 ALTER TABLE second_region
     ALTER COLUMN id RESTART WITH 285;
 
--- 크레딧 충전 상품: 1크레딧 = 1,000원, 추가 크레딧은 MVP에서 지급하지 않음
-INSERT INTO credit_product (id, name, price, credit_amount, bonus_credit, is_active, created_at)
-VALUES (1, '크레딧 10개', 10000, 10, 0, TRUE, CURRENT_TIMESTAMP),
-       (2, '크레딧 30개', 30000, 30, 0, TRUE, CURRENT_TIMESTAMP),
-       (3, '크레딧 50개', 50000, 50, 0, TRUE, CURRENT_TIMESTAMP),
-       (4, '크레딧 100개', 100000, 100, 0, TRUE, CURRENT_TIMESTAMP);
+-- 크레딧 충전 상품: 1크레딧 = 1,000원
+INSERT INTO credit_product (id, name, price, credit_amount, is_active, created_at)
+VALUES (1, '크레딧 10개', 10000, 10, TRUE, CURRENT_TIMESTAMP),
+       (2, '크레딧 30개', 30000, 30, TRUE, CURRENT_TIMESTAMP),
+       (3, '크레딧 50개', 50000, 50, TRUE, CURRENT_TIMESTAMP),
+       (4, '크레딧 100개', 100000, 100, TRUE, CURRENT_TIMESTAMP);
 
 -- 팀원별 10번대~50번대 계정: 각 고객·고수·관리자 2개씩. 기존 회원 ID 보존을 위해 마지막에 입력합니다.
 -- 각 번호대 끝자리 9번 고객은 탈퇴 테스트 전용이며 초기 상태는 정상 회원입니다.
 INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
-VALUES ('customer11@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '다민고객', '01000001011', 'USER', CURRENT_TIMESTAMP, 0),
-       ('customer12@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '하린고객', '01000001012', 'USER', CURRENT_TIMESTAMP, 0),
-       ('expert11@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '민서고수', '01000002011', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('expert12@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '지호고수', '01000002012', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('admin11@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '다온관리자', '01000003011', 'ADMIN', CURRENT_TIMESTAMP, 0),
-       ('admin12@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '라온관리자', '01000003012', 'ADMIN', CURRENT_TIMESTAMP, 0),
-       ('customer21@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '서준고객', '01000001021', 'USER', CURRENT_TIMESTAMP, 0),
-       ('customer22@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '지우고객', '01000001022', 'USER', CURRENT_TIMESTAMP, 0),
-       ('expert21@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '서연고수', '01000002021', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('expert22@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '이준고수', '01000002022', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('admin21@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '해솔관리자', '01000003021', 'ADMIN', CURRENT_TIMESTAMP, 0),
-       ('admin22@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '이든관리자', '01000003022', 'ADMIN', CURRENT_TIMESTAMP, 0),
-       ('customer31@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '유나고객', '01000001031', 'USER', CURRENT_TIMESTAMP, 0),
-       ('customer32@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '도윤고객', '01000001032', 'USER', CURRENT_TIMESTAMP, 0),
-       ('expert31@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '채원고수', '01000002031', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('expert32@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '도현고수', '01000002032', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('admin31@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '가온관리자', '01000003031', 'ADMIN', CURRENT_TIMESTAMP, 0),
-       ('admin32@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '나래관리자', '01000003032', 'ADMIN', CURRENT_TIMESTAMP, 0),
-       ('customer41@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '수아고객', '01000001041', 'USER', CURRENT_TIMESTAMP, 0),
-       ('customer42@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '시우고객', '01000001042', 'USER', CURRENT_TIMESTAMP, 0),
-       ('expert41@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '예린고수', '01000002041', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('expert42@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '은우고수', '01000002042', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('admin41@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '유찬관리자', '01000003041', 'ADMIN', CURRENT_TIMESTAMP, 0),
-       ('admin42@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '소율관리자', '01000003042', 'ADMIN', CURRENT_TIMESTAMP, 0),
-       ('customer51@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '지안고객', '01000001051', 'USER', CURRENT_TIMESTAMP, 0),
-       ('customer52@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '하준고객', '01000001052', 'USER', CURRENT_TIMESTAMP, 0),
-       ('expert51@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '서아고수', '01000002051', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('expert52@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '수호고수', '01000002052', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('admin51@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '하람관리자', '01000003051', 'ADMIN', CURRENT_TIMESTAMP, 0),
-       ('admin52@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '윤슬관리자', '01000003052', 'ADMIN', CURRENT_TIMESTAMP, 0),
-       ('customer19@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '별하고객', '01000009019', 'USER', CURRENT_TIMESTAMP, 0),
-       ('customer29@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '로아고객', '01000009029', 'USER', CURRENT_TIMESTAMP, 0),
-       ('customer39@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '여름고객', '01000009039', 'USER', CURRENT_TIMESTAMP, 0),
-       ('customer49@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '온유고객', '01000009049', 'USER', CURRENT_TIMESTAMP, 0),
-       ('customer59@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '은솔고객', '01000009059', 'USER', CURRENT_TIMESTAMP, 0);
+VALUES ('customer11@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '다민고객', '01000001011',
+        'USER', CURRENT_TIMESTAMP, 0),
+       ('customer12@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '하린고객', '01000001012',
+        'USER', CURRENT_TIMESTAMP, 0),
+       ('expert11@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '민서고수', '01000002011',
+        'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('expert12@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '지호고수', '01000002012',
+        'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('admin11@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '다온관리자', '01000003011',
+        'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('admin12@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '라온관리자', '01000003012',
+        'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('customer21@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '서준고객', '01000001021',
+        'USER', CURRENT_TIMESTAMP, 0),
+       ('customer22@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '지우고객', '01000001022',
+        'USER', CURRENT_TIMESTAMP, 0),
+       ('expert21@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '서연고수', '01000002021',
+        'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('expert22@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '이준고수', '01000002022',
+        'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('admin21@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '해솔관리자', '01000003021',
+        'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('admin22@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '이든관리자', '01000003022',
+        'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('customer31@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '유나고객', '01000001031',
+        'USER', CURRENT_TIMESTAMP, 0),
+       ('customer32@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '도윤고객', '01000001032',
+        'USER', CURRENT_TIMESTAMP, 0),
+       ('expert31@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '채원고수', '01000002031',
+        'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('expert32@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '도현고수', '01000002032',
+        'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('admin31@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '가온관리자', '01000003031',
+        'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('admin32@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '나래관리자', '01000003032',
+        'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('customer41@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '수아고객', '01000001041',
+        'USER', CURRENT_TIMESTAMP, 0),
+       ('customer42@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '시우고객', '01000001042',
+        'USER', CURRENT_TIMESTAMP, 0),
+       ('expert41@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '예린고수', '01000002041',
+        'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('expert42@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '은우고수', '01000002042',
+        'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('admin41@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '유찬관리자', '01000003041',
+        'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('admin42@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '소율관리자', '01000003042',
+        'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('customer51@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '지안고객', '01000001051',
+        'USER', CURRENT_TIMESTAMP, 0),
+       ('customer52@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '하준고객', '01000001052',
+        'USER', CURRENT_TIMESTAMP, 0),
+       ('expert51@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '서아고수', '01000002051',
+        'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('expert52@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '수호고수', '01000002052',
+        'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('admin51@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '하람관리자', '01000003051',
+        'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('admin52@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '윤슬관리자', '01000003052',
+        'ADMIN', CURRENT_TIMESTAMP, 0),
+       ('customer19@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '별하고객', '01000009019',
+        'USER', CURRENT_TIMESTAMP, 0),
+       ('customer29@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '로아고객', '01000009029',
+        'USER', CURRENT_TIMESTAMP, 0),
+       ('customer39@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '여름고객', '01000009039',
+        'USER', CURRENT_TIMESTAMP, 0),
+       ('customer49@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '온유고객', '01000009049',
+        'USER', CURRENT_TIMESTAMP, 0),
+       ('customer59@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '은솔고객', '01000009059',
+        'USER', CURRENT_TIMESTAMP, 0);
 
 -- 팀원별 지역을 분리합니다. 끝자리 1번은 개별 시군구 이사·입주 청소. 2번은 해당 시도 전체 이사·개발 외주.
-INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id, is_nationwide)
-VALUES ((SELECT id FROM member WHERE email = 'expert11@example.com'), '서울 강남구 테스트 고수입니다.', '서울 강남구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
-       ((SELECT id FROM member WHERE email = 'expert12@example.com'), '서울 강남구 테스트 고수입니다.', '서울 강남구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
-       ((SELECT id FROM member WHERE email = 'expert21@example.com'), '부산 중구 테스트 고수입니다.', '부산 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
-       ((SELECT id FROM member WHERE email = 'expert22@example.com'), '부산 중구 테스트 고수입니다.', '부산 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
-       ((SELECT id FROM member WHERE email = 'expert31@example.com'), '대구 중구 테스트 고수입니다.', '대구 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
-       ((SELECT id FROM member WHERE email = 'expert32@example.com'), '대구 중구 테스트 고수입니다.', '대구 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
-       ((SELECT id FROM member WHERE email = 'expert41@example.com'), '인천 제물포구 테스트 고수입니다.', '인천 제물포구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
-       ((SELECT id FROM member WHERE email = 'expert42@example.com'), '인천 제물포구 테스트 고수입니다.', '인천 제물포구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
-       ((SELECT id FROM member WHERE email = 'expert51@example.com'), '대전 동구 테스트 고수입니다.', '대전 동구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
-       ((SELECT id FROM member WHERE email = 'expert52@example.com'), '대전 동구 테스트 고수입니다.', '대전 동구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+VALUES ((SELECT id FROM member WHERE email = 'expert11@example.com'), '서울 강남구 테스트 고수입니다.',
+        '서울 강남구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert12@example.com'), '서울 강남구 테스트 고수입니다.',
+        '서울 강남구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert21@example.com'), '부산 중구 테스트 고수입니다.',
+        '부산 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert22@example.com'), '부산 중구 테스트 고수입니다.',
+        '부산 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert31@example.com'), '대구 중구 테스트 고수입니다.',
+        '대구 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert32@example.com'), '대구 중구 테스트 고수입니다.',
+        '대구 중구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert41@example.com'), '인천 제물포구 테스트 고수입니다.',
+        '인천 제물포구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert42@example.com'), '인천 제물포구 테스트 고수입니다.',
+        '인천 제물포구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert51@example.com'), '대전 동구 테스트 고수입니다.',
+        '대전 동구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 101, FALSE),
+       ((SELECT id FROM member WHERE email = 'expert52@example.com'), '대전 동구 테스트 고수입니다.',
+        '대전 동구 활동과 견적 발송을 확인하는 테스트 프로필입니다.', 3, '테스트용 경력', 139, FALSE);
 
 INSERT INTO expert_profile_services (expert_profile_id, services_id)
-VALUES ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert11@example.com'), 101),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert11@example.com'), 102),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert12@example.com'), 101),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert12@example.com'), 139),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert21@example.com'), 101),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert21@example.com'), 102),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert22@example.com'), 101),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert22@example.com'), 139),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert31@example.com'), 101),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert31@example.com'), 102),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert32@example.com'), 101),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert32@example.com'), 139),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert41@example.com'), 101),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert41@example.com'), 102),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert42@example.com'), 101),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert42@example.com'), 139),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert51@example.com'), 101),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert51@example.com'), 102),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert52@example.com'), 101),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id = m.id WHERE m.email = 'expert52@example.com'), 139);
+VALUES ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert11@example.com'), 101),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert11@example.com'), 102),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert12@example.com'), 101),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert12@example.com'), 139),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert21@example.com'), 101),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert21@example.com'), 102),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert22@example.com'), 101),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert22@example.com'), 139),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert31@example.com'), 101),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert31@example.com'), 102),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert32@example.com'), 101),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert32@example.com'), 139),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert41@example.com'), 101),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert41@example.com'), 102),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert42@example.com'), 101),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert42@example.com'), 139),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert51@example.com'), 101),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert51@example.com'), 102),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert52@example.com'), 101),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert52@example.com'), 139);
 
 INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
-VALUES ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert11@example.com'), 39),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert21@example.com'), 69),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert31@example.com'), 85),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert41@example.com'), 94),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert51@example.com'), 105);
+VALUES ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert11@example.com'), 39),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert21@example.com'), 69),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert31@example.com'), 85),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert41@example.com'), 94),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert51@example.com'), 105);
 
 INSERT INTO expert_profile_whole_regions (expert_profile_id, whole_regions_id)
-VALUES ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert12@example.com'), 1),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert22@example.com'), 3),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert32@example.com'), 4),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert42@example.com'), 5),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert52@example.com'), 6);
+VALUES ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert12@example.com'), 1),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert22@example.com'), 3),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert32@example.com'), 4),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert42@example.com'), 5),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert52@example.com'), 6);
 
 -- 신규 고수는 20크레딧에서 시작합니다. 아래 의뢰 요청됨 시드에만 2크레딧 사용을 반영합니다.
 INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
-SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP FROM member
-WHERE email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com', 'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com', 'expert51@example.com', 'expert52@example.com');
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com',
+                'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com',
+                'expert51@example.com', 'expert52@example.com');
 
 -- 팀원별 요청서·견적 화면 시나리오: 원본 요청서 1~10과 원본 견적은 유지합니다.
 INSERT INTO service_request (member_id, second_category_id, second_region_id, request_status, created_at)
-VALUES ((SELECT id FROM member WHERE email='customer11@example.com'), 101, 39, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer11@example.com'), 139, 39, 'CLOSED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer12@example.com'), 102, 39, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer12@example.com'), 139, 39, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer21@example.com'), 101, 69, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer21@example.com'), 139, 69, 'CLOSED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer22@example.com'), 102, 69, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer22@example.com'), 139, 69, 'MATCHED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer31@example.com'), 101, 85, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer31@example.com'), 139, 85, 'CLOSED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer32@example.com'), 102, 85, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer32@example.com'), 139, 85, 'MATCHED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer41@example.com'), 101, 94, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer41@example.com'), 139, 94, 'CLOSED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer42@example.com'), 102, 94, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer42@example.com'), 139, 94, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer51@example.com'), 101, 105, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer51@example.com'), 139, 105, 'CLOSED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer52@example.com'), 102, 105, 'OPEN', DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
-       ((SELECT id FROM member WHERE email='customer52@example.com'), 139, 105, 'MATCHED', DATEADD('HOUR', -1, CURRENT_TIMESTAMP));
+VALUES ((SELECT id FROM member WHERE email = 'customer11@example.com'), 101, 39, 'OPEN',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer11@example.com'), 139, 39, 'CLOSED',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer12@example.com'), 102, 39, 'OPEN',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer12@example.com'), 139, 39, 'OPEN',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer21@example.com'), 101, 69, 'OPEN',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer21@example.com'), 139, 69, 'CLOSED',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer22@example.com'), 102, 69, 'OPEN',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer22@example.com'), 139, 69, 'MATCHED',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer31@example.com'), 101, 85, 'OPEN',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer31@example.com'), 139, 85, 'CLOSED',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer32@example.com'), 102, 85, 'OPEN',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer32@example.com'), 139, 85, 'MATCHED',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer41@example.com'), 101, 94, 'OPEN',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer41@example.com'), 139, 94, 'CLOSED',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer42@example.com'), 102, 94, 'OPEN',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer42@example.com'), 139, 94, 'OPEN',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer51@example.com'), 101, 105, 'OPEN',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer51@example.com'), 139, 105, 'CLOSED',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer52@example.com'), 102, 105, 'OPEN',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP)),
+       ((SELECT id FROM member WHERE email = 'customer52@example.com'), 139, 105, 'MATCHED',
+        DATEADD('HOUR', -1, CURRENT_TIMESTAMP));
 
 -- 새 고객의 요청서에는 필수·선택 질문 답변을 모두 저장합니다.
 INSERT INTO request_answer (service_request_id, question_id, question_content, content)
-SELECT sr.id, q.id, q.content,
-       CASE q.display_order WHEN 1 THEN '시드 요청서의 서비스 견적을 받고 싶습니다.'
-                            WHEN 2 THEN '고수와 일정 협의 예정입니다.'
-                            WHEN 3 THEN '예산은 견적 확인 후 협의합니다.'
-                            ELSE '팀원별 화면 확인용 테스트 요청서입니다.' END
-FROM service_request sr JOIN member m ON sr.member_id=m.id CROSS JOIN question q
-WHERE m.email IN ('customer11@example.com', 'customer12@example.com', 'customer21@example.com', 'customer22@example.com', 'customer31@example.com', 'customer32@example.com', 'customer41@example.com', 'customer42@example.com', 'customer51@example.com', 'customer52@example.com');
+SELECT sr.id,
+       q.id,
+       q.content,
+       CASE q.display_order
+           WHEN 1 THEN '시드 요청서의 서비스 견적을 받고 싶습니다.'
+           WHEN 2 THEN '고수와 일정 협의 예정입니다.'
+           WHEN 3 THEN '예산은 견적 확인 후 협의합니다.'
+           ELSE '팀원별 화면 확인용 테스트 요청서입니다.' END
+FROM service_request sr
+         JOIN member m ON sr.member_id = m.id
+         CROSS JOIN question q
+WHERE m.email IN
+      ('customer11@example.com', 'customer12@example.com', 'customer21@example.com', 'customer22@example.com',
+       'customer31@example.com', 'customer32@example.com', 'customer41@example.com', 'customer42@example.com',
+       'customer51@example.com', 'customer52@example.com');
 
 -- 팀원별 견적: 반복 INSERT를 하나로 묶고 기존 입력 순서를 유지합니다.
 INSERT INTO quote (expert_id, service_request_id, description, price, quote_status, sent_at)
-VALUES ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert12@example.com'),
-        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
-         WHERE m.email='customer11@example.com' AND sr.second_category_id=101 AND sr.request_status<>'CLOSED'),
+VALUES ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert12@example.com'),
+        (SELECT sr.id
+         FROM service_request sr
+                  JOIN member m ON sr.member_id = m.id
+         WHERE m.email = 'customer11@example.com'
+           AND sr.second_category_id = 101
+           AND sr.request_status <> 'CLOSED'),
         'expert12의 팀원별 SENT 견적입니다.', 112000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert21@example.com'),
-        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
-         WHERE m.email='customer22@example.com' AND sr.second_category_id=102 AND sr.request_status<>'CLOSED'),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert21@example.com'),
+        (SELECT sr.id
+         FROM service_request sr
+                  JOIN member m ON sr.member_id = m.id
+         WHERE m.email = 'customer22@example.com'
+           AND sr.second_category_id = 102
+           AND sr.request_status <> 'CLOSED'),
         'expert21의 팀원별 SENT 견적입니다.', 121000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert22@example.com'),
-        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
-         WHERE m.email='customer22@example.com' AND sr.second_category_id=139 AND sr.request_status<>'CLOSED'),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert22@example.com'),
+        (SELECT sr.id
+         FROM service_request sr
+                  JOIN member m ON sr.member_id = m.id
+         WHERE m.email = 'customer22@example.com'
+           AND sr.second_category_id = 139
+           AND sr.request_status <> 'CLOSED'),
         'expert22의 팀원별 REQUESTED 견적입니다.', 122000, 'REQUESTED', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert31@example.com'),
-        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
-         WHERE m.email='customer31@example.com' AND sr.second_category_id=101 AND sr.request_status<>'CLOSED'),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert31@example.com'),
+        (SELECT sr.id
+         FROM service_request sr
+                  JOIN member m ON sr.member_id = m.id
+         WHERE m.email = 'customer31@example.com'
+           AND sr.second_category_id = 101
+           AND sr.request_status <> 'CLOSED'),
         'expert31의 팀원별 SENT 견적입니다.', 131000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert31@example.com'),
-        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
-         WHERE m.email='customer32@example.com' AND sr.second_category_id=102 AND sr.request_status<>'CLOSED'),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert31@example.com'),
+        (SELECT sr.id
+         FROM service_request sr
+                  JOIN member m ON sr.member_id = m.id
+         WHERE m.email = 'customer32@example.com'
+           AND sr.second_category_id = 102
+           AND sr.request_status <> 'CLOSED'),
         'expert31의 팀원별 SENT 견적입니다.', 131000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert32@example.com'),
-        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
-         WHERE m.email='customer32@example.com' AND sr.second_category_id=139 AND sr.request_status<>'CLOSED'),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert32@example.com'),
+        (SELECT sr.id
+         FROM service_request sr
+                  JOIN member m ON sr.member_id = m.id
+         WHERE m.email = 'customer32@example.com'
+           AND sr.second_category_id = 139
+           AND sr.request_status <> 'CLOSED'),
         'expert32의 팀원별 REQUESTED 견적입니다.', 132000, 'REQUESTED', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert32@example.com'),
-        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
-         WHERE m.email='customer31@example.com' AND sr.second_category_id=101 AND sr.request_status<>'CLOSED'),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert32@example.com'),
+        (SELECT sr.id
+         FROM service_request sr
+                  JOIN member m ON sr.member_id = m.id
+         WHERE m.email = 'customer31@example.com'
+           AND sr.second_category_id = 101
+           AND sr.request_status <> 'CLOSED'),
         'expert32의 팀원별 SENT 견적입니다.', 132000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert41@example.com'),
-        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
-         WHERE m.email='customer42@example.com' AND sr.second_category_id=102 AND sr.request_status<>'CLOSED'),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert41@example.com'),
+        (SELECT sr.id
+         FROM service_request sr
+                  JOIN member m ON sr.member_id = m.id
+         WHERE m.email = 'customer42@example.com'
+           AND sr.second_category_id = 102
+           AND sr.request_status <> 'CLOSED'),
         'expert41의 팀원별 SENT 견적입니다.', 141000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert51@example.com'),
-        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
-         WHERE m.email='customer51@example.com' AND sr.second_category_id=101 AND sr.request_status<>'CLOSED'),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert51@example.com'),
+        (SELECT sr.id
+         FROM service_request sr
+                  JOIN member m ON sr.member_id = m.id
+         WHERE m.email = 'customer51@example.com'
+           AND sr.second_category_id = 101
+           AND sr.request_status <> 'CLOSED'),
         'expert51의 팀원별 SENT 견적입니다.', 151000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert51@example.com'),
-        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
-         WHERE m.email='customer52@example.com' AND sr.second_category_id=102 AND sr.request_status<>'CLOSED'),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert51@example.com'),
+        (SELECT sr.id
+         FROM service_request sr
+                  JOIN member m ON sr.member_id = m.id
+         WHERE m.email = 'customer52@example.com'
+           AND sr.second_category_id = 102
+           AND sr.request_status <> 'CLOSED'),
         'expert51의 팀원별 SENT 견적입니다.', 151000, 'SENT', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP)),
-       ((SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert52@example.com'),
-        (SELECT sr.id FROM service_request sr JOIN member m ON sr.member_id=m.id
-         WHERE m.email='customer52@example.com' AND sr.second_category_id=139 AND sr.request_status<>'CLOSED'),
+       ((SELECT ep.id
+         FROM expert_profile ep
+                  JOIN member m ON ep.member_id = m.id
+         WHERE m.email = 'expert52@example.com'),
+        (SELECT sr.id
+         FROM service_request sr
+                  JOIN member m ON sr.member_id = m.id
+         WHERE m.email = 'customer52@example.com'
+           AND sr.second_category_id = 139
+           AND sr.request_status <> 'CLOSED'),
         'expert52의 팀원별 REQUESTED 견적입니다.', 152000, 'REQUESTED', DATEADD('MINUTE', -20, CURRENT_TIMESTAMP));
 
 -- SENT는 예약만 반영하고 REQUESTED는 실제 의뢰 요청처럼 사용 처리·잔액·내역·채팅방을 맞춥니다.
 INSERT INTO credit_reservation (credit_wallet_id, quote_id, amount, reservation_status, created_at)
-SELECT w.id, q.id, 2, CASE WHEN q.quote_status='REQUESTED' THEN 'USED' ELSE 'RESERVED' END, q.sent_at
-FROM quote q JOIN expert_profile ep ON q.expert_id=ep.id
-JOIN member m ON ep.member_id=m.id JOIN credit_wallet w ON w.member_id=m.id
-WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com', 'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com', 'expert51@example.com', 'expert52@example.com');
+SELECT w.id, q.id, 2, CASE WHEN q.quote_status = 'REQUESTED' THEN 'USED' ELSE 'RESERVED' END, q.sent_at
+FROM quote q
+         JOIN expert_profile ep ON q.expert_id = ep.id
+         JOIN member m ON ep.member_id = m.id
+         JOIN credit_wallet w ON w.member_id = m.id
+WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com',
+                  'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com',
+                  'expert51@example.com', 'expert52@example.com');
 
-UPDATE credit_wallet SET balance=18
-WHERE member_id IN (SELECT id FROM member WHERE email IN ('expert22@example.com', 'expert32@example.com', 'expert52@example.com'));
+UPDATE credit_wallet
+SET balance=18
+WHERE member_id IN
+      (SELECT id FROM member WHERE email IN ('expert22@example.com', 'expert32@example.com', 'expert52@example.com'));
 
 INSERT INTO credit_history (credit_wallet_id, history_type, amount, balance_after, quote_id, created_at)
 SELECT w.id, 'USE', -2, 18, q.id, q.sent_at
-FROM quote q JOIN expert_profile ep ON q.expert_id=ep.id
-JOIN member m ON ep.member_id=m.id JOIN credit_wallet w ON w.member_id=m.id
-WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com', 'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com', 'expert51@example.com', 'expert52@example.com') AND q.quote_status='REQUESTED';
+FROM quote q
+         JOIN expert_profile ep ON q.expert_id = ep.id
+         JOIN member m ON ep.member_id = m.id
+         JOIN credit_wallet w ON w.member_id = m.id
+WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com',
+                  'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com',
+                  'expert51@example.com', 'expert52@example.com')
+  AND q.quote_status = 'REQUESTED';
 
 INSERT INTO chat_room (quote_id, created_at)
-SELECT q.id, q.sent_at FROM quote q JOIN expert_profile ep ON q.expert_id=ep.id
-JOIN member m ON ep.member_id=m.id
-WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com', 'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com', 'expert51@example.com', 'expert52@example.com') AND q.quote_status='REQUESTED';
+SELECT q.id, q.sent_at
+FROM quote q
+         JOIN expert_profile ep ON q.expert_id = ep.id
+         JOIN member m ON ep.member_id = m.id
+WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com',
+                  'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com',
+                  'expert51@example.com', 'expert52@example.com')
+  AND q.quote_status = 'REQUESTED';
 
 INSERT INTO chat_participant (chat_room_id, member_id)
-SELECT cr.id, ep.member_id FROM chat_room cr JOIN quote q ON cr.quote_id=q.id
-JOIN expert_profile ep ON q.expert_id=ep.id JOIN member m ON ep.member_id=m.id
-WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com', 'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com', 'expert51@example.com', 'expert52@example.com')
+SELECT cr.id, ep.member_id
+FROM chat_room cr
+         JOIN quote q ON cr.quote_id = q.id
+         JOIN expert_profile ep ON q.expert_id = ep.id
+         JOIN member m ON ep.member_id = m.id
+WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com',
+                  'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com',
+                  'expert51@example.com', 'expert52@example.com')
 UNION ALL
-SELECT cr.id, sr.member_id FROM chat_room cr JOIN quote q ON cr.quote_id=q.id
-JOIN service_request sr ON q.service_request_id=sr.id JOIN expert_profile ep ON q.expert_id=ep.id
-JOIN member m ON ep.member_id=m.id WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com', 'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com', 'expert51@example.com', 'expert52@example.com');
+SELECT cr.id, sr.member_id
+FROM chat_room cr
+         JOIN quote q ON cr.quote_id = q.id
+         JOIN service_request sr ON q.service_request_id = sr.id
+         JOIN expert_profile ep ON q.expert_id = ep.id
+         JOIN member m ON ep.member_id = m.id
+WHERE m.email IN ('expert11@example.com', 'expert12@example.com', 'expert21@example.com', 'expert22@example.com',
+                  'expert31@example.com', 'expert32@example.com', 'expert41@example.com', 'expert42@example.com',
+                  'expert51@example.com', 'expert52@example.com');
 
 -- H2의 고정 ID 상품 1~4 다음부터 신규 상품을 등록합니다.
-ALTER TABLE credit_product ALTER COLUMN id RESTART WITH 5;
+ALTER TABLE credit_product
+    ALTER COLUMN id RESTART WITH 5;
 
 -- 팀원별 커뮤니티: 게시판별 1개씩. 탈퇴 전용 계정은 연결하지 않습니다.
 
-INSERT INTO post (member_id, second_category_id, second_region_id, board_type, title, content, view_count, comment_count, like_count, is_visible, created_at, updated_at)
-VALUES ((SELECT id FROM member WHERE email='customer11@example.com'), 101, 39, 'QUESTION', '원룸 이사 박스는 몇 개가 적당할까요', '옷과 책이 많은 7평 원룸입니다. 큰 가구는 침대와 책상뿐인데 박스를 어느 정도 준비하면 좋을까요?', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='expert11@example.com'), 102, 39, 'TIP', '입주 청소 전 수납장 비우는 순서', '작은 짐부터 상자에 담고 수납장 문을 모두 열어 두세요. 분리 가능한 선반은 따로 모아 두면 안쪽 먼지를 확인하기 쉽습니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer12@example.com'), 139, 39, 'RECRUIT', '작은 카페 주문 소개 페이지 제작', '메뉴와 영업시간을 휴대폰에서 편하게 보여 주는 페이지가 필요합니다. 주문 결제 없이 매장 소개와 지도 연결부터 만들고 싶어요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='expert12@example.com'), 139, 39, 'PROMOTION', '가게 소개 웹사이트를 함께 만듭니다', '작은 매장의 소개 페이지와 모바일 메뉴 화면을 제작합니다. 처음 상담에서 꼭 필요한 내용만 정리하고 운영자가 수정할 부분을 나누어 안내합니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer21@example.com'), 101, 69, 'QUESTION', '냉장고는 이사 전날 비워야 하나요', '부산 중구에서 같은 동네로 이사합니다. 냉동식품과 김치가 남아 있는데 전원은 언제 끄는 게 좋을까요?', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='expert21@example.com'), 102, 69, 'TIP', '욕실 물때를 줄이는 환기 습관', '샤워 뒤에는 바닥의 큰 물기를 먼저 밀어내고 환풍기를 잠시 더 켜 두세요. 세면대 수전은 마른 천으로 닦아 주면 물자국이 덜 남습니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer22@example.com'), 139, 69, 'RECRUIT', '공방 수업 예약 화면을 만들고 싶어요', '요일별 도예 수업의 남은 자리를 보여 주고 신청을 받는 화면을 찾고 있습니다. 우선 예약 확인 문자 없이 운영 가능한 구조면 좋겠습니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='expert22@example.com'), 139, 69, 'PROMOTION', '예약 흐름부터 정리하는 웹 개발', '공방과 소규모 수업의 예약 과정을 설계합니다. 정원과 일정 변경 규칙을 확인하고 운영자가 예약을 관리하기 쉬운 화면을 제안합니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer31@example.com'), 101, 85, 'QUESTION', '엘리베이터 없는 3층 이사 준비', '대구의 오래된 빌라 3층으로 들어갑니다. 계단 폭이 좁아서 소파가 들어갈지 미리 확인하고 싶어요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='expert31@example.com'), 102, 85, 'TIP', '주방 후드 필터 세척 전 확인할 것', '필터를 분리하기 전에 전원을 끄고 설명서의 세척 가능 표시를 확인하세요. 소재에 따라 강한 세제가 변색을 만들 수 있어 먼저 작은 부분에 시험합니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer32@example.com'), 139, 85, 'RECRUIT', '동네 체육관 출석 관리 웹 모집', '종이 출석부 대신 회원 이름과 방문 날짜를 기록하는 내부 웹이 필요합니다. 직원 두 명이 함께 쓰며 개인정보는 최소한만 저장하려고 합니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='expert32@example.com'), 139, 85, 'PROMOTION', '관리 화면 API 연결을 도와드립니다', '회원 조회와 주문 상태처럼 반복되는 관리 업무를 웹으로 연결합니다. 기존 화면이 있다면 요청과 응답 형식을 먼저 확인하고 필요한 API부터 개발합니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer41@example.com'), 101, 94, 'QUESTION', '비 오는 날 이사하면 무엇을 챙기나요', '인천으로 이사하는 날 비 예보가 있습니다. 책과 전자기기를 젖지 않게 포장하는 요령이 궁금해요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='expert41@example.com'), 102, 94, 'TIP', '창틀 먼지를 덜 날리며 닦는 방법', '먼지를 마른 솔로 먼저 털면 실내로 날리기 쉽습니다. 살짝 적신 천으로 큰 먼지를 걷어 낸 뒤 틈새를 닦고 마지막에 물기를 제거하세요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer42@example.com'), 139, 94, 'RECRUIT', '사진가 포트폴리오 사이트 의뢰', '웨딩과 가족 사진을 구분해 보여 주는 사이트를 만들고 싶습니다. 사진을 직접 교체할 수 있고 문의 폼은 없어도 괜찮습니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='expert42@example.com'), 139, 94, 'PROMOTION', '휴대폰에서 읽기 편한 화면 제작', '작은 화면의 버튼 간격과 글자 크기를 살펴 반응형 화면을 구현합니다. 소개 페이지와 문의 화면을 중심으로 실제 사용 순서에 맞춰 정리합니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer51@example.com'), 101, 105, 'QUESTION', '이삿날 주차 공간은 어떻게 확보하나요', '대전 골목 안쪽 주택으로 이사할 예정입니다. 차량 진입과 잠시 짐을 내릴 공간을 언제 확인해야 할까요?', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='expert51@example.com'), 102, 105, 'TIP', '마루 청소 후 물기를 남기지 마세요', '마루는 물을 흥건하게 쓰기보다 꼭 짠 걸레로 나누어 닦는 편이 좋습니다. 가구 아래까지 말랐는지 확인하고 작은 흠집은 소재에 맞춰 관리하세요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer52@example.com'), 139, 105, 'RECRUIT', '소규모 쇼핑몰 재고 도구 제작', '상품명과 옵션별 수량을 기록하고 엑셀로 내려받는 관리 화면이 필요합니다. 결제나 배송 기능은 이번 범위에서 제외하고 싶습니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='expert52@example.com'), 139, 105, 'PROMOTION', '배포 후 운영까지 생각하는 개발', '웹 개발부터 배포 후 기본 점검까지 진행합니다. 관리자 계정과 환경 설정을 구분하고 직접 바꿀 수 있는 내용은 간단한 운영 안내로 남깁니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO post (member_id, second_category_id, second_region_id, board_type, title, content, view_count,
+                  comment_count, like_count, is_visible, created_at, updated_at)
+VALUES ((SELECT id FROM member WHERE email = 'customer11@example.com'), 101, 39, 'QUESTION', '원룸 이사 박스는 몇 개가 적당할까요',
+        '옷과 책이 많은 7평 원룸입니다. 큰 가구는 침대와 책상뿐인데 박스를 어느 정도 준비하면 좋을까요?', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'expert11@example.com'), 102, 39, 'TIP', '입주 청소 전 수납장 비우는 순서',
+        '작은 짐부터 상자에 담고 수납장 문을 모두 열어 두세요. 분리 가능한 선반은 따로 모아 두면 안쪽 먼지를 확인하기 쉽습니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer12@example.com'), 139, 39, 'RECRUIT', '작은 카페 주문 소개 페이지 제작',
+        '메뉴와 영업시간을 휴대폰에서 편하게 보여 주는 페이지가 필요합니다. 주문 결제 없이 매장 소개와 지도 연결부터 만들고 싶어요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'expert12@example.com'), 139, 39, 'PROMOTION', '가게 소개 웹사이트를 함께 만듭니다',
+        '작은 매장의 소개 페이지와 모바일 메뉴 화면을 제작합니다. 처음 상담에서 꼭 필요한 내용만 정리하고 운영자가 수정할 부분을 나누어 안내합니다.', 0, 2, 0, TRUE,
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer21@example.com'), 101, 69, 'QUESTION', '냉장고는 이사 전날 비워야 하나요',
+        '부산 중구에서 같은 동네로 이사합니다. 냉동식품과 김치가 남아 있는데 전원은 언제 끄는 게 좋을까요?', 0, 2, 0, TRUE, CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'expert21@example.com'), 102, 69, 'TIP', '욕실 물때를 줄이는 환기 습관',
+        '샤워 뒤에는 바닥의 큰 물기를 먼저 밀어내고 환풍기를 잠시 더 켜 두세요. 세면대 수전은 마른 천으로 닦아 주면 물자국이 덜 남습니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer22@example.com'), 139, 69, 'RECRUIT', '공방 수업 예약 화면을 만들고 싶어요',
+        '요일별 도예 수업의 남은 자리를 보여 주고 신청을 받는 화면을 찾고 있습니다. 우선 예약 확인 문자 없이 운영 가능한 구조면 좋겠습니다.', 0, 2, 0, TRUE,
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'expert22@example.com'), 139, 69, 'PROMOTION', '예약 흐름부터 정리하는 웹 개발',
+        '공방과 소규모 수업의 예약 과정을 설계합니다. 정원과 일정 변경 규칙을 확인하고 운영자가 예약을 관리하기 쉬운 화면을 제안합니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer31@example.com'), 101, 85, 'QUESTION', '엘리베이터 없는 3층 이사 준비',
+        '대구의 오래된 빌라 3층으로 들어갑니다. 계단 폭이 좁아서 소파가 들어갈지 미리 확인하고 싶어요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'expert31@example.com'), 102, 85, 'TIP', '주방 후드 필터 세척 전 확인할 것',
+        '필터를 분리하기 전에 전원을 끄고 설명서의 세척 가능 표시를 확인하세요. 소재에 따라 강한 세제가 변색을 만들 수 있어 먼저 작은 부분에 시험합니다.', 0, 2, 0, TRUE,
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer32@example.com'), 139, 85, 'RECRUIT', '동네 체육관 출석 관리 웹 모집',
+        '종이 출석부 대신 회원 이름과 방문 날짜를 기록하는 내부 웹이 필요합니다. 직원 두 명이 함께 쓰며 개인정보는 최소한만 저장하려고 합니다.', 0, 2, 0, TRUE,
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'expert32@example.com'), 139, 85, 'PROMOTION', '관리 화면 API 연결을 도와드립니다',
+        '회원 조회와 주문 상태처럼 반복되는 관리 업무를 웹으로 연결합니다. 기존 화면이 있다면 요청과 응답 형식을 먼저 확인하고 필요한 API부터 개발합니다.', 0, 2, 0, TRUE,
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer41@example.com'), 101, 94, 'QUESTION', '비 오는 날 이사하면 무엇을 챙기나요',
+        '인천으로 이사하는 날 비 예보가 있습니다. 책과 전자기기를 젖지 않게 포장하는 요령이 궁금해요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'expert41@example.com'), 102, 94, 'TIP', '창틀 먼지를 덜 날리며 닦는 방법',
+        '먼지를 마른 솔로 먼저 털면 실내로 날리기 쉽습니다. 살짝 적신 천으로 큰 먼지를 걷어 낸 뒤 틈새를 닦고 마지막에 물기를 제거하세요.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer42@example.com'), 139, 94, 'RECRUIT', '사진가 포트폴리오 사이트 의뢰',
+        '웨딩과 가족 사진을 구분해 보여 주는 사이트를 만들고 싶습니다. 사진을 직접 교체할 수 있고 문의 폼은 없어도 괜찮습니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'expert42@example.com'), 139, 94, 'PROMOTION', '휴대폰에서 읽기 편한 화면 제작',
+        '작은 화면의 버튼 간격과 글자 크기를 살펴 반응형 화면을 구현합니다. 소개 페이지와 문의 화면을 중심으로 실제 사용 순서에 맞춰 정리합니다.', 0, 2, 0, TRUE,
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer51@example.com'), 101, 105, 'QUESTION', '이삿날 주차 공간은 어떻게 확보하나요',
+        '대전 골목 안쪽 주택으로 이사할 예정입니다. 차량 진입과 잠시 짐을 내릴 공간을 언제 확인해야 할까요?', 0, 2, 0, TRUE, CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'expert51@example.com'), 102, 105, 'TIP', '마루 청소 후 물기를 남기지 마세요',
+        '마루는 물을 흥건하게 쓰기보다 꼭 짠 걸레로 나누어 닦는 편이 좋습니다. 가구 아래까지 말랐는지 확인하고 작은 흠집은 소재에 맞춰 관리하세요.', 0, 2, 0, TRUE,
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer52@example.com'), 139, 105, 'RECRUIT', '소규모 쇼핑몰 재고 도구 제작',
+        '상품명과 옵션별 수량을 기록하고 엑셀로 내려받는 관리 화면이 필요합니다. 결제나 배송 기능은 이번 범위에서 제외하고 싶습니다.', 0, 2, 0, TRUE, CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'expert52@example.com'), 139, 105, 'PROMOTION', '배포 후 운영까지 생각하는 개발',
+        '웹 개발부터 배포 후 기본 점검까지 진행합니다. 관리자 계정과 환경 설정을 구분하고 직접 바꿀 수 있는 내용은 간단한 운영 안내로 남깁니다.', 0, 2, 0, TRUE,
+        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- 게시글마다 같은 팀의 고객·고수가 댓글을 하나씩 작성합니다.
 INSERT INTO post_comment (post_id, member_id, content, like_count, created_at, updated_at)
-SELECT p.id, commenter.id, CASE p.title
-    WHEN '원룸 이사 박스는 몇 개가 적당할까요' THEN '책은 작은 박스에 나누면 옮길 때 훨씬 수월합니다.'
-    WHEN '입주 청소 전 수납장 비우는 순서' THEN '선반을 빼기 전에 원래 위치를 사진으로 남겨 두면 편합니다.'
-    WHEN '작은 카페 주문 소개 페이지 제작' THEN '메뉴 사진과 가격표를 먼저 모아 두면 작업 범위를 정하기 좋습니다.'
-    WHEN '가게 소개 웹사이트를 함께 만듭니다' THEN '매장 사진이 적어도 시작할 수 있는지 궁금합니다.'
-    WHEN '냉장고는 이사 전날 비워야 하나요' THEN '제품 모델과 운반 시간을 알려 주시면 준비 순서를 안내할 수 있어요.'
-    WHEN '욕실 물때를 줄이는 환기 습관' THEN '배수구 덮개를 주기적으로 말리는 것도 도움이 됩니다.'
-    WHEN '공방 수업 예약 화면을 만들고 싶어요' THEN '수업별 정원과 취소 가능 시간을 먼저 정해 주세요.'
-    WHEN '예약 흐름부터 정리하는 웹 개발' THEN '여러 강사가 함께 쓰는 일정도 상담 가능한가요?'
-    WHEN '엘리베이터 없는 3층 이사 준비' THEN '소파 가로와 대각선 길이도 함께 재어 두시면 도움이 됩니다.'
-    WHEN '주방 후드 필터 세척 전 확인할 것' THEN '분리한 나사는 그릇에 담아 두면 잃어버리지 않아요.'
-    WHEN '동네 체육관 출석 관리 웹 모집' THEN '관리자별 접근 권한과 기록 보관 기간도 정하면 좋습니다.'
-    WHEN '관리 화면 API 연결을 도와드립니다' THEN '이미 운영 중인 화면에도 필요한 부분만 연결할 수 있나요?'
-    WHEN '비 오는 날 이사하면 무엇을 챙기나요' THEN '전자기기는 전용 포장과 방수 덮개를 함께 준비하는 편이 좋습니다.'
-    WHEN '창틀 먼지를 덜 날리며 닦는 방법' THEN '창틀 배수 구멍을 막지 않도록 마무리할 때 살펴보세요.'
-    WHEN '사진가 포트폴리오 사이트 의뢰' THEN '사진 용량과 모바일에서 보일 순서를 정리해 두세요.'
-    WHEN '휴대폰에서 읽기 편한 화면 제작' THEN '기존 데스크톱 화면을 유지하면서 모바일만 보완할 수 있나요?'
-    WHEN '이삿날 주차 공간은 어떻게 확보하나요' THEN '차량 높이 제한과 전선 위치도 미리 확인해 주세요.'
-    WHEN '마루 청소 후 물기를 남기지 마세요' THEN '바닥 재질마다 관리 방법이 달라 제품 안내도 확인해 주세요.'
-    WHEN '소규모 쇼핑몰 재고 도구 제작' THEN '현재 쓰는 엑셀 양식을 바탕으로 필요한 항목을 추릴 수 있어요.'
-    WHEN '배포 후 운영까지 생각하는 개발' THEN '서버 비용과 도메인 준비 항목도 함께 안내받고 싶습니다.'
-END, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-FROM post p JOIN member author ON p.member_id=author.id
-JOIN member commenter ON commenter.email=CONCAT('expert', SUBSTRING(author.email, LOCATE('@', author.email)-2, 1), '1@example.com');
+SELECT p.id,
+       commenter.id,
+       CASE p.title
+           WHEN '원룸 이사 박스는 몇 개가 적당할까요' THEN '책은 작은 박스에 나누면 옮길 때 훨씬 수월합니다.'
+           WHEN '입주 청소 전 수납장 비우는 순서' THEN '선반을 빼기 전에 원래 위치를 사진으로 남겨 두면 편합니다.'
+           WHEN '작은 카페 주문 소개 페이지 제작' THEN '메뉴 사진과 가격표를 먼저 모아 두면 작업 범위를 정하기 좋습니다.'
+           WHEN '가게 소개 웹사이트를 함께 만듭니다' THEN '매장 사진이 적어도 시작할 수 있는지 궁금합니다.'
+           WHEN '냉장고는 이사 전날 비워야 하나요' THEN '제품 모델과 운반 시간을 알려 주시면 준비 순서를 안내할 수 있어요.'
+           WHEN '욕실 물때를 줄이는 환기 습관' THEN '배수구 덮개를 주기적으로 말리는 것도 도움이 됩니다.'
+           WHEN '공방 수업 예약 화면을 만들고 싶어요' THEN '수업별 정원과 취소 가능 시간을 먼저 정해 주세요.'
+           WHEN '예약 흐름부터 정리하는 웹 개발' THEN '여러 강사가 함께 쓰는 일정도 상담 가능한가요?'
+           WHEN '엘리베이터 없는 3층 이사 준비' THEN '소파 가로와 대각선 길이도 함께 재어 두시면 도움이 됩니다.'
+           WHEN '주방 후드 필터 세척 전 확인할 것' THEN '분리한 나사는 그릇에 담아 두면 잃어버리지 않아요.'
+           WHEN '동네 체육관 출석 관리 웹 모집' THEN '관리자별 접근 권한과 기록 보관 기간도 정하면 좋습니다.'
+           WHEN '관리 화면 API 연결을 도와드립니다' THEN '이미 운영 중인 화면에도 필요한 부분만 연결할 수 있나요?'
+           WHEN '비 오는 날 이사하면 무엇을 챙기나요' THEN '전자기기는 전용 포장과 방수 덮개를 함께 준비하는 편이 좋습니다.'
+           WHEN '창틀 먼지를 덜 날리며 닦는 방법' THEN '창틀 배수 구멍을 막지 않도록 마무리할 때 살펴보세요.'
+           WHEN '사진가 포트폴리오 사이트 의뢰' THEN '사진 용량과 모바일에서 보일 순서를 정리해 두세요.'
+           WHEN '휴대폰에서 읽기 편한 화면 제작' THEN '기존 데스크톱 화면을 유지하면서 모바일만 보완할 수 있나요?'
+           WHEN '이삿날 주차 공간은 어떻게 확보하나요' THEN '차량 높이 제한과 전선 위치도 미리 확인해 주세요.'
+           WHEN '마루 청소 후 물기를 남기지 마세요' THEN '바닥 재질마다 관리 방법이 달라 제품 안내도 확인해 주세요.'
+           WHEN '소규모 쇼핑몰 재고 도구 제작' THEN '현재 쓰는 엑셀 양식을 바탕으로 필요한 항목을 추릴 수 있어요.'
+           WHEN '배포 후 운영까지 생각하는 개발' THEN '서버 비용과 도메인 준비 항목도 함께 안내받고 싶습니다.'
+           END,
+       0,
+       CURRENT_TIMESTAMP,
+       CURRENT_TIMESTAMP
+FROM post p
+         JOIN member author ON p.member_id = author.id
+         JOIN member commenter ON commenter.email =
+                                  CONCAT('expert', SUBSTRING(author.email, LOCATE('@', author.email) - 2, 1),
+                                         '1@example.com');
 
 INSERT INTO post_comment (post_id, member_id, content, like_count, created_at, updated_at)
-SELECT p.id, commenter.id, CASE p.title
-    WHEN '원룸 이사 박스는 몇 개가 적당할까요' THEN '옷은 압축하지 않고 옷걸이 박스로 옮기는 방법도 있나요?'
-    WHEN '입주 청소 전 수납장 비우는 순서' THEN '붙박이장 경첩 주변도 이번에 같이 확인해 봐야겠어요.'
-    WHEN '작은 카페 주문 소개 페이지 제작' THEN '직접 메뉴를 수정할 수 있는지도 상담할 때 물어보려고 합니다.'
-    WHEN '가게 소개 웹사이트를 함께 만듭니다' THEN '소개 문구와 연락처를 먼저 준비한 뒤 상담해 보겠습니다.'
-    WHEN '냉장고는 이사 전날 비워야 하나요' THEN '냉동식품은 보냉 가방에 따로 챙겨 두겠습니다.'
-    WHEN '욕실 물때를 줄이는 환기 습관' THEN '수전 옆에 작은 마른 수건을 두고 사용해 보겠습니다.'
-    WHEN '공방 수업 예약 화면을 만들고 싶어요' THEN '달력에서 수업 종류를 골라 신청하는 흐름을 생각하고 있어요.'
-    WHEN '예약 흐름부터 정리하는 웹 개발' THEN '수업별 정원표와 현재 예약 과정을 정리해 두겠습니다.'
-    WHEN '엘리베이터 없는 3층 이사 준비' THEN '계단 모서리와 현관 사진을 찍어서 상담해 보겠습니다.'
-    WHEN '주방 후드 필터 세척 전 확인할 것' THEN '알루미늄 필터는 세제 선택부터 확인해야겠네요.'
-    WHEN '동네 체육관 출석 관리 웹 모집' THEN '전화번호 없이 회원 번호로 관리하는 방법을 검토하고 있습니다.'
-    WHEN '관리 화면 API 연결을 도와드립니다' THEN '수기로 처리하는 업무 목록부터 적어 보고 문의하겠습니다.'
-    WHEN '비 오는 날 이사하면 무엇을 챙기나요' THEN '서류는 지퍼백에 넣고 별도 가방으로 챙기려고 합니다.'
-    WHEN '창틀 먼지를 덜 날리며 닦는 방법' THEN '청소기를 먼저 쓰는 대신 젖은 천으로 시작해 보겠습니다.'
-    WHEN '사진가 포트폴리오 사이트 의뢰' THEN '기존 촬영본을 행사별 폴더로 먼저 나누어 두겠습니다.'
-    WHEN '휴대폰에서 읽기 편한 화면 제작' THEN '자주 쓰는 휴대폰 크기를 확인해 상담 때 알려 드릴게요.'
-    WHEN '이삿날 주차 공간은 어떻게 확보하나요' THEN '이웃에게 통행 시간을 안내하고 업체와 동선을 정해 보겠습니다.'
-    WHEN '마루 청소 후 물기를 남기지 마세요' THEN '가구를 바로 밀어 넣지 않고 충분히 말린 뒤 정리하겠습니다.'
-    WHEN '소규모 쇼핑몰 재고 도구 제작' THEN '바코드 기능은 나중에 추가하고 수량 입력부터 시작하려고 합니다.'
-    WHEN '배포 후 운영까지 생각하는 개발' THEN '운영 중 직접 수정할 문구를 먼저 정리해 보겠습니다.'
-END, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-FROM post p JOIN member author ON p.member_id=author.id
-JOIN member commenter ON commenter.email=CONCAT('customer', SUBSTRING(author.email, LOCATE('@', author.email)-2, 1), '2@example.com');
+SELECT p.id,
+       commenter.id,
+       CASE p.title
+           WHEN '원룸 이사 박스는 몇 개가 적당할까요' THEN '옷은 압축하지 않고 옷걸이 박스로 옮기는 방법도 있나요?'
+           WHEN '입주 청소 전 수납장 비우는 순서' THEN '붙박이장 경첩 주변도 이번에 같이 확인해 봐야겠어요.'
+           WHEN '작은 카페 주문 소개 페이지 제작' THEN '직접 메뉴를 수정할 수 있는지도 상담할 때 물어보려고 합니다.'
+           WHEN '가게 소개 웹사이트를 함께 만듭니다' THEN '소개 문구와 연락처를 먼저 준비한 뒤 상담해 보겠습니다.'
+           WHEN '냉장고는 이사 전날 비워야 하나요' THEN '냉동식품은 보냉 가방에 따로 챙겨 두겠습니다.'
+           WHEN '욕실 물때를 줄이는 환기 습관' THEN '수전 옆에 작은 마른 수건을 두고 사용해 보겠습니다.'
+           WHEN '공방 수업 예약 화면을 만들고 싶어요' THEN '달력에서 수업 종류를 골라 신청하는 흐름을 생각하고 있어요.'
+           WHEN '예약 흐름부터 정리하는 웹 개발' THEN '수업별 정원표와 현재 예약 과정을 정리해 두겠습니다.'
+           WHEN '엘리베이터 없는 3층 이사 준비' THEN '계단 모서리와 현관 사진을 찍어서 상담해 보겠습니다.'
+           WHEN '주방 후드 필터 세척 전 확인할 것' THEN '알루미늄 필터는 세제 선택부터 확인해야겠네요.'
+           WHEN '동네 체육관 출석 관리 웹 모집' THEN '전화번호 없이 회원 번호로 관리하는 방법을 검토하고 있습니다.'
+           WHEN '관리 화면 API 연결을 도와드립니다' THEN '수기로 처리하는 업무 목록부터 적어 보고 문의하겠습니다.'
+           WHEN '비 오는 날 이사하면 무엇을 챙기나요' THEN '서류는 지퍼백에 넣고 별도 가방으로 챙기려고 합니다.'
+           WHEN '창틀 먼지를 덜 날리며 닦는 방법' THEN '청소기를 먼저 쓰는 대신 젖은 천으로 시작해 보겠습니다.'
+           WHEN '사진가 포트폴리오 사이트 의뢰' THEN '기존 촬영본을 행사별 폴더로 먼저 나누어 두겠습니다.'
+           WHEN '휴대폰에서 읽기 편한 화면 제작' THEN '자주 쓰는 휴대폰 크기를 확인해 상담 때 알려 드릴게요.'
+           WHEN '이삿날 주차 공간은 어떻게 확보하나요' THEN '이웃에게 통행 시간을 안내하고 업체와 동선을 정해 보겠습니다.'
+           WHEN '마루 청소 후 물기를 남기지 마세요' THEN '가구를 바로 밀어 넣지 않고 충분히 말린 뒤 정리하겠습니다.'
+           WHEN '소규모 쇼핑몰 재고 도구 제작' THEN '바코드 기능은 나중에 추가하고 수량 입력부터 시작하려고 합니다.'
+           WHEN '배포 후 운영까지 생각하는 개발' THEN '운영 중 직접 수정할 문구를 먼저 정리해 보겠습니다.'
+           END,
+       0,
+       CURRENT_TIMESTAMP,
+       CURRENT_TIMESTAMP
+FROM post p
+         JOIN member author ON p.member_id = author.id
+         JOIN member commenter ON commenter.email =
+                                  CONCAT('customer', SUBSTRING(author.email, LOCATE('@', author.email) - 2, 1),
+                                         '2@example.com');
 
 INSERT INTO bookmark (member_id, expert_profile_id, is_active, bookmarked_at)
-VALUES ((SELECT id FROM member WHERE email='customer11@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert11@example.com'), TRUE, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer11@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert12@example.com'), TRUE, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer12@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert12@example.com'), TRUE, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer21@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert21@example.com'), TRUE, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer21@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert22@example.com'), TRUE, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer22@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert22@example.com'), TRUE, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer31@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert31@example.com'), TRUE, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer31@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert32@example.com'), TRUE, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer32@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert32@example.com'), TRUE, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer41@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert41@example.com'), TRUE, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer41@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert42@example.com'), TRUE, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer42@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert42@example.com'), TRUE, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer51@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert51@example.com'), TRUE, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer51@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert52@example.com'), TRUE, CURRENT_TIMESTAMP),
-       ((SELECT id FROM member WHERE email='customer52@example.com'), (SELECT ep.id FROM expert_profile ep JOIN member m ON ep.member_id=m.id WHERE m.email='expert52@example.com'), TRUE, CURRENT_TIMESTAMP);
+VALUES ((SELECT id FROM member WHERE email = 'customer11@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert11@example.com'), TRUE,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer11@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert12@example.com'), TRUE,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer12@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert12@example.com'), TRUE,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer21@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert21@example.com'), TRUE,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer21@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert22@example.com'), TRUE,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer22@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert22@example.com'), TRUE,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer31@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert31@example.com'), TRUE,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer31@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert32@example.com'), TRUE,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer32@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert32@example.com'), TRUE,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer41@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert41@example.com'), TRUE,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer41@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert42@example.com'), TRUE,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer42@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert42@example.com'), TRUE,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer51@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert51@example.com'), TRUE,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer51@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert52@example.com'), TRUE,
+        CURRENT_TIMESTAMP),
+       ((SELECT id FROM member WHERE email = 'customer52@example.com'), (SELECT ep.id
+                                                                         FROM expert_profile ep
+                                                                                  JOIN member m ON ep.member_id = m.id
+                                                                         WHERE m.email = 'expert52@example.com'), TRUE,
+        CURRENT_TIMESTAMP);
 
 -- 기존 채팅방 3개의 참여자가 대화합니다. 목록 미리보기도 마지막 메시지와 맞춥니다.
 INSERT INTO chat_message (chat_room_id, sender_id, type, content, created_at)
 SELECT cr.id, sr.member_id, 'TEXT', '안녕하세요. 작업 일정 상담을 부탁드립니다.', DATEADD('MINUTE', -10, CURRENT_TIMESTAMP)
-FROM chat_room cr JOIN quote q ON cr.quote_id=q.id JOIN service_request sr ON q.service_request_id=sr.id;
+FROM chat_room cr
+         JOIN quote q ON cr.quote_id = q.id
+         JOIN service_request sr ON q.service_request_id = sr.id;
 
 INSERT INTO chat_message (chat_room_id, sender_id, type, content, created_at)
 SELECT cr.id, ep.member_id, 'TEXT', '안녕하세요. 가능한 일정과 작업 범위를 알려 주세요.', DATEADD('MINUTE', -9, CURRENT_TIMESTAMP)
-FROM chat_room cr JOIN quote q ON cr.quote_id=q.id JOIN expert_profile ep ON q.expert_id=ep.id;
+FROM chat_room cr
+         JOIN quote q ON cr.quote_id = q.id
+         JOIN expert_profile ep ON q.expert_id = ep.id;
 
-UPDATE chat_room SET last_message_preview='안녕하세요. 가능한 일정과 작업 범위를 알려 주세요.',
-                     last_message_at=DATEADD('MINUTE', -9, CURRENT_TIMESTAMP);
+UPDATE chat_room
+SET last_message_preview='안녕하세요. 가능한 일정과 작업 범위를 알려 주세요.',
+    last_message_at=DATEADD('MINUTE', -9, CURRENT_TIMESTAMP);
 
 
 -- =====================================================================
@@ -1019,14 +1421,22 @@ UPDATE chat_room SET last_message_preview='안녕하세요. 가능한 일정과 
 
 -- 1) 시드 회원 -----------------------------------------------------------
 INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
-VALUES ('seed-clean@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '깔끔클린', '01070000001', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('seed-plumb@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '바른설비', '01070000002', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('seed-interior@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '온공간디자인', '01070000003', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('seed-photo@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '스냅작가하루', '01070000004', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('seed-english@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '제니영어', '01070000005', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('seed-dev@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '코드메이트', '01070000006', 'EXPERT', CURRENT_TIMESTAMP, 0),
-       ('seed-user1@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '이사준비중', '01070000007', 'USER', CURRENT_TIMESTAMP, 0),
-       ('seed-user2@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '새내기집사', '01070000008', 'USER', CURRENT_TIMESTAMP, 0);
+VALUES ('seed-clean@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '깔끔클린', '01070000001',
+        'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('seed-plumb@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '바른설비', '01070000002',
+        'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('seed-interior@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '온공간디자인',
+        '01070000003', 'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('seed-photo@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '스냅작가하루',
+        '01070000004', 'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('seed-english@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '제니영어',
+        '01070000005', 'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('seed-dev@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '코드메이트', '01070000006',
+        'EXPERT', CURRENT_TIMESTAMP, 0),
+       ('seed-user1@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '이사준비중',
+        '01070000007', 'USER', CURRENT_TIMESTAMP, 0),
+       ('seed-user2@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '새내기집사',
+        '01070000008', 'USER', CURRENT_TIMESTAMP, 0);
 
 -- 2) 게시글 --------------------------------------------------------------
 -- 지역 ID: 19 용산 · 20 성동 · 27 노원 · 30 마포 · 35 영등포 · 37 관악 · 38 서초 · 39 강남 · 40 송파 (모두 서울)
@@ -1208,7 +1618,8 @@ FROM (VALUES ('expert1@example.com', '5daa003e-1e20-4848-81d7-c3a418cecf91.jpg',
              ('seed-photo@example.com', '2f5d05bc-bad6-42c7-bdb6-dbae87d162e8.jpg', 'tip-wedding.jpg'),
              ('seed-english@example.com', 'd40e132c-5fe4-4565-8427-859a847dca8a.jpg', 'tip-words.jpg'),
              ('seed-dev@example.com', '434ee595-4316-4306-8b89-be7d42425ab9.jpg', 'tip-docs.jpg'),
-             ('expert2@example.com', '797b95bd-3896-4109-bbf3-4912b12e72b1.jpg', 'tip-aircon.jpg')) AS v(email, path, name)
+             ('expert2@example.com', '797b95bd-3896-4109-bbf3-4912b12e72b1.jpg',
+              'tip-aircon.jpg')) AS v(email, path, name)
          JOIN member m ON m.email = v.email;
 
 -- sort_order 0번 사진이 목록 썸네일이 된다
@@ -1239,39 +1650,60 @@ FROM (VALUES ('원룸·투룸 이사 전문, 3년간 파손 0건', '5daa003e-1e2
 
 -- 4) 댓글 ----------------------------------------------------------------
 INSERT INTO post_comment (post_id, member_id, content, like_count, created_at, updated_at)
-SELECT p.id, m.id, v.content, 0, DATEADD('HOUR', -v.hrs, CURRENT_TIMESTAMP), DATEADD('HOUR', -v.hrs, CURRENT_TIMESTAMP)
-FROM (VALUES ('이사 견적이 업체마다 왜 이렇게 달라요?', 'expert1@example.com', '사다리차 포함 여부, 포장 범위, 작업 인원을 먼저 비교해 보세요. 이 세 가지에서 차이가 가장 커요.', 28),
+SELECT p.id,
+       m.id,
+       v.content,
+       0,
+       DATEADD('HOUR', -v.hrs, CURRENT_TIMESTAMP),
+       DATEADD('HOUR', -v.hrs, CURRENT_TIMESTAMP)
+FROM (VALUES ('이사 견적이 업체마다 왜 이렇게 달라요?', 'expert1@example.com',
+              '사다리차 포함 여부, 포장 범위, 작업 인원을 먼저 비교해 보세요. 이 세 가지에서 차이가 가장 커요.', 28),
              ('이사 견적이 업체마다 왜 이렇게 달라요?', 'expert2@example.com', '추가 요금 조건(층수, 엘리베이터, 주말)도 견적서에 적혀 있는지 확인하세요.', 27),
              ('이사 견적이 업체마다 왜 이렇게 달라요?', 'customer1@example.com', '저도 비슷했는데 포장 범위 차이였어요!', 25),
              ('입주청소 몇 평부터 2명이 와요?', 'seed-clean@example.com', '보통 20평대부터 2명이 가요. 1명이면 시간이 두 배 가까이 걸려요.', 24),
              ('입주청소 몇 평부터 2명이 와요?', 'seed-user1@example.com', '저는 25평에 2명 오셨어요.', 22),
-             ('보일러에 E-03 에러가 계속 떠요', 'seed-plumb@example.com', '대부분 점화 불량이에요. 가스 밸브가 열려 있는지 먼저 확인해 보시고, 계속 뜨면 점검받으세요.', 18),
+             ('보일러에 E-03 에러가 계속 떠요', 'seed-plumb@example.com', '대부분 점화 불량이에요. 가스 밸브가 열려 있는지 먼저 확인해 보시고, 계속 뜨면 점검받으세요.',
+              18),
              ('보일러에 E-03 에러가 계속 떠요', 'seed-user2@example.com', '저희 집도 밸브가 반쯤 잠겨 있었어요.', 17),
-             ('원룸 도배, 셀프로 해도 될까요?', 'seed-interior@example.com', '6평이면 셀프도 가능해요. 다만 천장은 혼자 하기 어려워서 벽만 셀프로 하시는 분이 많아요.', 14),
-             ('초등 영어 과외 몇 학년부터 하나요?', 'seed-english@example.com', '초3이면 1:1로 기초 읽기부터 잡기 좋은 시기예요. 아이 성향에 따라 소그룹도 괜찮아요.', 10),
+             ('원룸 도배, 셀프로 해도 될까요?', 'seed-interior@example.com', '6평이면 셀프도 가능해요. 다만 천장은 혼자 하기 어려워서 벽만 셀프로 하시는 분이 많아요.',
+              14),
+             ('초등 영어 과외 몇 학년부터 하나요?', 'seed-english@example.com', '초3이면 1:1로 기초 읽기부터 잡기 좋은 시기예요. 아이 성향에 따라 소그룹도 괜찮아요.',
+              10),
              ('웨딩 스냅 원본도 다 받을 수 있나요?', 'seed-photo@example.com', '저는 원본 전체를 드려요. 계약 전에 원본 제공 여부를 꼭 물어보세요.', 7),
-             ('앱 외주 견적은 뭘 기준으로 받아요?', 'seed-dev@example.com', '기능 목록에 화면 개수와 로그인 방식까지 적어 주시면 견적이 정확해져요.', 2)) AS v(title, email, content, hrs)
+             ('앱 외주 견적은 뭘 기준으로 받아요?', 'seed-dev@example.com', '기능 목록에 화면 개수와 로그인 방식까지 적어 주시면 견적이 정확해져요.',
+              2)) AS v(title, email, content, hrs)
          JOIN post p ON p.title = v.title
          JOIN member m ON m.email = v.email;
 
 -- 5) 좋아요 --------------------------------------------------------------
 INSERT INTO post_like (member_id, post_id)
 SELECT m.id, p.id
-FROM (VALUES ('입주청소 전에 꼭 확인할 5가지', 'customer1@example.com'), ('입주청소 전에 꼭 확인할 5가지', 'customer2@example.com'),
-             ('입주청소 전에 꼭 확인할 5가지', 'seed-user1@example.com'), ('입주청소 전에 꼭 확인할 5가지', 'seed-user2@example.com'),
+FROM (VALUES ('입주청소 전에 꼭 확인할 5가지', 'customer1@example.com'),
+             ('입주청소 전에 꼭 확인할 5가지', 'customer2@example.com'),
+             ('입주청소 전에 꼭 확인할 5가지', 'seed-user1@example.com'),
+             ('입주청소 전에 꼭 확인할 5가지', 'seed-user2@example.com'),
              ('입주청소 전에 꼭 확인할 5가지', 'expert1@example.com'),
-             ('장판 vs 강마루, 이렇게 고르세요', 'customer1@example.com'), ('장판 vs 강마루, 이렇게 고르세요', 'customer2@example.com'),
-             ('장판 vs 강마루, 이렇게 고르세요', 'seed-user1@example.com'), ('장판 vs 강마루, 이렇게 고르세요', 'seed-user2@example.com'),
-             ('영어 단어, 하루 30개 외우는 법', 'customer2@example.com'), ('영어 단어, 하루 30개 외우는 법', 'seed-user1@example.com'),
+             ('장판 vs 강마루, 이렇게 고르세요', 'customer1@example.com'),
+             ('장판 vs 강마루, 이렇게 고르세요', 'customer2@example.com'),
+             ('장판 vs 강마루, 이렇게 고르세요', 'seed-user1@example.com'),
+             ('장판 vs 강마루, 이렇게 고르세요', 'seed-user2@example.com'),
+             ('영어 단어, 하루 30개 외우는 법', 'customer2@example.com'),
+             ('영어 단어, 하루 30개 외우는 법', 'seed-user1@example.com'),
              ('영어 단어, 하루 30개 외우는 법', 'seed-user2@example.com'),
-             ('보일러 동파 막는 겨울 습관', 'customer1@example.com'), ('보일러 동파 막는 겨울 습관', 'seed-user2@example.com'),
-             ('이삿짐 쌀 때 깨지는 물건 포장법', 'seed-user1@example.com'), ('이삿짐 쌀 때 깨지는 물건 포장법', 'customer2@example.com'),
-             ('15평 구축 부분 리모델링 사례', 'customer1@example.com'), ('15평 구축 부분 리모델링 사례', 'seed-user2@example.com'),
+             ('보일러 동파 막는 겨울 습관', 'customer1@example.com'),
+             ('보일러 동파 막는 겨울 습관', 'seed-user2@example.com'),
+             ('이삿짐 쌀 때 깨지는 물건 포장법', 'seed-user1@example.com'),
+             ('이삿짐 쌀 때 깨지는 물건 포장법', 'customer2@example.com'),
+             ('15평 구축 부분 리모델링 사례', 'customer1@example.com'),
+             ('15평 구축 부분 리모델링 사례', 'seed-user2@example.com'),
              ('15평 구축 부분 리모델링 사례', 'customer2@example.com'),
-             ('입주청소 전후 사진 보여드려요', 'seed-user1@example.com'), ('입주청소 전후 사진 보여드려요', 'customer2@example.com'),
-             ('이사 견적이 업체마다 왜 이렇게 달라요?', 'customer1@example.com'), ('이사 견적이 업체마다 왜 이렇게 달라요?', 'customer2@example.com'),
+             ('입주청소 전후 사진 보여드려요', 'seed-user1@example.com'),
+             ('입주청소 전후 사진 보여드려요', 'customer2@example.com'),
+             ('이사 견적이 업체마다 왜 이렇게 달라요?', 'customer1@example.com'),
+             ('이사 견적이 업체마다 왜 이렇게 달라요?', 'customer2@example.com'),
              ('이사 견적이 업체마다 왜 이렇게 달라요?', 'seed-user2@example.com'),
-             ('보일러에 E-03 에러가 계속 떠요', 'seed-user1@example.com'), ('보일러에 E-03 에러가 계속 떠요', 'customer2@example.com'),
+             ('보일러에 E-03 에러가 계속 떠요', 'seed-user1@example.com'),
+             ('보일러에 E-03 에러가 계속 떠요', 'customer2@example.com'),
              ('입주청소 몇 평부터 2명이 와요?', 'seed-user2@example.com')) AS v(title, email)
          JOIN post p ON p.title = v.title
          JOIN member m ON m.email = v.email;
@@ -1282,288 +1714,1429 @@ SET comment_count = (SELECT COUNT(*) FROM post_comment c WHERE c.post_id = p.id 
     like_count    = (SELECT COUNT(*) FROM post_like l WHERE l.post_id = p.id);
 
 -- 홈 시안의 가상 고수 20명. 기존 계정·프로필 ID는 바꾸지 않습니다.
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile101@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','한결이사','01080000101','EXPERT',DATEADD('DAY', -41, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'원룸부터 쓰리룸까지 포장이사 전문','원룸부터 쓰리룸까지 포장이사 전문. 작업 범위와 일정은 상담 후 안내해 드립니다.',9,'관련 서비스 경력 9년입니다.',101,FALSE FROM member WHERE email='profile101@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile101@example.com')),101);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile101@example.com')),102);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile101@example.com')),103);
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile101@example.com')),(SELECT id FROM second_region WHERE first_region_id=1 AND name='강남구'));
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile101@example.com')),(SELECT id FROM second_region WHERE first_region_id=1 AND name='서초구'));
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile101@example.com')),(SELECT id FROM second_region WHERE first_region_id=1 AND name='송파구'));
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile101@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile101@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile101@example.com'),'seed/expert-portraits/fac79094f403daa49b653ca7165425239106e33de7c46cbf9943e0afb06594f2.jpg','expert-101.jpg','image/jpeg',151214,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/fac79094f403daa49b653ca7165425239106e33de7c46cbf9943e0afb06594f2.jpg') WHERE email='profile101@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile102@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','반짝홈케어','01080000102','EXPERT',DATEADD('DAY', -20, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'입주 청소와 이사 청소를 하루에 끝내 드려요','입주 청소와 이사 청소를 하루에 끝내 드려요. 작업 범위와 일정은 상담 후 안내해 드립니다.',6,'관련 서비스 경력 6년입니다.',102,FALSE FROM member WHERE email='profile102@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile102@example.com')),102);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile102@example.com')),101);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile102@example.com')),103);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile102@example.com')),104);
-INSERT INTO expert_profile_whole_regions (expert_profile_id,whole_regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile102@example.com')),1);
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile102@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile102@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile102@example.com'),'seed/expert-portraits/3a3b36b5e571b7df3f0cf9f556eeeb547c68adde6d77b47b79f3cdb8ec47b31b.jpg','expert-102.jpg','image/jpeg',170465,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/3a3b36b5e571b7df3f0cf9f556eeeb547c68adde6d77b47b79f3cdb8ec47b31b.jpg') WHERE email='profile102@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile103@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','윤선생 영어','01080000103','EXPERT',DATEADD('DAY', -120, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'중고등 내신과 수능 영어를 1:1로 봐 드립니다','중고등 내신과 수능 영어를 1:1로 봐 드립니다. 작업 범위와 일정은 상담 후 안내해 드립니다.',11,'관련 서비스 경력 11년입니다.',129,FALSE FROM member WHERE email='profile103@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile103@example.com')),129);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile103@example.com')),127);
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile103@example.com')),(SELECT id FROM second_region WHERE first_region_id=1 AND name='마포구'));
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile103@example.com')),(SELECT id FROM second_region WHERE first_region_id=1 AND name='서대문구'));
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile103@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile103@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile103@example.com'),'seed/expert-portraits/2536fa08e550e96a256fe8288f3d09b17d055949df054a541ef09de97fc31421.jpg','expert-103.jpg','image/jpeg',213066,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/2536fa08e550e96a256fe8288f3d09b17d055949df054a541ef09de97fc31421.jpg') WHERE email='profile103@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile104@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','소리공방','01080000104','EXPERT',DATEADD('DAY', -5, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'취미 피아노와 기타를 처음부터 차근차근','취미 피아노와 기타를 처음부터 차근차근. 작업 범위와 일정은 상담 후 안내해 드립니다.',7,'관련 서비스 경력 7년입니다.',165,FALSE FROM member WHERE email='profile104@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile104@example.com')),165);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile104@example.com')),166);
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile104@example.com')),(SELECT id FROM second_region WHERE first_region_id=1 AND name='마포구'));
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile104@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile104@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile104@example.com'),'seed/expert-portraits/d01c2618fe2ab4a4b3e5a4788a830ea6cd49651d876de7fea68e776e75397b43.jpg','expert-104.jpg','image/jpeg',188637,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/d01c2618fe2ab4a4b3e5a4788a830ea6cd49651d876de7fea68e776e75397b43.jpg') WHERE email='profile104@example.com';
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'쇼핑몰과 예약 서비스 웹을 기획부터 배포까지','쇼핑몰과 예약 서비스 웹을 기획부터 배포까지. 작업 범위와 일정은 상담 후 안내해 드립니다.',8,'관련 서비스 경력 8년입니다.',139,TRUE FROM member WHERE email='seed-dev@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='seed-dev@example.com')),139);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='seed-dev@example.com')),138);
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='seed-dev@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='seed-dev@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='seed-dev@example.com'),'seed/expert-portraits/8706e1fa2982c383584d4f8f45cc67a854e272943b2fdbbb4a1948b697389102.jpg','expert-105.jpg','image/jpeg',170844,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/8706e1fa2982c383584d4f8f45cc67a854e272943b2fdbbb4a1948b697389102.jpg') WHERE email='seed-dev@example.com';
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'누수 탐지와 보일러 교체를 당일에 확인합니다','누수 탐지와 보일러 교체를 당일에 확인합니다. 작업 범위와 일정은 상담 후 안내해 드립니다.',15,'관련 서비스 경력 15년입니다.',109,FALSE FROM member WHERE email='seed-plumb@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='seed-plumb@example.com')),109);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='seed-plumb@example.com')),107);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='seed-plumb@example.com')),108);
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='seed-plumb@example.com')),(SELECT id FROM second_region WHERE first_region_id=3 AND name='해운대구'));
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='seed-plumb@example.com')),(SELECT id FROM second_region WHERE first_region_id=3 AND name='수영구'));
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='seed-plumb@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='seed-plumb@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='seed-plumb@example.com'),'seed/expert-portraits/eedb73b924cddac497cf0106675414f0b5b0e659b6da32a9501cab29e2977a31.jpg','expert-106.jpg','image/jpeg',202546,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/eedb73b924cddac497cf0106675414f0b5b0e659b6da32a9501cab29e2977a31.jpg') WHERE email='seed-plumb@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile107@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','온집 인테리어','01080000107','EXPERT',DATEADD('DAY', -8, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'욕실과 주방 부분 시공을 깔끔하게','욕실과 주방 부분 시공을 깔끔하게. 작업 범위와 일정은 상담 후 안내해 드립니다.',12,'관련 서비스 경력 12년입니다.',113,FALSE FROM member WHERE email='profile107@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile107@example.com')),113);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile107@example.com')),112);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile107@example.com')),114);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile107@example.com')),115);
-INSERT INTO expert_profile_whole_regions (expert_profile_id,whole_regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile107@example.com')),4);
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile107@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile107@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile107@example.com'),'seed/expert-portraits/91d49f183011359c7be3278ef88d06a0e2b85ae4f75d28985065fad7c180abfe.jpg','expert-107.jpg','image/jpeg',176534,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/91d49f183011359c7be3278ef88d06a0e2b85ae4f75d28985065fad7c180abfe.jpg') WHERE email='profile107@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile108@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','담다 스냅','01080000108','EXPERT',DATEADD('DAY', -1, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'웨딩 스냅과 가족 사진을 자연광으로 담아요','웨딩 스냅과 가족 사진을 자연광으로 담아요. 작업 범위와 일정은 상담 후 안내해 드립니다.',5,'관련 서비스 경력 5년입니다.',120,TRUE FROM member WHERE email='profile108@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile108@example.com')),120);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile108@example.com')),118);
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile108@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile108@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile108@example.com'),'seed/expert-portraits/bf61066aa0ba76c96797534f2ac306cfdc8e32a7c14b7adc4e052be7744cee4b.jpg','expert-108.jpg','image/jpeg',152721,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/bf61066aa0ba76c96797534f2ac306cfdc8e32a7c14b7adc4e052be7744cee4b.jpg') WHERE email='profile108@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile109@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','정리하는 하루','01080000109','EXPERT',DATEADD('DAY', -6, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'가전 분해 세척과 가구 청소를 함께 맡겨 주세요','가전 분해 세척과 가구 청소를 함께 맡겨 주세요. 작업 범위와 일정은 상담 후 안내해 드립니다.',4,'관련 서비스 경력 4년입니다.',103,FALSE FROM member WHERE email='profile109@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile109@example.com')),103);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile109@example.com')),101);
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile109@example.com')),(SELECT id FROM second_region WHERE first_region_id=5 AND name='연수구'));
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile109@example.com')),(SELECT id FROM second_region WHERE first_region_id=5 AND name='남동구'));
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile109@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile109@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile109@example.com'),'seed/expert-portraits/2c6b30f4271e6fe0de0876b2c58147e797c16951f31db4eb2497a6d68ee8efb6.jpg','expert-109.jpg','image/jpeg',179817,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/2c6b30f4271e6fe0de0876b2c58147e797c16951f31db4eb2497a6d68ee8efb6.jpg') WHERE email='profile109@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile110@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','김코치 피트니스','01080000110','EXPERT',DATEADD('DAY', -60, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'체형 교정 중심의 1:1 퍼스널 트레이닝','체형 교정 중심의 1:1 퍼스널 트레이닝. 작업 범위와 일정은 상담 후 안내해 드립니다.',10,'관련 서비스 경력 10년입니다.',174,FALSE FROM member WHERE email='profile110@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile110@example.com')),174);
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile110@example.com')),(SELECT id FROM second_region WHERE first_region_id=1 AND name='강남구'));
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile110@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile110@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile110@example.com'),'seed/expert-portraits/9e0a013410c73d2600f30f7764042c664597f65dc75fec784602f011101dc86b.jpg','expert-110.jpg','image/jpeg',153418,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/9e0a013410c73d2600f30f7764042c664597f65dc75fec784602f011101dc86b.jpg') WHERE email='profile110@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile111@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','문고리 수리','01080000111','EXPERT',DATEADD('DAY', -4, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'도어락 교체와 방충망, 창문 수리','도어락 교체와 방충망, 창문 수리. 작업 범위와 일정은 상담 후 안내해 드립니다.',8,'관련 서비스 경력 8년입니다.',108,FALSE FROM member WHERE email='profile111@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile111@example.com')),108);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile111@example.com')),107);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile111@example.com')),109);
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile111@example.com')),(SELECT id FROM second_region WHERE first_region_id=1 AND name='송파구'));
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile111@example.com')),(SELECT id FROM second_region WHERE first_region_id=1 AND name='강동구'));
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile111@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile111@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile111@example.com'),'seed/expert-portraits/730c36a224c75ad6716687b5e3412b10018f5ac5fc95c388df95f7d52852bf55.jpg','expert-111.jpg','image/jpeg',187770,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/730c36a224c75ad6716687b5e3412b10018f5ac5fc95c388df95f7d52852bf55.jpg') WHERE email='profile111@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile112@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','해운대 이사짐센터','01080000112','EXPERT',DATEADD('DAY', -300, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'부산 전 지역 소형 이사와 용달','부산 전 지역 소형 이사와 용달. 작업 범위와 일정은 상담 후 안내해 드립니다.',18,'관련 서비스 경력 18년입니다.',101,FALSE FROM member WHERE email='profile112@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile112@example.com')),101);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile112@example.com')),102);
-INSERT INTO expert_profile_whole_regions (expert_profile_id,whole_regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile112@example.com')),3);
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile112@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile112@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile112@example.com'),'seed/expert-portraits/8236bea6ade5759f4a467ae33aad1dfb8b0a8497fa0925396e2bea41ef4c56a7.jpg','expert-112.jpg','image/jpeg',223823,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/8236bea6ade5759f4a467ae33aad1dfb8b0a8497fa0925396e2bea41ef4c56a7.jpg') WHERE email='profile112@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile113@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','커리어노트','01080000113','EXPERT',DATEADD('DAY', -90, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'자소서 첨삭과 직무 면접 준비를 1:1로','자소서 첨삭과 직무 면접 준비를 1:1로. 작업 범위와 일정은 상담 후 안내해 드립니다.',9,'관련 서비스 경력 9년입니다.',150,FALSE FROM member WHERE email='profile113@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile113@example.com')),150);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile113@example.com')),151);
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile113@example.com')),(SELECT id FROM second_region WHERE first_region_id=4 AND name='수성구'));
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile113@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile113@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile113@example.com'),'seed/expert-portraits/3dbb32e8d3411c87a6e6a0b69329bfd6beb96b11cc057a9e906c73418b43fa09.jpg','expert-113.jpg','image/jpeg',163175,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/3dbb32e8d3411c87a6e6a0b69329bfd6beb96b11cc057a9e906c73418b43fa09.jpg') WHERE email='profile113@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile114@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','그림숲 아틀리에','01080000114','EXPERT',DATEADD('DAY', -9, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'성인 취미 드로잉과 수채화 클래스','성인 취미 드로잉과 수채화 클래스. 작업 범위와 일정은 상담 후 안내해 드립니다.',6,'관련 서비스 경력 6년입니다.',167,FALSE FROM member WHERE email='profile114@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile114@example.com')),167);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile114@example.com')),165);
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile114@example.com')),(SELECT id FROM second_region WHERE first_region_id=5 AND name='연수구'));
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile114@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile114@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile114@example.com'),'seed/expert-portraits/cd044537eb5b2ec44fa95ecd26f478034191e1add421270a26e57fb771200d50.jpg','expert-114.jpg','image/jpeg',232104,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/cd044537eb5b2ec44fa95ecd26f478034191e1add421270a26e57fb771200d50.jpg') WHERE email='profile114@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile115@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','새길 노무','01080000115','EXPERT',DATEADD('DAY', -2, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'임금 체불과 근로계약 상담을 쉽게 풀어 드려요','임금 체불과 근로계약 상담을 쉽게 풀어 드려요. 작업 범위와 일정은 상담 후 안내해 드립니다.',13,'관련 서비스 경력 13년입니다.',187,TRUE FROM member WHERE email='profile115@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile115@example.com')),187);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile115@example.com')),186);
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile115@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile115@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile115@example.com'),'seed/expert-portraits/61a80e03ceb23a12806b88a229bb551f8049954dbca07e60d4deee5dac2123d2.jpg','expert-115.jpg','image/jpeg',162192,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/61a80e03ceb23a12806b88a229bb551f8049954dbca07e60d4deee5dac2123d2.jpg') WHERE email='profile115@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile116@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','마음쉼표 상담','01080000116','EXPERT',DATEADD('DAY', -30, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'직장인 스트레스와 관계 고민 상담','직장인 스트레스와 관계 고민 상담. 작업 범위와 일정은 상담 후 안내해 드립니다.',10,'관련 서비스 경력 10년입니다.',190,FALSE FROM member WHERE email='profile116@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile116@example.com')),190);
-INSERT INTO expert_profile_whole_regions (expert_profile_id,whole_regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile116@example.com')),1);
-INSERT INTO expert_profile_whole_regions (expert_profile_id,whole_regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile116@example.com')),9);
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile116@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile116@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile116@example.com'),'seed/expert-portraits/6a49ba904e011b7af641619aff3198364b1274e647ab0068c9396331f6ec88ab.jpg','expert-116.jpg','image/jpeg',191691,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/6a49ba904e011b7af641619aff3198364b1274e647ab0068c9396331f6ec88ab.jpg') WHERE email='profile116@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile117@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','한빛 카케어','01080000117','EXPERT',DATEADD('DAY', -150, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'출장 세차와 실내 클리닝, 소모품 교체','출장 세차와 실내 클리닝, 소모품 교체. 작업 범위와 일정은 상담 후 안내해 드립니다.',16,'관련 서비스 경력 16년입니다.',184,FALSE FROM member WHERE email='profile117@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile117@example.com')),184);
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile117@example.com')),(SELECT id FROM second_region WHERE first_region_id=3 AND name='해운대구'));
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile117@example.com')),(SELECT id FROM second_region WHERE first_region_id=3 AND name='수영구'));
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile117@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile117@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile117@example.com'),'seed/expert-portraits/7e4aaf88726a0226a2685864377b24821ee4b03de50f4279e7e22745f2ea4a46.jpg','expert-117.jpg','image/jpeg',197828,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/7e4aaf88726a0226a2685864377b24821ee4b03de50f4279e7e22745f2ea4a46.jpg') WHERE email='profile117@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile118@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','맑은창 줄눈','01080000118','EXPERT',DATEADD('DAY', -75, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'욕실 줄눈과 실리콘 재시공을 반나절에','욕실 줄눈과 실리콘 재시공을 반나절에. 작업 범위와 일정은 상담 후 안내해 드립니다.',9,'관련 서비스 경력 9년입니다.',113,FALSE FROM member WHERE email='profile118@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile118@example.com')),113);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile118@example.com')),112);
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile118@example.com')),(SELECT id FROM second_region WHERE first_region_id=1 AND name='마포구'));
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile118@example.com')),(SELECT id FROM second_region WHERE first_region_id=1 AND name='은평구'));
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile118@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile118@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile118@example.com'),'seed/expert-portraits/51d1c0e5c1940e4304e24b58465dbfc1defd5480104064407d108fd84c73b6d1.jpg','expert-118.jpg','image/jpeg',190855,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/51d1c0e5c1940e4304e24b58465dbfc1defd5480104064407d108fd84c73b6d1.jpg') WHERE email='profile118@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile119@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','하늘 웨딩플래너','01080000119','EXPERT',DATEADD('DAY', -200, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'스드메 견적 비교부터 본식 진행까지','스드메 견적 비교부터 본식 진행까지. 작업 범위와 일정은 상담 후 안내해 드립니다.',8,'관련 서비스 경력 8년입니다.',118,FALSE FROM member WHERE email='profile119@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile119@example.com')),118);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile119@example.com')),119);
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile119@example.com')),120);
-INSERT INTO expert_profile_whole_regions (expert_profile_id,whole_regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile119@example.com')),3);
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile119@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile119@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile119@example.com'),'seed/expert-portraits/23fc54320fddad75b686b37b70e15606ce25e3bed139a01d0765ba581b96465d.jpg','expert-119.jpg','image/jpeg',206410,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/23fc54320fddad75b686b37b70e15606ce25e3bed139a01d0765ba581b96465d.jpg') WHERE email='profile119@example.com';
-INSERT INTO member (email,password,nickname,phone,role,created_at,token_version) VALUES ('profile120@example.com','$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C','오늘의 요가','01080000120','EXPERT',DATEADD('DAY', -45, CURRENT_TIMESTAMP),0);
-INSERT INTO expert_profile (member_id,short_intro,description,career_years,career_description,primary_category_id,is_nationwide) SELECT id,'소규모 그룹과 1:1 요가 수업','소규모 그룹과 1:1 요가 수업. 작업 범위와 일정은 상담 후 안내해 드립니다.',6,'관련 서비스 경력 6년입니다.',174,FALSE FROM member WHERE email='profile120@example.com';
-INSERT INTO expert_profile_services (expert_profile_id,services_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile120@example.com')),174);
-INSERT INTO expert_profile_regions (expert_profile_id,regions_id) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='profile120@example.com')),(SELECT id FROM second_region WHERE first_region_id=4 AND name='수성구'));
-INSERT INTO credit_wallet (member_id,balance,created_at,updated_at) SELECT id,20,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP FROM member WHERE email='profile120@example.com' AND NOT EXISTS (SELECT 1 FROM credit_wallet WHERE member_id=(SELECT id FROM member WHERE email='profile120@example.com'));
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='profile120@example.com'),'seed/expert-portraits/f3f7685df4a9d41458c4e1aac7d34397e6ba4bb301d6d63a6527c02968caeb9b.jpg','expert-120.jpg','image/jpeg',173333,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/expert-portraits/f3f7685df4a9d41458c4e1aac7d34397e6ba4bb301d6d63a6527c02968caeb9b.jpg') WHERE email='profile120@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile101@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '한결이사', '01080000101',
+        'EXPERT', DATEADD('DAY', -41, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id, '원룸부터 쓰리룸까지 포장이사 전문', '원룸부터 쓰리룸까지 포장이사 전문. 작업 범위와 일정은 상담 후 안내해 드립니다.', 9, '관련 서비스 경력 9년입니다.', 101, FALSE
+FROM member
+WHERE email = 'profile101@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile101@example.com')), 101);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile101@example.com')), 102);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile101@example.com')), 103);
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile101@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 1 AND name = '강남구'));
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile101@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 1 AND name = '서초구'));
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile101@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 1 AND name = '송파구'));
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile101@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile101@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile101@example.com'),
+        'seed/expert-portraits/fac79094f403daa49b653ca7165425239106e33de7c46cbf9943e0afb06594f2.jpg', 'expert-101.jpg',
+        'image/jpeg', 151214, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/fac79094f403daa49b653ca7165425239106e33de7c46cbf9943e0afb06594f2.jpg')
+WHERE email = 'profile101@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile102@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '반짝홈케어',
+        '01080000102', 'EXPERT', DATEADD('DAY', -20, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id,
+       '입주 청소와 이사 청소를 하루에 끝내 드려요',
+       '입주 청소와 이사 청소를 하루에 끝내 드려요. 작업 범위와 일정은 상담 후 안내해 드립니다.',
+       6,
+       '관련 서비스 경력 6년입니다.',
+       102,
+       FALSE
+FROM member
+WHERE email = 'profile102@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile102@example.com')), 102);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile102@example.com')), 101);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile102@example.com')), 103);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile102@example.com')), 104);
+INSERT INTO expert_profile_whole_regions (expert_profile_id, whole_regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile102@example.com')), 1);
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile102@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile102@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile102@example.com'),
+        'seed/expert-portraits/3a3b36b5e571b7df3f0cf9f556eeeb547c68adde6d77b47b79f3cdb8ec47b31b.jpg', 'expert-102.jpg',
+        'image/jpeg', 170465, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/3a3b36b5e571b7df3f0cf9f556eeeb547c68adde6d77b47b79f3cdb8ec47b31b.jpg')
+WHERE email = 'profile102@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile103@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '윤선생 영어',
+        '01080000103', 'EXPERT', DATEADD('DAY', -120, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id,
+       '중고등 내신과 수능 영어를 1:1로 봐 드립니다',
+       '중고등 내신과 수능 영어를 1:1로 봐 드립니다. 작업 범위와 일정은 상담 후 안내해 드립니다.',
+       11,
+       '관련 서비스 경력 11년입니다.',
+       129,
+       FALSE
+FROM member
+WHERE email = 'profile103@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile103@example.com')), 129);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile103@example.com')), 127);
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile103@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 1 AND name = '마포구'));
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile103@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 1 AND name = '서대문구'));
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile103@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile103@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile103@example.com'),
+        'seed/expert-portraits/2536fa08e550e96a256fe8288f3d09b17d055949df054a541ef09de97fc31421.jpg', 'expert-103.jpg',
+        'image/jpeg', 213066, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/2536fa08e550e96a256fe8288f3d09b17d055949df054a541ef09de97fc31421.jpg')
+WHERE email = 'profile103@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile104@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '소리공방', '01080000104',
+        'EXPERT', DATEADD('DAY', -5, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id,
+       '취미 피아노와 기타를 처음부터 차근차근',
+       '취미 피아노와 기타를 처음부터 차근차근. 작업 범위와 일정은 상담 후 안내해 드립니다.',
+       7,
+       '관련 서비스 경력 7년입니다.',
+       165,
+       FALSE
+FROM member
+WHERE email = 'profile104@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile104@example.com')), 165);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile104@example.com')), 166);
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile104@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 1 AND name = '마포구'));
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile104@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile104@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile104@example.com'),
+        'seed/expert-portraits/d01c2618fe2ab4a4b3e5a4788a830ea6cd49651d876de7fea68e776e75397b43.jpg', 'expert-104.jpg',
+        'image/jpeg', 188637, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/d01c2618fe2ab4a4b3e5a4788a830ea6cd49651d876de7fea68e776e75397b43.jpg')
+WHERE email = 'profile104@example.com';
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id,
+       '쇼핑몰과 예약 서비스 웹을 기획부터 배포까지',
+       '쇼핑몰과 예약 서비스 웹을 기획부터 배포까지. 작업 범위와 일정은 상담 후 안내해 드립니다.',
+       8,
+       '관련 서비스 경력 8년입니다.',
+       139,
+       TRUE
+FROM member
+WHERE email = 'seed-dev@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'seed-dev@example.com')),
+        139);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'seed-dev@example.com')),
+        138);
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'seed-dev@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'seed-dev@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'seed-dev@example.com'),
+        'seed/expert-portraits/8706e1fa2982c383584d4f8f45cc67a854e272943b2fdbbb4a1948b697389102.jpg', 'expert-105.jpg',
+        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/8706e1fa2982c383584d4f8f45cc67a854e272943b2fdbbb4a1948b697389102.jpg')
+WHERE email = 'seed-dev@example.com';
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id,
+       '누수 탐지와 보일러 교체를 당일에 확인합니다',
+       '누수 탐지와 보일러 교체를 당일에 확인합니다. 작업 범위와 일정은 상담 후 안내해 드립니다.',
+       15,
+       '관련 서비스 경력 15년입니다.',
+       109,
+       FALSE
+FROM member
+WHERE email = 'seed-plumb@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'seed-plumb@example.com')), 109);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'seed-plumb@example.com')), 107);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'seed-plumb@example.com')), 108);
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'seed-plumb@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 3 AND name = '해운대구'));
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'seed-plumb@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 3 AND name = '수영구'));
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'seed-plumb@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'seed-plumb@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'seed-plumb@example.com'),
+        'seed/expert-portraits/eedb73b924cddac497cf0106675414f0b5b0e659b6da32a9501cab29e2977a31.jpg', 'expert-106.jpg',
+        'image/jpeg', 202546, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/eedb73b924cddac497cf0106675414f0b5b0e659b6da32a9501cab29e2977a31.jpg')
+WHERE email = 'seed-plumb@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile107@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '온집 인테리어',
+        '01080000107', 'EXPERT', DATEADD('DAY', -8, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id, '욕실과 주방 부분 시공을 깔끔하게', '욕실과 주방 부분 시공을 깔끔하게. 작업 범위와 일정은 상담 후 안내해 드립니다.', 12, '관련 서비스 경력 12년입니다.', 113, FALSE
+FROM member
+WHERE email = 'profile107@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile107@example.com')), 113);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile107@example.com')), 112);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile107@example.com')), 114);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile107@example.com')), 115);
+INSERT INTO expert_profile_whole_regions (expert_profile_id, whole_regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile107@example.com')), 4);
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile107@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile107@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile107@example.com'),
+        'seed/expert-portraits/91d49f183011359c7be3278ef88d06a0e2b85ae4f75d28985065fad7c180abfe.jpg', 'expert-107.jpg',
+        'image/jpeg', 176534, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/91d49f183011359c7be3278ef88d06a0e2b85ae4f75d28985065fad7c180abfe.jpg')
+WHERE email = 'profile107@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile108@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '담다 스냅',
+        '01080000108', 'EXPERT', DATEADD('DAY', -1, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id,
+       '웨딩 스냅과 가족 사진을 자연광으로 담아요',
+       '웨딩 스냅과 가족 사진을 자연광으로 담아요. 작업 범위와 일정은 상담 후 안내해 드립니다.',
+       5,
+       '관련 서비스 경력 5년입니다.',
+       120,
+       TRUE
+FROM member
+WHERE email = 'profile108@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile108@example.com')), 120);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile108@example.com')), 118);
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile108@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile108@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile108@example.com'),
+        'seed/expert-portraits/bf61066aa0ba76c96797534f2ac306cfdc8e32a7c14b7adc4e052be7744cee4b.jpg', 'expert-108.jpg',
+        'image/jpeg', 152721, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/bf61066aa0ba76c96797534f2ac306cfdc8e32a7c14b7adc4e052be7744cee4b.jpg')
+WHERE email = 'profile108@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile109@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '정리하는 하루',
+        '01080000109', 'EXPERT', DATEADD('DAY', -6, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id,
+       '가전 분해 세척과 가구 청소를 함께 맡겨 주세요',
+       '가전 분해 세척과 가구 청소를 함께 맡겨 주세요. 작업 범위와 일정은 상담 후 안내해 드립니다.',
+       4,
+       '관련 서비스 경력 4년입니다.',
+       103,
+       FALSE
+FROM member
+WHERE email = 'profile109@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile109@example.com')), 103);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile109@example.com')), 101);
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile109@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 5 AND name = '연수구'));
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile109@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 5 AND name = '남동구'));
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile109@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile109@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile109@example.com'),
+        'seed/expert-portraits/2c6b30f4271e6fe0de0876b2c58147e797c16951f31db4eb2497a6d68ee8efb6.jpg', 'expert-109.jpg',
+        'image/jpeg', 179817, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/2c6b30f4271e6fe0de0876b2c58147e797c16951f31db4eb2497a6d68ee8efb6.jpg')
+WHERE email = 'profile109@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile110@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '김코치 피트니스',
+        '01080000110', 'EXPERT', DATEADD('DAY', -60, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id,
+       '체형 교정 중심의 1:1 퍼스널 트레이닝',
+       '체형 교정 중심의 1:1 퍼스널 트레이닝. 작업 범위와 일정은 상담 후 안내해 드립니다.',
+       10,
+       '관련 서비스 경력 10년입니다.',
+       174,
+       FALSE
+FROM member
+WHERE email = 'profile110@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile110@example.com')), 174);
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile110@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 1 AND name = '강남구'));
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile110@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile110@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile110@example.com'),
+        'seed/expert-portraits/9e0a013410c73d2600f30f7764042c664597f65dc75fec784602f011101dc86b.jpg', 'expert-110.jpg',
+        'image/jpeg', 153418, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/9e0a013410c73d2600f30f7764042c664597f65dc75fec784602f011101dc86b.jpg')
+WHERE email = 'profile110@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile111@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '문고리 수리',
+        '01080000111', 'EXPERT', DATEADD('DAY', -4, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id, '도어락 교체와 방충망, 창문 수리', '도어락 교체와 방충망, 창문 수리. 작업 범위와 일정은 상담 후 안내해 드립니다.', 8, '관련 서비스 경력 8년입니다.', 108, FALSE
+FROM member
+WHERE email = 'profile111@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile111@example.com')), 108);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile111@example.com')), 107);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile111@example.com')), 109);
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile111@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 1 AND name = '송파구'));
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile111@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 1 AND name = '강동구'));
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile111@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile111@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile111@example.com'),
+        'seed/expert-portraits/730c36a224c75ad6716687b5e3412b10018f5ac5fc95c388df95f7d52852bf55.jpg', 'expert-111.jpg',
+        'image/jpeg', 187770, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/730c36a224c75ad6716687b5e3412b10018f5ac5fc95c388df95f7d52852bf55.jpg')
+WHERE email = 'profile111@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile112@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '해운대 이사짐센터',
+        '01080000112', 'EXPERT', DATEADD('DAY', -300, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id, '부산 전 지역 소형 이사와 용달', '부산 전 지역 소형 이사와 용달. 작업 범위와 일정은 상담 후 안내해 드립니다.', 18, '관련 서비스 경력 18년입니다.', 101, FALSE
+FROM member
+WHERE email = 'profile112@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile112@example.com')), 101);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile112@example.com')), 102);
+INSERT INTO expert_profile_whole_regions (expert_profile_id, whole_regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile112@example.com')), 3);
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile112@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile112@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile112@example.com'),
+        'seed/expert-portraits/8236bea6ade5759f4a467ae33aad1dfb8b0a8497fa0925396e2bea41ef4c56a7.jpg', 'expert-112.jpg',
+        'image/jpeg', 223823, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/8236bea6ade5759f4a467ae33aad1dfb8b0a8497fa0925396e2bea41ef4c56a7.jpg')
+WHERE email = 'profile112@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile113@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '커리어노트',
+        '01080000113', 'EXPERT', DATEADD('DAY', -90, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id,
+       '자소서 첨삭과 직무 면접 준비를 1:1로',
+       '자소서 첨삭과 직무 면접 준비를 1:1로. 작업 범위와 일정은 상담 후 안내해 드립니다.',
+       9,
+       '관련 서비스 경력 9년입니다.',
+       150,
+       FALSE
+FROM member
+WHERE email = 'profile113@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile113@example.com')), 150);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile113@example.com')), 151);
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile113@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 4 AND name = '수성구'));
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile113@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile113@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile113@example.com'),
+        'seed/expert-portraits/3dbb32e8d3411c87a6e6a0b69329bfd6beb96b11cc057a9e906c73418b43fa09.jpg', 'expert-113.jpg',
+        'image/jpeg', 163175, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/3dbb32e8d3411c87a6e6a0b69329bfd6beb96b11cc057a9e906c73418b43fa09.jpg')
+WHERE email = 'profile113@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile114@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '그림숲 아틀리에',
+        '01080000114', 'EXPERT', DATEADD('DAY', -9, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id, '성인 취미 드로잉과 수채화 클래스', '성인 취미 드로잉과 수채화 클래스. 작업 범위와 일정은 상담 후 안내해 드립니다.', 6, '관련 서비스 경력 6년입니다.', 167, FALSE
+FROM member
+WHERE email = 'profile114@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile114@example.com')), 167);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile114@example.com')), 165);
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile114@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 5 AND name = '연수구'));
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile114@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile114@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile114@example.com'),
+        'seed/expert-portraits/cd044537eb5b2ec44fa95ecd26f478034191e1add421270a26e57fb771200d50.jpg', 'expert-114.jpg',
+        'image/jpeg', 232104, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/cd044537eb5b2ec44fa95ecd26f478034191e1add421270a26e57fb771200d50.jpg')
+WHERE email = 'profile114@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile115@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '새길 노무',
+        '01080000115', 'EXPERT', DATEADD('DAY', -2, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id,
+       '임금 체불과 근로계약 상담을 쉽게 풀어 드려요',
+       '임금 체불과 근로계약 상담을 쉽게 풀어 드려요. 작업 범위와 일정은 상담 후 안내해 드립니다.',
+       13,
+       '관련 서비스 경력 13년입니다.',
+       187,
+       TRUE
+FROM member
+WHERE email = 'profile115@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile115@example.com')), 187);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile115@example.com')), 186);
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile115@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile115@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile115@example.com'),
+        'seed/expert-portraits/61a80e03ceb23a12806b88a229bb551f8049954dbca07e60d4deee5dac2123d2.jpg', 'expert-115.jpg',
+        'image/jpeg', 162192, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/61a80e03ceb23a12806b88a229bb551f8049954dbca07e60d4deee5dac2123d2.jpg')
+WHERE email = 'profile115@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile116@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '마음쉼표 상담',
+        '01080000116', 'EXPERT', DATEADD('DAY', -30, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id, '직장인 스트레스와 관계 고민 상담', '직장인 스트레스와 관계 고민 상담. 작업 범위와 일정은 상담 후 안내해 드립니다.', 10, '관련 서비스 경력 10년입니다.', 190, FALSE
+FROM member
+WHERE email = 'profile116@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile116@example.com')), 190);
+INSERT INTO expert_profile_whole_regions (expert_profile_id, whole_regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile116@example.com')), 1);
+INSERT INTO expert_profile_whole_regions (expert_profile_id, whole_regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile116@example.com')), 9);
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile116@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile116@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile116@example.com'),
+        'seed/expert-portraits/6a49ba904e011b7af641619aff3198364b1274e647ab0068c9396331f6ec88ab.jpg', 'expert-116.jpg',
+        'image/jpeg', 191691, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/6a49ba904e011b7af641619aff3198364b1274e647ab0068c9396331f6ec88ab.jpg')
+WHERE email = 'profile116@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile117@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '한빛 카케어',
+        '01080000117', 'EXPERT', DATEADD('DAY', -150, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id,
+       '출장 세차와 실내 클리닝, 소모품 교체',
+       '출장 세차와 실내 클리닝, 소모품 교체. 작업 범위와 일정은 상담 후 안내해 드립니다.',
+       16,
+       '관련 서비스 경력 16년입니다.',
+       184,
+       FALSE
+FROM member
+WHERE email = 'profile117@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile117@example.com')), 184);
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile117@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 3 AND name = '해운대구'));
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile117@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 3 AND name = '수영구'));
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile117@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile117@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile117@example.com'),
+        'seed/expert-portraits/7e4aaf88726a0226a2685864377b24821ee4b03de50f4279e7e22745f2ea4a46.jpg', 'expert-117.jpg',
+        'image/jpeg', 197828, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/7e4aaf88726a0226a2685864377b24821ee4b03de50f4279e7e22745f2ea4a46.jpg')
+WHERE email = 'profile117@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile118@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '맑은창 줄눈',
+        '01080000118', 'EXPERT', DATEADD('DAY', -75, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id, '욕실 줄눈과 실리콘 재시공을 반나절에', '욕실 줄눈과 실리콘 재시공을 반나절에. 작업 범위와 일정은 상담 후 안내해 드립니다.', 9, '관련 서비스 경력 9년입니다.', 113, FALSE
+FROM member
+WHERE email = 'profile118@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile118@example.com')), 113);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile118@example.com')), 112);
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile118@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 1 AND name = '마포구'));
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile118@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 1 AND name = '은평구'));
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile118@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile118@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile118@example.com'),
+        'seed/expert-portraits/51d1c0e5c1940e4304e24b58465dbfc1defd5480104064407d108fd84c73b6d1.jpg', 'expert-118.jpg',
+        'image/jpeg', 190855, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/51d1c0e5c1940e4304e24b58465dbfc1defd5480104064407d108fd84c73b6d1.jpg')
+WHERE email = 'profile118@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile119@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '하늘 웨딩플래너',
+        '01080000119', 'EXPERT', DATEADD('DAY', -200, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id, '스드메 견적 비교부터 본식 진행까지', '스드메 견적 비교부터 본식 진행까지. 작업 범위와 일정은 상담 후 안내해 드립니다.', 8, '관련 서비스 경력 8년입니다.', 118, FALSE
+FROM member
+WHERE email = 'profile119@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile119@example.com')), 118);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile119@example.com')), 119);
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile119@example.com')), 120);
+INSERT INTO expert_profile_whole_regions (expert_profile_id, whole_regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile119@example.com')), 3);
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile119@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile119@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile119@example.com'),
+        'seed/expert-portraits/23fc54320fddad75b686b37b70e15606ce25e3bed139a01d0765ba581b96465d.jpg', 'expert-119.jpg',
+        'image/jpeg', 206410, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/23fc54320fddad75b686b37b70e15606ce25e3bed139a01d0765ba581b96465d.jpg')
+WHERE email = 'profile119@example.com';
+INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
+VALUES ('profile120@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '오늘의 요가',
+        '01080000120', 'EXPERT', DATEADD('DAY', -45, CURRENT_TIMESTAMP), 0);
+INSERT INTO expert_profile (member_id, short_intro, description, career_years, career_description, primary_category_id,
+                            is_nationwide)
+SELECT id, '소규모 그룹과 1:1 요가 수업', '소규모 그룹과 1:1 요가 수업. 작업 범위와 일정은 상담 후 안내해 드립니다.', 6, '관련 서비스 경력 6년입니다.', 174, FALSE
+FROM member
+WHERE email = 'profile120@example.com';
+INSERT INTO expert_profile_services (expert_profile_id, services_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile120@example.com')), 174);
+INSERT INTO expert_profile_regions (expert_profile_id, regions_id)
+VALUES ((SELECT id
+         FROM expert_profile
+         WHERE member_id = (SELECT id FROM member WHERE email = 'profile120@example.com')),
+        (SELECT id FROM second_region WHERE first_region_id = 4 AND name = '수성구'));
+INSERT INTO credit_wallet (member_id, balance, created_at, updated_at)
+SELECT id, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM member
+WHERE email = 'profile120@example.com'
+  AND NOT EXISTS (SELECT 1
+                  FROM credit_wallet
+                  WHERE member_id = (SELECT id FROM member WHERE email = 'profile120@example.com'));
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'profile120@example.com'),
+        'seed/expert-portraits/f3f7685df4a9d41458c4e1aac7d34397e6ba4bb301d6d63a6527c02968caeb9b.jpg', 'expert-120.jpg',
+        'image/jpeg', 173333, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path =
+                    'seed/expert-portraits/f3f7685df4a9d41458c4e1aac7d34397e6ba4bb301d6d63a6527c02968caeb9b.jpg')
+WHERE email = 'profile120@example.com';
 
 
 -- 기존 Supabase 커뮤니티 사진의 서비스별 작업 사례. 파일 소유자는 해당 고수입니다.
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='한결이사'),'seed/expert-work/16de8671c1456f24e95274b607c9bbbe-101-0.jpg','promo-moving-1.jpg','image/jpeg',194916,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='한결이사')),(SELECT id FROM file WHERE storage_path='seed/expert-work/16de8671c1456f24e95274b607c9bbbe-101-0.jpg'),'포장이사 작업 사례',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='한결이사'),'seed/expert-work/008a9a87a2c15102ef303eb2c31bf770-101-1.jpg','promo-moving-2.jpg','image/jpeg',183928,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='한결이사')),(SELECT id FROM file WHERE storage_path='seed/expert-work/008a9a87a2c15102ef303eb2c31bf770-101-1.jpg'),'이삿짐 운반 작업 사례',1);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='반짝홈케어'),'seed/expert-work/bfd792b1d7fa53d5c2190c964aa29798-102-0.jpg','promo-clean-1.jpg','image/jpeg',142658,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='반짝홈케어')),(SELECT id FROM file WHERE storage_path='seed/expert-work/bfd792b1d7fa53d5c2190c964aa29798-102-0.jpg'),'입주 청소 작업 사례',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='반짝홈케어'),'seed/expert-work/ac44f8883c34a4deae39fc8b6cb82da0-102-1.jpg','promo-clean-2.jpg','image/jpeg',138881,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='반짝홈케어')),(SELECT id FROM file WHERE storage_path='seed/expert-work/ac44f8883c34a4deae39fc8b6cb82da0-102-1.jpg'),'청소 마무리 작업 사례',1);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='윤선생 영어'),'seed/expert-work/216cbc29b8a476ed0a26d81d837f46df-103-0.jpg','promo-english-1.jpg','image/jpeg',192334,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='윤선생 영어')),(SELECT id FROM file WHERE storage_path='seed/expert-work/216cbc29b8a476ed0a26d81d837f46df-103-0.jpg'),'영어 수업 진행 사례',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='코드메이트'),'seed/expert-work/f6d0aa6e187ba38f665fa545f92fa073-105-0.jpg','promo-dev-1.jpg','image/jpeg',139255,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='코드메이트')),(SELECT id FROM file WHERE storage_path='seed/expert-work/f6d0aa6e187ba38f665fa545f92fa073-105-0.jpg'),'웹 개발 작업 사례',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='바른설비'),'seed/expert-work/40c7ffe8fa9ddd4c1bfe38372c9648f7-106-0.jpg','promo-boiler-1.jpg','image/jpeg',178861,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='바른설비')),(SELECT id FROM file WHERE storage_path='seed/expert-work/40c7ffe8fa9ddd4c1bfe38372c9648f7-106-0.jpg'),'보일러 설비 작업 사례',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='온집 인테리어'),'seed/expert-work/3d3327ec26e5d74025e457aeca358912-107-0.jpg','promo-interior-1.jpg','image/jpeg',209409,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='온집 인테리어')),(SELECT id FROM file WHERE storage_path='seed/expert-work/3d3327ec26e5d74025e457aeca358912-107-0.jpg'),'부분 인테리어 작업 사례',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='온집 인테리어'),'seed/expert-work/fe32925474575a143b11465fc473b193-107-1.jpg','promo-interior-2.jpg','image/jpeg',126840,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='온집 인테리어')),(SELECT id FROM file WHERE storage_path='seed/expert-work/fe32925474575a143b11465fc473b193-107-1.jpg'),'실내 시공 작업 사례',1);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='담다 스냅'),'seed/expert-work/e1b4e7d25f66716ef603bffdce076b86-108-0.jpg','promo-snap-1.jpg','image/jpeg',94193,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='담다 스냅')),(SELECT id FROM file WHERE storage_path='seed/expert-work/e1b4e7d25f66716ef603bffdce076b86-108-0.jpg'),'스냅 촬영 작업 사례',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='담다 스냅'),'seed/expert-work/e5d6e1eaa9c945df8921783233acafee-108-1.jpg','promo-snap-2.jpg','image/jpeg',89410,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='담다 스냅')),(SELECT id FROM file WHERE storage_path='seed/expert-work/e5d6e1eaa9c945df8921783233acafee-108-1.jpg'),'인물 촬영 작업 사례',1);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='정리하는 하루'),'seed/expert-work/692893d76be445e26009371fd2909ae9-109-0.jpg','promo-aircon-1.jpg','image/jpeg',175712,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='정리하는 하루')),(SELECT id FROM file WHERE storage_path='seed/expert-work/692893d76be445e26009371fd2909ae9-109-0.jpg'),'에어컨 청소 작업 사례',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='해운대 이사짐센터'),'seed/expert-work/16de8671c1456f24e95274b607c9bbbe-112-0.jpg','promo-moving-1.jpg','image/jpeg',194916,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='해운대 이사짐센터')),(SELECT id FROM file WHERE storage_path='seed/expert-work/16de8671c1456f24e95274b607c9bbbe-112-0.jpg'),'포장이사 작업 사례',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='해운대 이사짐센터'),'seed/expert-work/008a9a87a2c15102ef303eb2c31bf770-112-1.jpg','promo-moving-2.jpg','image/jpeg',183928,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='해운대 이사짐센터')),(SELECT id FROM file WHERE storage_path='seed/expert-work/008a9a87a2c15102ef303eb2c31bf770-112-1.jpg'),'이삿짐 운반 작업 사례',1);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='맑은창 줄눈'),'seed/expert-work/3d3327ec26e5d74025e457aeca358912-118-0.jpg','promo-interior-1.jpg','image/jpeg',209409,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='맑은창 줄눈')),(SELECT id FROM file WHERE storage_path='seed/expert-work/3d3327ec26e5d74025e457aeca358912-118-0.jpg'),'부분 인테리어 작업 사례',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE nickname='맑은창 줄눈'),'seed/expert-work/fe32925474575a143b11465fc473b193-118-1.jpg','promo-interior-2.jpg','image/jpeg',126840,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE nickname='맑은창 줄눈')),(SELECT id FROM file WHERE storage_path='seed/expert-work/fe32925474575a143b11465fc473b193-118-1.jpg'),'실내 시공 작업 사례',1);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '한결이사'), 'seed/expert-work/16de8671c1456f24e95274b607c9bbbe-101-0.jpg',
+        'promo-moving-1.jpg', 'image/jpeg', 194916, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '한결이사')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/16de8671c1456f24e95274b607c9bbbe-101-0.jpg'),
+        '포장이사 작업 사례', 0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '한결이사'), 'seed/expert-work/008a9a87a2c15102ef303eb2c31bf770-101-1.jpg',
+        'promo-moving-2.jpg', 'image/jpeg', 183928, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '한결이사')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/008a9a87a2c15102ef303eb2c31bf770-101-1.jpg'),
+        '이삿짐 운반 작업 사례', 1);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '반짝홈케어'), 'seed/expert-work/bfd792b1d7fa53d5c2190c964aa29798-102-0.jpg',
+        'promo-clean-1.jpg', 'image/jpeg', 142658, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '반짝홈케어')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/bfd792b1d7fa53d5c2190c964aa29798-102-0.jpg'),
+        '입주 청소 작업 사례', 0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '반짝홈케어'), 'seed/expert-work/ac44f8883c34a4deae39fc8b6cb82da0-102-1.jpg',
+        'promo-clean-2.jpg', 'image/jpeg', 138881, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '반짝홈케어')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/ac44f8883c34a4deae39fc8b6cb82da0-102-1.jpg'),
+        '청소 마무리 작업 사례', 1);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '윤선생 영어'),
+        'seed/expert-work/216cbc29b8a476ed0a26d81d837f46df-103-0.jpg', 'promo-english-1.jpg', 'image/jpeg', 192334,
+        'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '윤선생 영어')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/216cbc29b8a476ed0a26d81d837f46df-103-0.jpg'),
+        '영어 수업 진행 사례', 0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '코드메이트'), 'seed/expert-work/f6d0aa6e187ba38f665fa545f92fa073-105-0.jpg',
+        'promo-dev-1.jpg', 'image/jpeg', 139255, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '코드메이트')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/f6d0aa6e187ba38f665fa545f92fa073-105-0.jpg'),
+        '웹 개발 작업 사례', 0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '바른설비'), 'seed/expert-work/40c7ffe8fa9ddd4c1bfe38372c9648f7-106-0.jpg',
+        'promo-boiler-1.jpg', 'image/jpeg', 178861, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '바른설비')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/40c7ffe8fa9ddd4c1bfe38372c9648f7-106-0.jpg'),
+        '보일러 설비 작업 사례', 0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '온집 인테리어'),
+        'seed/expert-work/3d3327ec26e5d74025e457aeca358912-107-0.jpg', 'promo-interior-1.jpg', 'image/jpeg', 209409,
+        'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '온집 인테리어')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/3d3327ec26e5d74025e457aeca358912-107-0.jpg'),
+        '부분 인테리어 작업 사례', 0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '온집 인테리어'),
+        'seed/expert-work/fe32925474575a143b11465fc473b193-107-1.jpg', 'promo-interior-2.jpg', 'image/jpeg', 126840,
+        'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '온집 인테리어')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/fe32925474575a143b11465fc473b193-107-1.jpg'),
+        '실내 시공 작업 사례', 1);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '담다 스냅'), 'seed/expert-work/e1b4e7d25f66716ef603bffdce076b86-108-0.jpg',
+        'promo-snap-1.jpg', 'image/jpeg', 94193, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '담다 스냅')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/e1b4e7d25f66716ef603bffdce076b86-108-0.jpg'),
+        '스냅 촬영 작업 사례', 0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '담다 스냅'), 'seed/expert-work/e5d6e1eaa9c945df8921783233acafee-108-1.jpg',
+        'promo-snap-2.jpg', 'image/jpeg', 89410, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '담다 스냅')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/e5d6e1eaa9c945df8921783233acafee-108-1.jpg'),
+        '인물 촬영 작업 사례', 1);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '정리하는 하루'),
+        'seed/expert-work/692893d76be445e26009371fd2909ae9-109-0.jpg', 'promo-aircon-1.jpg', 'image/jpeg', 175712,
+        'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '정리하는 하루')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/692893d76be445e26009371fd2909ae9-109-0.jpg'),
+        '에어컨 청소 작업 사례', 0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '해운대 이사짐센터'),
+        'seed/expert-work/16de8671c1456f24e95274b607c9bbbe-112-0.jpg', 'promo-moving-1.jpg', 'image/jpeg', 194916,
+        'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '해운대 이사짐센터')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/16de8671c1456f24e95274b607c9bbbe-112-0.jpg'),
+        '포장이사 작업 사례', 0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '해운대 이사짐센터'),
+        'seed/expert-work/008a9a87a2c15102ef303eb2c31bf770-112-1.jpg', 'promo-moving-2.jpg', 'image/jpeg', 183928,
+        'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '해운대 이사짐센터')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/008a9a87a2c15102ef303eb2c31bf770-112-1.jpg'),
+        '이삿짐 운반 작업 사례', 1);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '맑은창 줄눈'),
+        'seed/expert-work/3d3327ec26e5d74025e457aeca358912-118-0.jpg', 'promo-interior-1.jpg', 'image/jpeg', 209409,
+        'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '맑은창 줄눈')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/3d3327ec26e5d74025e457aeca358912-118-0.jpg'),
+        '부분 인테리어 작업 사례', 0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE nickname = '맑은창 줄눈'),
+        'seed/expert-work/fe32925474575a143b11465fc473b193-118-1.jpg', 'promo-interior-2.jpg', 'image/jpeg', 126840,
+        'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE nickname = '맑은창 줄눈')),
+        (SELECT id FROM file WHERE storage_path = 'seed/expert-work/fe32925474575a143b11465fc473b193-118-1.jpg'),
+        '실내 시공 작업 사례', 1);
 
 
 -- #195 기존 테스트 고수의 사진 연결. 계정·프로필·게시글 ID와 기존 사진은 유지합니다.
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert1@example.com'),'seed/accounts/f6e5c71632281a5da3e28abd5163ac7fc5b2382390702d1a741501ae3a685ba2.jpg','expert-101.jpg','image/jpeg',151214,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/accounts/f6e5c71632281a5da3e28abd5163ac7fc5b2382390702d1a741501ae3a685ba2.jpg') WHERE id=(SELECT id FROM member WHERE email='expert1@example.com') AND image_id IS NULL;
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert1@example.com'),'seed/accounts/6663043958194795b3f3bf764c6c9c45bf96b7e7bf72ecc34466de5ad413c68a.jpg','promo-moving-1.jpg','image/jpeg',194916,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert1@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/6663043958194795b3f3bf764c6c9c45bf96b7e7bf72ecc34466de5ad413c68a.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/6663043958194795b3f3bf764c6c9c45bf96b7e7bf72ecc34466de5ad413c68a.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert1@example.com') AND p.second_category_id=101 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert1@example.com'),'seed/accounts/5bfdce0be94405bfdcfb40c459256aebccc84f9246bd46a179b0f2014748a17c.jpg','promo-moving-2.jpg','image/jpeg',183928,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert1@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/5bfdce0be94405bfdcfb40c459256aebccc84f9246bd46a179b0f2014748a17c.jpg'),'서비스 작업 사례 사진',1);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert2@example.com'),'seed/accounts/34aef27b58d794f83dad398391d039494aba403cacfe007bf7d915d8a91980ae.jpg','expert-105.jpg','image/jpeg',170844,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/accounts/34aef27b58d794f83dad398391d039494aba403cacfe007bf7d915d8a91980ae.jpg') WHERE id=(SELECT id FROM member WHERE email='expert2@example.com') AND image_id IS NULL;
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert2@example.com'),'seed/accounts/1a98131222651fa1a1069a3429e2db3b6daf4412dc16c4195999e12bf3cbb55d.jpg','promo-dev-1.jpg','image/jpeg',139255,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert2@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/1a98131222651fa1a1069a3429e2db3b6daf4412dc16c4195999e12bf3cbb55d.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/1a98131222651fa1a1069a3429e2db3b6daf4412dc16c4195999e12bf3cbb55d.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert2@example.com') AND p.second_category_id=139 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert11@example.com'),'seed/accounts/8d787add3b31b9da0c79f0db28fb5e38c88a44ceb09d1351c39b660b14367965.jpg','expert-101.jpg','image/jpeg',151214,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/accounts/8d787add3b31b9da0c79f0db28fb5e38c88a44ceb09d1351c39b660b14367965.jpg') WHERE id=(SELECT id FROM member WHERE email='expert11@example.com') AND image_id IS NULL;
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert11@example.com'),'seed/accounts/1bc318f083d1247f4c121e206ee55233a9de868965fb49890f7822e34969cef5.jpg','promo-moving-1.jpg','image/jpeg',194916,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert11@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/1bc318f083d1247f4c121e206ee55233a9de868965fb49890f7822e34969cef5.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/1bc318f083d1247f4c121e206ee55233a9de868965fb49890f7822e34969cef5.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert11@example.com') AND p.second_category_id=101 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert11@example.com'),'seed/accounts/529ab8f7912c5047b2b1801f0df11720249c9c99936c0d605be8fc2421c67c8e.jpg','promo-moving-2.jpg','image/jpeg',183928,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert11@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/529ab8f7912c5047b2b1801f0df11720249c9c99936c0d605be8fc2421c67c8e.jpg'),'서비스 작업 사례 사진',1);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert11@example.com'),'seed/accounts/4ea93c54a0470a6d410969ed4e282b1857b8d5ee39b1bc39497aed69c3b255ef.jpg','promo-clean-1.jpg','image/jpeg',142658,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/4ea93c54a0470a6d410969ed4e282b1857b8d5ee39b1bc39497aed69c3b255ef.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert11@example.com') AND p.second_category_id=102 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert12@example.com'),'seed/accounts/e70b2c90bde5da48c107166fcc43f45c89d901a0752323cd1d078d48473b8a8c.jpg','expert-105.jpg','image/jpeg',170844,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/accounts/e70b2c90bde5da48c107166fcc43f45c89d901a0752323cd1d078d48473b8a8c.jpg') WHERE id=(SELECT id FROM member WHERE email='expert12@example.com') AND image_id IS NULL;
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert12@example.com'),'seed/accounts/e80f5e65ee4dac108a994b09df8ef512c4a5fe4b84621f7310fa8c82cb67f77f.jpg','promo-dev-1.jpg','image/jpeg',139255,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert12@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/e80f5e65ee4dac108a994b09df8ef512c4a5fe4b84621f7310fa8c82cb67f77f.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert12@example.com'),'seed/post-previews/web-workspace-pexels-38164328.jpg','web-workspace.jpg','image/jpeg',104019,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/post-previews/web-workspace-pexels-38164328.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert12@example.com') AND p.second_category_id=139 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert21@example.com'),'seed/accounts/891055d72814f52b305ef68907ead3ecaaa610c6470026fce15ceaf3f3f9a355.jpg','expert-101.jpg','image/jpeg',151214,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/accounts/891055d72814f52b305ef68907ead3ecaaa610c6470026fce15ceaf3f3f9a355.jpg') WHERE id=(SELECT id FROM member WHERE email='expert21@example.com') AND image_id IS NULL;
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert21@example.com'),'seed/accounts/b8ec0bb7ca58c6147dc7a508c238ad9fc6511a3402173a807213ad52b40b11f5.jpg','promo-moving-1.jpg','image/jpeg',194916,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert21@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/b8ec0bb7ca58c6147dc7a508c238ad9fc6511a3402173a807213ad52b40b11f5.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/b8ec0bb7ca58c6147dc7a508c238ad9fc6511a3402173a807213ad52b40b11f5.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert21@example.com') AND p.second_category_id=101 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert21@example.com'),'seed/accounts/18b6e3471ef9f9bd83fed561c1df7f84c6fb48c420d7806f2f87f2ea96197bed.jpg','promo-moving-2.jpg','image/jpeg',183928,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert21@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/18b6e3471ef9f9bd83fed561c1df7f84c6fb48c420d7806f2f87f2ea96197bed.jpg'),'서비스 작업 사례 사진',1);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert21@example.com'),'seed/post-previews/d66799a8c5f442fc5050a24e44ffd58014e11221e5ca7449ea8e6fcddf086b9e.jpg','post-preview.jpg','image/jpeg',138881,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/post-previews/d66799a8c5f442fc5050a24e44ffd58014e11221e5ca7449ea8e6fcddf086b9e.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert21@example.com') AND p.second_category_id=102 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert22@example.com'),'seed/accounts/2319b7f87ff6decd4cb119215d4c8d2724f1328d2be11374aafbd23461e3197e.jpg','expert-105.jpg','image/jpeg',170844,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/accounts/2319b7f87ff6decd4cb119215d4c8d2724f1328d2be11374aafbd23461e3197e.jpg') WHERE id=(SELECT id FROM member WHERE email='expert22@example.com') AND image_id IS NULL;
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert22@example.com'),'seed/accounts/fc86f1b5a60b0d8faa97de25dfc583048d6de10815722587cb2961fe69ed81e6.jpg','promo-dev-1.jpg','image/jpeg',139255,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert22@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/fc86f1b5a60b0d8faa97de25dfc583048d6de10815722587cb2961fe69ed81e6.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert31@example.com'),'seed/accounts/6af64aa4c438ee2b70dfa9c05f29c5bfabb0d15fcab9cddd1aab3aa5355d59b7.jpg','expert-101.jpg','image/jpeg',151214,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/accounts/6af64aa4c438ee2b70dfa9c05f29c5bfabb0d15fcab9cddd1aab3aa5355d59b7.jpg') WHERE id=(SELECT id FROM member WHERE email='expert31@example.com') AND image_id IS NULL;
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert31@example.com'),'seed/accounts/fcceae98a52d7b28ed6e7b6258a85e9144977ac247c91faaae851b4196414b90.jpg','promo-moving-1.jpg','image/jpeg',194916,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert31@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/fcceae98a52d7b28ed6e7b6258a85e9144977ac247c91faaae851b4196414b90.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/fcceae98a52d7b28ed6e7b6258a85e9144977ac247c91faaae851b4196414b90.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert31@example.com') AND p.second_category_id=101 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert31@example.com'),'seed/accounts/02acf0e4c33e04bf6be318444416c6b9b0c7753a0e0b0614430731eeca43ba78.jpg','promo-moving-2.jpg','image/jpeg',183928,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert31@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/02acf0e4c33e04bf6be318444416c6b9b0c7753a0e0b0614430731eeca43ba78.jpg'),'서비스 작업 사례 사진',1);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert31@example.com'),'seed/post-previews/hood-filter-3d36b0d6c61a06b8.jpg','hood-filter.jpg','image/jpeg',373999,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/post-previews/hood-filter-3d36b0d6c61a06b8.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert31@example.com') AND p.title='주방 후드 필터 세척 전 확인할 것' AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert32@example.com'),'seed/accounts/a0ec1c0db10d72d255d24964764910c4b87dd46f87cbd3c39aec31fa6e8dd7ed.jpg','expert-105.jpg','image/jpeg',170844,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/accounts/a0ec1c0db10d72d255d24964764910c4b87dd46f87cbd3c39aec31fa6e8dd7ed.jpg') WHERE id=(SELECT id FROM member WHERE email='expert32@example.com') AND image_id IS NULL;
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert32@example.com'),'seed/accounts/8b86c275ce6b7ad07e155462ffa33b672553fb4dad2910535f0349c61fb3abdd.jpg','promo-dev-1.jpg','image/jpeg',139255,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert32@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/8b86c275ce6b7ad07e155462ffa33b672553fb4dad2910535f0349c61fb3abdd.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert41@example.com'),'seed/accounts/6784d3b303865177f03afd7a1b3a7bc461c568cf927df6a5d2d196c9472d15ad.jpg','expert-101.jpg','image/jpeg',151214,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/accounts/6784d3b303865177f03afd7a1b3a7bc461c568cf927df6a5d2d196c9472d15ad.jpg') WHERE id=(SELECT id FROM member WHERE email='expert41@example.com') AND image_id IS NULL;
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert41@example.com'),'seed/accounts/e0b9a48ba99ea0fdab51f073fe5c17b1aadda6058dc873b83846689fdbf16342.jpg','promo-moving-1.jpg','image/jpeg',194916,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert41@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/e0b9a48ba99ea0fdab51f073fe5c17b1aadda6058dc873b83846689fdbf16342.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/e0b9a48ba99ea0fdab51f073fe5c17b1aadda6058dc873b83846689fdbf16342.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert41@example.com') AND p.second_category_id=101 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert41@example.com'),'seed/accounts/3e75e6866e2a65ed8ac86e8271015ab80a107261f21618d78db349687aa11730.jpg','promo-moving-2.jpg','image/jpeg',183928,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert41@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/3e75e6866e2a65ed8ac86e8271015ab80a107261f21618d78db349687aa11730.jpg'),'서비스 작업 사례 사진',1);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert41@example.com'),'seed/post-previews/window-frame-pexels-18509790.jpg','window-frame.jpg','image/jpeg',81487,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/post-previews/window-frame-pexels-18509790.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert41@example.com') AND p.second_category_id=102 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert42@example.com'),'seed/accounts/fd31c6d9904f7977af33c34b65ad09e898c64894178dc942773ae4d38f649594.jpg','expert-105.jpg','image/jpeg',170844,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/accounts/fd31c6d9904f7977af33c34b65ad09e898c64894178dc942773ae4d38f649594.jpg') WHERE id=(SELECT id FROM member WHERE email='expert42@example.com') AND image_id IS NULL;
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert42@example.com'),'seed/accounts/d2398d0ca1f40c7d45fe00ccea3cc3b86e8a6ea76f1982292f94fe0d55a2c1d8.jpg','promo-dev-1.jpg','image/jpeg',139255,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert42@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/d2398d0ca1f40c7d45fe00ccea3cc3b86e8a6ea76f1982292f94fe0d55a2c1d8.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert51@example.com'),'seed/accounts/13558b062e6eda5178b4f995bad393f52f1f1cc1b78c5fb4f0b1098130baae52.jpg','expert-101.jpg','image/jpeg',151214,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/accounts/13558b062e6eda5178b4f995bad393f52f1f1cc1b78c5fb4f0b1098130baae52.jpg') WHERE id=(SELECT id FROM member WHERE email='expert51@example.com') AND image_id IS NULL;
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert51@example.com'),'seed/accounts/87c049648877fddc62072f492135a948b34154947fba9cdb061c046f5e0b2562.jpg','promo-moving-1.jpg','image/jpeg',194916,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert51@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/87c049648877fddc62072f492135a948b34154947fba9cdb061c046f5e0b2562.jpg'),'서비스 작업 사례 사진',0);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/accounts/87c049648877fddc62072f492135a948b34154947fba9cdb061c046f5e0b2562.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert51@example.com') AND p.second_category_id=101 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert51@example.com'),'seed/accounts/ea0c2a75636e77d9f034aaa6028e6cef5b658f7e8f19fe93ce5e86cc11bf2b6a.jpg','promo-moving-2.jpg','image/jpeg',183928,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert51@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/ea0c2a75636e77d9f034aaa6028e6cef5b658f7e8f19fe93ce5e86cc11bf2b6a.jpg'),'서비스 작업 사례 사진',1);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert51@example.com'),'seed/post-previews/c989c59da9f6b43d3388ae983b4179e61351280272ed803e0bba226702c7a4d3.jpg','post-preview.jpg','image/jpeg',209409,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO post_images (post_id,file_id,sort_order) SELECT p.id,(SELECT id FROM file WHERE storage_path='seed/post-previews/c989c59da9f6b43d3388ae983b4179e61351280272ed803e0bba226702c7a4d3.jpg'),0 FROM post p WHERE p.member_id=(SELECT id FROM member WHERE email='expert51@example.com') AND p.second_category_id=102 AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id=p.id);
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert52@example.com'),'seed/accounts/57834dd3f824816583300b0d7b594d79cf4de16512d96d99cbb93fa26ee4c820.jpg','expert-105.jpg','image/jpeg',170844,'PUBLIC',CURRENT_TIMESTAMP);
-UPDATE member SET image_id=(SELECT id FROM file WHERE storage_path='seed/accounts/57834dd3f824816583300b0d7b594d79cf4de16512d96d99cbb93fa26ee4c820.jpg') WHERE id=(SELECT id FROM member WHERE email='expert52@example.com') AND image_id IS NULL;
-INSERT INTO file (uploader_id,storage_path,original_name,content_type,size,visibility,created_at) VALUES ((SELECT id FROM member WHERE email='expert52@example.com'),'seed/accounts/c91458d9ec331ccac201adcde487fff49023e92275c39ae7d9d23bae11f2fd19.jpg','promo-dev-1.jpg','image/jpeg',139255,'PUBLIC',CURRENT_TIMESTAMP);
-INSERT INTO work_image (expert_profile_id,file_id,description,display_order) VALUES ((SELECT id FROM expert_profile WHERE member_id=(SELECT id FROM member WHERE email='expert52@example.com')),(SELECT id FROM file WHERE storage_path='seed/accounts/c91458d9ec331ccac201adcde487fff49023e92275c39ae7d9d23bae11f2fd19.jpg'),'서비스 작업 사례 사진',0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert1@example.com'),
+        'seed/accounts/f6e5c71632281a5da3e28abd5163ac7fc5b2382390702d1a741501ae3a685ba2.jpg', 'expert-101.jpg',
+        'image/jpeg', 151214, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path = 'seed/accounts/f6e5c71632281a5da3e28abd5163ac7fc5b2382390702d1a741501ae3a685ba2.jpg')
+WHERE id = (SELECT id FROM member WHERE email = 'expert1@example.com')
+  AND image_id IS NULL;
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert1@example.com'),
+        'seed/accounts/6663043958194795b3f3bf764c6c9c45bf96b7e7bf72ecc34466de5ad413c68a.jpg', 'promo-moving-1.jpg',
+        'image/jpeg', 194916, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert1@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/6663043958194795b3f3bf764c6c9c45bf96b7e7bf72ecc34466de5ad413c68a.jpg'),
+        '서비스 작업 사례 사진', 0);
+INSERT INTO post_images (post_id, file_id, sort_order)
+SELECT p.id,
+       (SELECT id
+        FROM file
+        WHERE storage_path = 'seed/accounts/6663043958194795b3f3bf764c6c9c45bf96b7e7bf72ecc34466de5ad413c68a.jpg'),
+       0
+FROM post p
+WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert1@example.com')
+  AND p.second_category_id = 101
+  AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert1@example.com'),
+        'seed/accounts/5bfdce0be94405bfdcfb40c459256aebccc84f9246bd46a179b0f2014748a17c.jpg', 'promo-moving-2.jpg',
+        'image/jpeg', 183928, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert1@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/5bfdce0be94405bfdcfb40c459256aebccc84f9246bd46a179b0f2014748a17c.jpg'),
+        '서비스 작업 사례 사진', 1);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert2@example.com'),
+        'seed/accounts/34aef27b58d794f83dad398391d039494aba403cacfe007bf7d915d8a91980ae.jpg', 'expert-105.jpg',
+        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path = 'seed/accounts/34aef27b58d794f83dad398391d039494aba403cacfe007bf7d915d8a91980ae.jpg')
+WHERE id = (SELECT id FROM member WHERE email = 'expert2@example.com')
+  AND image_id IS NULL;
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert2@example.com'),
+        'seed/accounts/1a98131222651fa1a1069a3429e2db3b6daf4412dc16c4195999e12bf3cbb55d.jpg', 'promo-dev-1.jpg',
+        'image/jpeg', 139255, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert2@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/1a98131222651fa1a1069a3429e2db3b6daf4412dc16c4195999e12bf3cbb55d.jpg'),
+        '서비스 작업 사례 사진', 0);
+INSERT INTO post_images (post_id, file_id, sort_order)
+SELECT p.id,
+       (SELECT id
+        FROM file
+        WHERE storage_path = 'seed/accounts/1a98131222651fa1a1069a3429e2db3b6daf4412dc16c4195999e12bf3cbb55d.jpg'),
+       0
+FROM post p
+WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert2@example.com')
+  AND p.second_category_id = 139
+  AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert11@example.com'),
+        'seed/accounts/8d787add3b31b9da0c79f0db28fb5e38c88a44ceb09d1351c39b660b14367965.jpg', 'expert-101.jpg',
+        'image/jpeg', 151214, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path = 'seed/accounts/8d787add3b31b9da0c79f0db28fb5e38c88a44ceb09d1351c39b660b14367965.jpg')
+WHERE id = (SELECT id FROM member WHERE email = 'expert11@example.com')
+  AND image_id IS NULL;
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert11@example.com'),
+        'seed/accounts/1bc318f083d1247f4c121e206ee55233a9de868965fb49890f7822e34969cef5.jpg', 'promo-moving-1.jpg',
+        'image/jpeg', 194916, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert11@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/1bc318f083d1247f4c121e206ee55233a9de868965fb49890f7822e34969cef5.jpg'),
+        '서비스 작업 사례 사진', 0);
+INSERT INTO post_images (post_id, file_id, sort_order)
+SELECT p.id,
+       (SELECT id
+        FROM file
+        WHERE storage_path = 'seed/accounts/1bc318f083d1247f4c121e206ee55233a9de868965fb49890f7822e34969cef5.jpg'),
+       0
+FROM post p
+WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert11@example.com')
+  AND p.second_category_id = 101
+  AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert11@example.com'),
+        'seed/accounts/529ab8f7912c5047b2b1801f0df11720249c9c99936c0d605be8fc2421c67c8e.jpg', 'promo-moving-2.jpg',
+        'image/jpeg', 183928, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert11@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/529ab8f7912c5047b2b1801f0df11720249c9c99936c0d605be8fc2421c67c8e.jpg'),
+        '서비스 작업 사례 사진', 1);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert11@example.com'),
+        'seed/accounts/4ea93c54a0470a6d410969ed4e282b1857b8d5ee39b1bc39497aed69c3b255ef.jpg', 'promo-clean-1.jpg',
+        'image/jpeg', 142658, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO post_images (post_id, file_id, sort_order)
+SELECT p.id,
+       (SELECT id
+        FROM file
+        WHERE storage_path = 'seed/accounts/4ea93c54a0470a6d410969ed4e282b1857b8d5ee39b1bc39497aed69c3b255ef.jpg'),
+       0
+FROM post p
+WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert11@example.com')
+  AND p.second_category_id = 102
+  AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert12@example.com'),
+        'seed/accounts/e70b2c90bde5da48c107166fcc43f45c89d901a0752323cd1d078d48473b8a8c.jpg', 'expert-105.jpg',
+        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path = 'seed/accounts/e70b2c90bde5da48c107166fcc43f45c89d901a0752323cd1d078d48473b8a8c.jpg')
+WHERE id = (SELECT id FROM member WHERE email = 'expert12@example.com')
+  AND image_id IS NULL;
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert12@example.com'),
+        'seed/accounts/e80f5e65ee4dac108a994b09df8ef512c4a5fe4b84621f7310fa8c82cb67f77f.jpg', 'promo-dev-1.jpg',
+        'image/jpeg', 139255, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert12@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/e80f5e65ee4dac108a994b09df8ef512c4a5fe4b84621f7310fa8c82cb67f77f.jpg'),
+        '서비스 작업 사례 사진', 0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert12@example.com'),
+        'seed/post-previews/web-workspace-pexels-38164328.jpg', 'web-workspace.jpg', 'image/jpeg', 104019, 'PUBLIC',
+        CURRENT_TIMESTAMP);
+INSERT INTO post_images (post_id, file_id, sort_order)
+SELECT p.id, (SELECT id FROM file WHERE storage_path = 'seed/post-previews/web-workspace-pexels-38164328.jpg'), 0
+FROM post p
+WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert12@example.com')
+  AND p.second_category_id = 139
+  AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert21@example.com'),
+        'seed/accounts/891055d72814f52b305ef68907ead3ecaaa610c6470026fce15ceaf3f3f9a355.jpg', 'expert-101.jpg',
+        'image/jpeg', 151214, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path = 'seed/accounts/891055d72814f52b305ef68907ead3ecaaa610c6470026fce15ceaf3f3f9a355.jpg')
+WHERE id = (SELECT id FROM member WHERE email = 'expert21@example.com')
+  AND image_id IS NULL;
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert21@example.com'),
+        'seed/accounts/b8ec0bb7ca58c6147dc7a508c238ad9fc6511a3402173a807213ad52b40b11f5.jpg', 'promo-moving-1.jpg',
+        'image/jpeg', 194916, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert21@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/b8ec0bb7ca58c6147dc7a508c238ad9fc6511a3402173a807213ad52b40b11f5.jpg'),
+        '서비스 작업 사례 사진', 0);
+INSERT INTO post_images (post_id, file_id, sort_order)
+SELECT p.id,
+       (SELECT id
+        FROM file
+        WHERE storage_path = 'seed/accounts/b8ec0bb7ca58c6147dc7a508c238ad9fc6511a3402173a807213ad52b40b11f5.jpg'),
+       0
+FROM post p
+WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert21@example.com')
+  AND p.second_category_id = 101
+  AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert21@example.com'),
+        'seed/accounts/18b6e3471ef9f9bd83fed561c1df7f84c6fb48c420d7806f2f87f2ea96197bed.jpg', 'promo-moving-2.jpg',
+        'image/jpeg', 183928, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert21@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/18b6e3471ef9f9bd83fed561c1df7f84c6fb48c420d7806f2f87f2ea96197bed.jpg'),
+        '서비스 작업 사례 사진', 1);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert21@example.com'),
+        'seed/post-previews/d66799a8c5f442fc5050a24e44ffd58014e11221e5ca7449ea8e6fcddf086b9e.jpg', 'post-preview.jpg',
+        'image/jpeg', 138881, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO post_images (post_id, file_id, sort_order)
+SELECT p.id,
+       (SELECT id
+        FROM file
+        WHERE storage_path = 'seed/post-previews/d66799a8c5f442fc5050a24e44ffd58014e11221e5ca7449ea8e6fcddf086b9e.jpg'),
+       0
+FROM post p
+WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert21@example.com')
+  AND p.second_category_id = 102
+  AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert22@example.com'),
+        'seed/accounts/2319b7f87ff6decd4cb119215d4c8d2724f1328d2be11374aafbd23461e3197e.jpg', 'expert-105.jpg',
+        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path = 'seed/accounts/2319b7f87ff6decd4cb119215d4c8d2724f1328d2be11374aafbd23461e3197e.jpg')
+WHERE id = (SELECT id FROM member WHERE email = 'expert22@example.com')
+  AND image_id IS NULL;
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert22@example.com'),
+        'seed/accounts/fc86f1b5a60b0d8faa97de25dfc583048d6de10815722587cb2961fe69ed81e6.jpg', 'promo-dev-1.jpg',
+        'image/jpeg', 139255, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert22@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/fc86f1b5a60b0d8faa97de25dfc583048d6de10815722587cb2961fe69ed81e6.jpg'),
+        '서비스 작업 사례 사진', 0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert31@example.com'),
+        'seed/accounts/6af64aa4c438ee2b70dfa9c05f29c5bfabb0d15fcab9cddd1aab3aa5355d59b7.jpg', 'expert-101.jpg',
+        'image/jpeg', 151214, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path = 'seed/accounts/6af64aa4c438ee2b70dfa9c05f29c5bfabb0d15fcab9cddd1aab3aa5355d59b7.jpg')
+WHERE id = (SELECT id FROM member WHERE email = 'expert31@example.com')
+  AND image_id IS NULL;
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert31@example.com'),
+        'seed/accounts/fcceae98a52d7b28ed6e7b6258a85e9144977ac247c91faaae851b4196414b90.jpg', 'promo-moving-1.jpg',
+        'image/jpeg', 194916, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert31@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/fcceae98a52d7b28ed6e7b6258a85e9144977ac247c91faaae851b4196414b90.jpg'),
+        '서비스 작업 사례 사진', 0);
+INSERT INTO post_images (post_id, file_id, sort_order)
+SELECT p.id,
+       (SELECT id
+        FROM file
+        WHERE storage_path = 'seed/accounts/fcceae98a52d7b28ed6e7b6258a85e9144977ac247c91faaae851b4196414b90.jpg'),
+       0
+FROM post p
+WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert31@example.com')
+  AND p.second_category_id = 101
+  AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert31@example.com'),
+        'seed/accounts/02acf0e4c33e04bf6be318444416c6b9b0c7753a0e0b0614430731eeca43ba78.jpg', 'promo-moving-2.jpg',
+        'image/jpeg', 183928, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert31@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/02acf0e4c33e04bf6be318444416c6b9b0c7753a0e0b0614430731eeca43ba78.jpg'),
+        '서비스 작업 사례 사진', 1);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert31@example.com'),
+        'seed/post-previews/hood-filter-3d36b0d6c61a06b8.jpg', 'hood-filter.jpg', 'image/jpeg', 373999, 'PUBLIC',
+        CURRENT_TIMESTAMP);
+INSERT INTO post_images (post_id, file_id, sort_order)
+SELECT p.id, (SELECT id FROM file WHERE storage_path = 'seed/post-previews/hood-filter-3d36b0d6c61a06b8.jpg'), 0
+FROM post p
+WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert31@example.com')
+  AND p.title = '주방 후드 필터 세척 전 확인할 것'
+  AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert32@example.com'),
+        'seed/accounts/a0ec1c0db10d72d255d24964764910c4b87dd46f87cbd3c39aec31fa6e8dd7ed.jpg', 'expert-105.jpg',
+        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path = 'seed/accounts/a0ec1c0db10d72d255d24964764910c4b87dd46f87cbd3c39aec31fa6e8dd7ed.jpg')
+WHERE id = (SELECT id FROM member WHERE email = 'expert32@example.com')
+  AND image_id IS NULL;
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert32@example.com'),
+        'seed/accounts/8b86c275ce6b7ad07e155462ffa33b672553fb4dad2910535f0349c61fb3abdd.jpg', 'promo-dev-1.jpg',
+        'image/jpeg', 139255, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert32@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/8b86c275ce6b7ad07e155462ffa33b672553fb4dad2910535f0349c61fb3abdd.jpg'),
+        '서비스 작업 사례 사진', 0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert41@example.com'),
+        'seed/accounts/6784d3b303865177f03afd7a1b3a7bc461c568cf927df6a5d2d196c9472d15ad.jpg', 'expert-101.jpg',
+        'image/jpeg', 151214, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path = 'seed/accounts/6784d3b303865177f03afd7a1b3a7bc461c568cf927df6a5d2d196c9472d15ad.jpg')
+WHERE id = (SELECT id FROM member WHERE email = 'expert41@example.com')
+  AND image_id IS NULL;
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert41@example.com'),
+        'seed/accounts/e0b9a48ba99ea0fdab51f073fe5c17b1aadda6058dc873b83846689fdbf16342.jpg', 'promo-moving-1.jpg',
+        'image/jpeg', 194916, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert41@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/e0b9a48ba99ea0fdab51f073fe5c17b1aadda6058dc873b83846689fdbf16342.jpg'),
+        '서비스 작업 사례 사진', 0);
+INSERT INTO post_images (post_id, file_id, sort_order)
+SELECT p.id,
+       (SELECT id
+        FROM file
+        WHERE storage_path = 'seed/accounts/e0b9a48ba99ea0fdab51f073fe5c17b1aadda6058dc873b83846689fdbf16342.jpg'),
+       0
+FROM post p
+WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert41@example.com')
+  AND p.second_category_id = 101
+  AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert41@example.com'),
+        'seed/accounts/3e75e6866e2a65ed8ac86e8271015ab80a107261f21618d78db349687aa11730.jpg', 'promo-moving-2.jpg',
+        'image/jpeg', 183928, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert41@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/3e75e6866e2a65ed8ac86e8271015ab80a107261f21618d78db349687aa11730.jpg'),
+        '서비스 작업 사례 사진', 1);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert41@example.com'),
+        'seed/post-previews/window-frame-pexels-18509790.jpg', 'window-frame.jpg', 'image/jpeg', 81487, 'PUBLIC',
+        CURRENT_TIMESTAMP);
+INSERT INTO post_images (post_id, file_id, sort_order)
+SELECT p.id, (SELECT id FROM file WHERE storage_path = 'seed/post-previews/window-frame-pexels-18509790.jpg'), 0
+FROM post p
+WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert41@example.com')
+  AND p.second_category_id = 102
+  AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert42@example.com'),
+        'seed/accounts/fd31c6d9904f7977af33c34b65ad09e898c64894178dc942773ae4d38f649594.jpg', 'expert-105.jpg',
+        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path = 'seed/accounts/fd31c6d9904f7977af33c34b65ad09e898c64894178dc942773ae4d38f649594.jpg')
+WHERE id = (SELECT id FROM member WHERE email = 'expert42@example.com')
+  AND image_id IS NULL;
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert42@example.com'),
+        'seed/accounts/d2398d0ca1f40c7d45fe00ccea3cc3b86e8a6ea76f1982292f94fe0d55a2c1d8.jpg', 'promo-dev-1.jpg',
+        'image/jpeg', 139255, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert42@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/d2398d0ca1f40c7d45fe00ccea3cc3b86e8a6ea76f1982292f94fe0d55a2c1d8.jpg'),
+        '서비스 작업 사례 사진', 0);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert51@example.com'),
+        'seed/accounts/13558b062e6eda5178b4f995bad393f52f1f1cc1b78c5fb4f0b1098130baae52.jpg', 'expert-101.jpg',
+        'image/jpeg', 151214, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path = 'seed/accounts/13558b062e6eda5178b4f995bad393f52f1f1cc1b78c5fb4f0b1098130baae52.jpg')
+WHERE id = (SELECT id FROM member WHERE email = 'expert51@example.com')
+  AND image_id IS NULL;
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert51@example.com'),
+        'seed/accounts/87c049648877fddc62072f492135a948b34154947fba9cdb061c046f5e0b2562.jpg', 'promo-moving-1.jpg',
+        'image/jpeg', 194916, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert51@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/87c049648877fddc62072f492135a948b34154947fba9cdb061c046f5e0b2562.jpg'),
+        '서비스 작업 사례 사진', 0);
+INSERT INTO post_images (post_id, file_id, sort_order)
+SELECT p.id,
+       (SELECT id
+        FROM file
+        WHERE storage_path = 'seed/accounts/87c049648877fddc62072f492135a948b34154947fba9cdb061c046f5e0b2562.jpg'),
+       0
+FROM post p
+WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert51@example.com')
+  AND p.second_category_id = 101
+  AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert51@example.com'),
+        'seed/accounts/ea0c2a75636e77d9f034aaa6028e6cef5b658f7e8f19fe93ce5e86cc11bf2b6a.jpg', 'promo-moving-2.jpg',
+        'image/jpeg', 183928, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert51@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/ea0c2a75636e77d9f034aaa6028e6cef5b658f7e8f19fe93ce5e86cc11bf2b6a.jpg'),
+        '서비스 작업 사례 사진', 1);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert51@example.com'),
+        'seed/post-previews/c989c59da9f6b43d3388ae983b4179e61351280272ed803e0bba226702c7a4d3.jpg', 'post-preview.jpg',
+        'image/jpeg', 209409, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO post_images (post_id, file_id, sort_order)
+SELECT p.id,
+       (SELECT id
+        FROM file
+        WHERE storage_path = 'seed/post-previews/c989c59da9f6b43d3388ae983b4179e61351280272ed803e0bba226702c7a4d3.jpg'),
+       0
+FROM post p
+WHERE p.member_id = (SELECT id FROM member WHERE email = 'expert51@example.com')
+  AND p.second_category_id = 102
+  AND NOT EXISTS (SELECT 1 FROM post_images pi WHERE pi.post_id = p.id);
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert52@example.com'),
+        'seed/accounts/57834dd3f824816583300b0d7b594d79cf4de16512d96d99cbb93fa26ee4c820.jpg', 'expert-105.jpg',
+        'image/jpeg', 170844, 'PUBLIC', CURRENT_TIMESTAMP);
+UPDATE member
+SET image_id=(SELECT id
+              FROM file
+              WHERE storage_path = 'seed/accounts/57834dd3f824816583300b0d7b594d79cf4de16512d96d99cbb93fa26ee4c820.jpg')
+WHERE id = (SELECT id FROM member WHERE email = 'expert52@example.com')
+  AND image_id IS NULL;
+INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
+VALUES ((SELECT id FROM member WHERE email = 'expert52@example.com'),
+        'seed/accounts/c91458d9ec331ccac201adcde487fff49023e92275c39ae7d9d23bae11f2fd19.jpg', 'promo-dev-1.jpg',
+        'image/jpeg', 139255, 'PUBLIC', CURRENT_TIMESTAMP);
+INSERT INTO work_image (expert_profile_id, file_id, description, display_order)
+VALUES ((SELECT id FROM expert_profile WHERE member_id = (SELECT id FROM member WHERE email = 'expert52@example.com')),
+        (SELECT id
+         FROM file
+         WHERE storage_path = 'seed/accounts/c91458d9ec331ccac201adcde487fff49023e92275c39ae7d9d23bae11f2fd19.jpg'),
+        '서비스 작업 사례 사진', 0);
