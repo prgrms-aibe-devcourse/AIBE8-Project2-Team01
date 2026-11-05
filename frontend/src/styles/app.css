@@ -2872,3 +2872,233 @@ main.page.admin {
 .avatar.is-face img { transform: scale(2); transform-origin: 50% 0; }
 
 .sent-stack .avatar + .avatar, .pq-stack .avatar + .avatar { margin-left: -8px; }
+
+/* 고수 홈에서 작업 소개를 쓰러 들어오면 작업 사진 칸을 강조한다 */
+.page .card.is-focus {
+  box-shadow: inset 0 0 0 2px var(--blue);
+  scroll-margin-top: calc(var(--header-h) + 16px);
+}
+
+/* 받은 요청서 상세: 요청 내용과 견적 입력을 나란히 두어 읽고 바로 쓴다 */
+.page .received-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.page .received-card {
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.page .req-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px;
+}
+
+/* 아래쪽 견적 보내기: 선 하나로 나누고 바탕을 한 단계 낮춰 입력 영역임을 보여 준다 */
+.page .quote-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 28px 28px;
+  border-top: 1px solid var(--ink-100);
+  background: var(--paper-soft);
+}
+
+.page .quote-form .input {
+  background: var(--surface);
+}
+
+@media (max-width: 767px) {
+  .page .req-summary {
+    padding: 22px 20px;
+  }
+  .page .quote-form {
+    padding: 20px 20px 22px;
+  }
+  .page .quote-form .m-actions {
+    margin: 0 -20px -22px;
+    border-radius: 0;
+  }
+}
+
+.page .req-summary-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.page .req-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+}
+
+.page .req-answers > div {
+  padding: 12px 0;
+  border-top: 1px solid var(--ink-100);
+}
+
+.page .req-answers > div:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.page .req-answers dt {
+  color: var(--ink-500);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.page .req-answers dd {
+  margin: 4px 0 0;
+  color: var(--ink-900);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.page .quote-form .input.area {
+  min-height: 120px;
+}
+
+/* 모바일 전용 뒤로 가기 링크는 넓은 화면에서 숨긴다 */
+@media (min-width: 768px) {
+  .page .back.show-m {
+    display: none;
+  }
+}
+
+.page .quote-form .credit-note {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--ink-100);
+}
+
+/* 관리자 회원 관리: 역할 선택 드롭다운 (src/components/RoleSelect.tsx) */
+.page .role-pick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 96px;
+  min-height: 40px;
+  padding: 0 12px 0 14px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--ink-200);
+  color: var(--ink-900);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  cursor: pointer;
+  transition: box-shadow var(--dur) var(--ease-out);
+}
+.page .role-pick:hover {
+  box-shadow: inset 0 0 0 1px var(--ink-400);
+}
+.page .role-pick:focus-visible,
+.page .role-pick.is-open {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--blue);
+}
+.page .role-pick.is-changed {
+  background: var(--blue-soft);
+  box-shadow: inset 0 0 0 1px var(--blue-line);
+  color: var(--blue-strong);
+}
+.page .role-pick.is-changed:focus-visible,
+.page .role-pick.is-changed.is-open {
+  box-shadow: inset 0 0 0 2px var(--blue);
+}
+.page .role-pick-value {
+  white-space: nowrap;
+}
+.page .role-pick-icon {
+  flex: none;
+  color: var(--ink-400);
+  transition: transform var(--dur) var(--ease-out);
+}
+.page .role-pick.is-changed .role-pick-icon {
+  color: var(--blue-strong);
+}
+.page .role-pick.is-open .role-pick-icon {
+  transform: rotate(180deg);
+}
+
+/* 목록은 body에 붙으므로 .page 범위 밖에서 그린다 */
+.role-menu {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 6px;
+  border-radius: var(--r-control);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--ink-200), var(--shadow-float);
+  list-style: none;
+  font-family: var(--font);
+  animation: role-menu-in 140ms var(--ease-out);
+}
+.role-menu.is-up {
+  animation-name: role-menu-in-up;
+}
+.role-opt {
+  display: grid;
+  grid-template-columns: 16px auto 1fr;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 12px 0 10px;
+  border-radius: calc(var(--r-control) - 4px);
+  color: var(--ink-800);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.role-opt.is-active {
+  background: color-mix(in srgb, var(--ink-900) 7%, transparent);
+}
+.role-opt[aria-selected='true'] {
+  background: var(--blue-soft);
+  color: var(--blue-strong);
+  font-weight: 750;
+}
+.role-opt[aria-selected='true'].is-active {
+  background: color-mix(in srgb, var(--blue) 16%, var(--surface));
+}
+.role-opt-check {
+  visibility: hidden;
+}
+.role-opt[aria-selected='true'] .role-opt-check {
+  visibility: visible;
+}
+.role-opt-now {
+  justify-self: end;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  background: var(--paper-soft);
+  box-shadow: inset 0 0 0 1px var(--ink-100);
+  color: var(--ink-500);
+  font-size: 11px;
+  font-weight: 700;
+}
+@keyframes role-menu-in {
+  from { opacity: 0; transform: translateY(-4px); }
+}
+@keyframes role-menu-in-up {
+  from { opacity: 0; transform: translateY(4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .role-menu { animation: none; }
+  .page .role-pick-icon { transition: none; }
+}

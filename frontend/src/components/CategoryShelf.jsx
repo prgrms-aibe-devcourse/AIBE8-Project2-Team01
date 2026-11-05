@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { CATEGORIES, getSub, objectSrc } from '../data/categoryMeta.js';
+import { CATEGORIES, objectSrc } from '../data/categoryMeta.js';
 
 // 대분류 11개를 같은 크기·같은 기준선의 입체 오브젝트로 한 줄에 보여준다.
 // 창이 좁아지면 한 번에 보이는 개수를 줄이고 양옆 화살표나 가로 스와이프로 넘긴다.
-// 하나를 고르면 아래에 실제 소분류가 펼쳐지고 소분류를 누르면 요청서가 열린다.
-export default function CategoryShelf({ onPickSub }) {
+// 하나를 누르면 그 분야가 선택된 요청서 모달이 화면 가운데에 열린다. 세부 서비스는 모달 안에서 고른다.
+export default function CategoryShelf({ onPickCategory }) {
   const [openId, setOpenId] = useState(null);
   const [edge, setEdge] = useState({ start: true, end: true });
   const railRef = useRef(null);
-  const current = CATEGORIES.find((c) => c.id === openId);
 
   const update = useCallback(() => {
     const el = railRef.current;
@@ -57,9 +56,11 @@ export default function CategoryShelf({ onPickSub }) {
                   <button
                     type="button"
                     className={`shelf-tile${on ? ' is-open' : ''}`}
-                    aria-expanded={on}
-                    aria-controls="shelf-panel"
-                    onClick={() => setOpenId(on ? null : c.id)}
+                    aria-haspopup="dialog"
+                    onClick={() => {
+                      setOpenId(c.id);
+                      onPickCategory(c);
+                    }}
                   >
                     <span className="shelf-plate">
                       <img src={objectSrc(c.object)} alt="" width="80" height="80" loading="eager" />
@@ -76,27 +77,6 @@ export default function CategoryShelf({ onPickSub }) {
           </button>
         </div>
 
-        <div id="shelf-panel" className={`shelf-panel${current ? ' is-open' : ''}`} aria-live="polite">
-          {current && (
-            <div className="shelf-panel-inner" key={current.id}>
-              <div className="shelf-panel-head">
-                <h3>
-                  {current.name}
-                  <span className="count num">{current.subs.length}개 서비스</span>
-                </h3>
-              </div>
-              <ul className="shelf-subs">
-                {current.subs.map((s) => (
-                  <li key={s.id}>
-                    <button type="button" className="chip" onClick={() => onPickSub(getSub(s.id))}>
-                      {s.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
       </div>
     </section>
   );

@@ -24,7 +24,8 @@ const SERVER_FIELD: Record<string, ErrKey> = {
   serviceIds: 'services', primaryCategoryId: 'primary', wholeRegionIds: 'regions', regionIds: 'regions', nationwide: 'regions'
 };
 
-export function ExpertFormPage({ mode }: { mode: 'create' | 'edit' }) {
+// focus=works: 고수 홈의 '나도 작업 소개 작성하기'에서 들어오면 작업 사진 칸으로 바로 내려간다
+export function ExpertFormPage({ mode, focus }: { mode: 'create' | 'edit'; focus?: string | null }) {
   const { me } = useSession();
   const mine = useMyExpertProfile(true);
   if (!me) return null;
@@ -45,10 +46,10 @@ export function ExpertFormPage({ mode }: { mode: 'create' | 'edit' }) {
   if (mode === 'edit' && mine.state.kind === 'none') return (
     <main className="page narrow">{head}<div className="state card"><b>아직 고수 프로필이 없어요</b><a className="btn primary" href="#/expert/intro">고수로 전환</a></div></main>
   );
-  return <ExpertForm mode={mode} initial={mine.state.kind === 'ok' ? mine.state.profile : null} head={head} />;
+  return <ExpertForm mode={mode} initial={mine.state.kind === 'ok' ? mine.state.profile : null} head={head} focus={focus} />;
 }
 
-function ExpertForm({ mode, initial, head }: { mode: 'create' | 'edit'; initial: ExpertProfile | null; head: JSX.Element }) {
+function ExpertForm({ mode, initial, head, focus }: { mode: 'create' | 'edit'; initial: ExpertProfile | null; head: JSX.Element; focus?: string | null }) {
   const { me, reloadMe } = useSession();
   const toast = useToast();
   const { busy, run } = useSingleFlight();
@@ -89,6 +90,14 @@ function ExpertForm({ mode, initial, head }: { mode: 'create' | 'edit'; initial:
     } catch (e) { setBaseErr(e); }
   }, [initial]);
   useEffect(() => { loadBase(); }, [loadBase]);
+
+  // 작업 소개를 쓰러 들어왔으면 폼이 그려진 뒤 작업 사진 칸으로 한 번 내려간다
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    if (focus !== 'works' || focused || !firstCats || !firstRegions) return;
+    setFocused(true);
+    window.requestAnimationFrame(() => document.getElementById('expert-works')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }, [focus, focused, firstCats, firstRegions]);
 
   const [subErr, setSubErr] = useState('');
   useEffect(() => {
@@ -327,7 +336,7 @@ function ExpertForm({ mode, initial, head }: { mode: 'create' | 'edit'; initial:
           </Field>
         </fieldset>
 
-        <fieldset className="card" disabled={busy}>
+        <fieldset id="expert-works" className={`card${focus === 'works' ? ' is-focus' : ''}`} disabled={busy}>
           <legend className="sec-head"><span className="num">6</span>작업 사진 <small className="sub">선택</small></legend>
           <WorkImagesField value={works} onChange={setWorks} onBusy={setWorksBusy} />
         </fieldset>

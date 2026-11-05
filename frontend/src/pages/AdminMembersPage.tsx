@@ -5,6 +5,7 @@ import { adminDeleteMember, adminGetMembers, adminSetRole } from '../api/mvp';
 import type { Member, MemberRole } from '../api/types';
 import { useSession } from '../auth/session';
 import { LoadBox, Pager } from '../components/common';
+import { RoleSelect } from '../components/RoleSelect';
 import { useToast } from '../components/toast';
 import { Banner, Lines, Modal, Spinner } from '../components/ui';
 import { navigate } from '../hooks/useHashRoute';
@@ -15,7 +16,7 @@ import { friendly } from '../lib/messages';
 import { AdminNav } from './AdminBaseDataPages';
 
 const SORTS: { key: string; label: string }[] = [{ key: 'id', label: 'ID' }, { key: 'nickname', label: '닉네임' }, { key: 'email', label: '이메일' }, { key: 'createdAt', label: '가입일' }];
-const ROLES: MemberRole[] = ['USER', 'EXPERT', 'ADMIN'];
+const ROLE_OPTIONS = (['USER', 'EXPERT', 'ADMIN'] as MemberRole[]).map((r) => ({ value: r, label: roleLabel(r) }));
 
 export function AdminMembersPage({ params }: { params: URLSearchParams }) {
   const { me } = useSession();
@@ -72,9 +73,7 @@ export function AdminMembersPage({ params }: { params: URLSearchParams }) {
                             <td className="act-c">
                               {self ? <small className="sub">본인 권한은 바꿀 수 없어요</small> : (
                                 <span className="row">
-                                  <select className="input sm" value={sel} aria-label={`${m.nickname} 역할 선택`} onChange={(e) => setPicked((p) => ({ ...p, [m.id]: e.target.value as MemberRole }))}>
-                                    {ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
-                                  </select>
+                                  <RoleSelect value={sel} current={m.role} options={ROLE_OPTIONS} label={`${m.nickname} 역할 선택`} onChange={(r) => setPicked((p) => ({ ...p, [m.id]: r }))} />
                                   <button type="button" className="btn small" disabled={sel === m.role} onClick={() => { setErr(''); setAct({ kind: 'role', m, role: sel }); }}>변경</button>
                                   <button type="button" className="btn small danger-ghost" onClick={() => { setErr(''); setAct({ kind: 'delete', m }); }}>탈퇴</button>
                                 </span>

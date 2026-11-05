@@ -978,6 +978,30 @@
   margin-top: 8px;
 }
 
+/* 링크처럼 보이는 푸터 버튼 (고수의 '고객으로 전환') */
+.footer-link-btn {
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.footer-link-btn:hover:not(:disabled) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.footer-link-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.footer-link-btn:disabled {
+  color: var(--ink-400);
+  cursor: progress;
+}
+
 .footer-bottom {
   display: flex;
   justify-content: space-between;
@@ -1209,4 +1233,390 @@
   .work-rail .shelf-arrow {
     top: calc((100cqi - (var(--rail-n) - 1) * var(--rail-gap)) / var(--rail-n) * 3 / 8 - 20px + 8px);
   }
+}
+
+/* 메인의 실제 데이터 영역: 불러오는 중·빈 상태·오류 */
+.home-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 20px;
+  border-radius: var(--r-tile);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--ink-100);
+  color: var(--ink-600);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  text-align: center;
+}
+
+.home-state b {
+  color: var(--ink-900);
+  font-size: var(--fs-body);
+}
+
+.home-state svg {
+  color: var(--ink-400);
+}
+
+.is-skeleton {
+  pointer-events: none;
+}
+
+.is-skeleton .post-thumb,
+.sk-line {
+  background: var(--ink-50);
+  animation: sk-pulse 1.4s ease-in-out infinite;
+}
+
+.sk-line {
+  display: block;
+  height: 14px;
+  margin: 12px 10px 0;
+  border-radius: var(--r-tag);
+}
+
+.sk-line.short {
+  width: 50%;
+}
+
+@keyframes sk-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* 커뮤니티 카드 썸네일: 실제 사진은 꽉 채우고, 사진이 없으면 분야 아이콘 하나를 가운데에 둔다 */
+.post-card .post-thumb.has-photo {
+  background: var(--paper-soft);
+}
+
+.post-card .post-thumb .pt-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: none;
+}
+
+.post-card .post-thumb .pt-single {
+  left: 50%;
+  top: 50%;
+  width: 46%;
+  height: auto;
+  transform: translate(-50%, -50%);
+}
+
+.post-card:hover .post-thumb .pt-single {
+  transform: translate(-50%, -54%) rotate(-3deg);
+}
+
+.post-card:hover .post-thumb .pt-photo {
+  transform: scale(1.04);
+}
+
+/* 고수 홈: 지금 들어온 요청서 */
+.expert-home {
+  padding-top: calc(var(--section-gap) / 2.4);
+}
+
+.expert-home .section-head {
+  margin-bottom: 8px;
+}
+
+.expert-home-lead {
+  margin-bottom: 24px;
+  color: var(--ink-500);
+  font-size: var(--fs-sm);
+}
+
+.incoming-count {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  background: var(--blue-soft);
+  color: var(--blue-strong);
+  font-size: var(--fs-sm);
+  font-weight: 800;
+}
+
+.incoming-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.incoming-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  min-height: 200px;
+  padding: 20px;
+  border-radius: var(--r-tile);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--ink-100);
+  color: var(--ink-900);
+  transition: box-shadow var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+}
+
+.incoming-card:hover {
+  text-decoration: none;
+  box-shadow: inset 0 0 0 1px var(--ink-200), var(--shadow-lift);
+  transform: translateY(-2px);
+}
+
+.incoming-card.is-skeleton {
+  min-height: 200px;
+}
+
+.incoming-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.incoming-title {
+  font-size: var(--fs-lead);
+  font-weight: 800;
+}
+
+.incoming-meta {
+  color: var(--ink-500);
+  font-size: var(--fs-xs);
+}
+
+.incoming-summary {
+  display: -webkit-box;
+  margin-top: 6px;
+  overflow: hidden;
+  color: var(--ink-600);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .incoming-card:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 1080px) {
+  .incoming-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .incoming-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .incoming-card {
+    min-height: 0;
+  }
+}
+
+.incoming-summary.is-empty {
+  color: var(--ink-400);
+}
+
+/* 고수 홈: 작업 소개 작성 안내 */
+.work-cta-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding: 28px 32px;
+  border-radius: var(--r-tile);
+  background: var(--blue-soft);
+}
+
+.work-cta-inner h2 {
+  font-size: var(--fs-h3);
+  font-weight: 800;
+}
+
+.work-cta-inner p {
+  margin-top: 6px;
+  color: var(--ink-600);
+  font-size: var(--fs-sm);
+}
+
+@media (max-width: 560px) {
+  .work-cta-inner {
+    padding: 22px 20px;
+  }
+  .work-cta-inner .btn {
+    width: 100%;
+  }
+}
+
+/* 실제 고수 카드: 사진이 없거나 불러오지 못하면 기본 이미지 */
+.expert-default {
+  display: none;
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 56%;
+  height: 56%;
+  fill: var(--blue-line);
+  transform: translateX(-50%);
+}
+
+.expert-photo.is-default {
+  background: var(--blue-soft);
+}
+
+.expert-photo.is-default .expert-default {
+  display: block;
+}
+
+.expert-photo.is-default img {
+  display: none;
+}
+
+.rail .expert-card .expert-tags {
+  padding-right: 0;
+}
+
+/* 공개 고수 목록의 활동 지역 칩 (전체 + 많이 활동하는 지역) 과 '다른 지역' 선택 */
+.expert-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.expert-filter .expert-chips {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.expert-filter .tab:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.expert-filter .picker {
+  flex: none;
+  display: flex;
+  align-items: center;
+}
+
+.expert-filter .field-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.expert-filter .field-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  width: auto;
+  min-height: 40px;
+  padding: 0 12px 0 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--ink-200);
+  transition: box-shadow var(--dur) var(--ease-out);
+}
+
+.expert-filter .field-button:hover {
+  box-shadow: inset 0 0 0 1px var(--ink-400);
+}
+
+.expert-filter .field-button:focus-visible,
+.expert-filter .field-button[aria-expanded='true'] {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--blue);
+}
+
+.expert-filter .field-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+}
+
+.expert-filter .field-value {
+  flex: none;
+  margin-right: 4px;
+  color: var(--ink-600);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.expert-filter .field-caret {
+  width: 16px;
+  height: 16px;
+}
+
+/* 칩 줄 끝에 붙으므로 목록은 버튼 오른쪽 끝에 맞춰 연다 */
+.expert-filter .popover {
+  top: calc(100% + 8px);
+  left: auto;
+  right: 0;
+  min-width: 0;
+}
+
+/* 찜이 늘고 있는 고수: 이번 주 증가량과 누적 찜을 나눠 보여 준다 */
+.rank-stats {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: right;
+}
+
+.rank-stats .rank-gain {
+  color: var(--blue-strong);
+  font-weight: 800;
+}
+
+.rank-total {
+  color: var(--ink-500);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+/* 홈(고객·비로그인·관리자·고수)의 섹션 제목과 묶음·안내 카드 제목은 조금 작게 쓴다. 굵기는 그대로 둔다 */
+.home-main .section-head h2,
+.home-main .join h2 {
+  font-size: clamp(1.25rem, 1.05rem + 0.6vw, 1.5rem); /* 20px → 24px (기존 24px → 28px) */
+}
+
+.home-main .collection h3,
+.home-main .work-cta-inner h2 {
+  font-size: clamp(1.125rem, 1rem + 0.35vw, 1.25rem); /* 18px → 20px */
+}
+
+/* 찜 목록을 읽는 동안 하트를 잠가 둔다 */
+.bookmark:disabled {
+  opacity: 0.45;
+  cursor: progress;
+}
+
+.bookmark:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* 하트가 있는 카드는 태그가 하트 밑으로 들어가지 않게 오른쪽을 비운다 */
+.expert-body:has(> .bookmark) .expert-tags {
+  padding-right: 40px;
 }

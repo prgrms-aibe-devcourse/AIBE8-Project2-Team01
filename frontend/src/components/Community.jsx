@@ -3,10 +3,11 @@ import { ChevronRight, Heart, MessageSquare } from 'lucide-react';
 import { getPosts } from '../api/mvp';
 import { errorText } from '../api/client';
 import { useLoad } from '../hooks/useLoad';
-import { categoryIconSrc } from '../data/categoryMeta.js';
+import { CATEGORIES, categoryIconSrc } from '../data/categoryMeta.js';
 
 // 메인의 커뮤니티 미리보기. 공개 게시글 API(GET /api/public/posts)의 실제 글을 보여 주고 글 상세로 이동한다.
-// 첫 페이지(최신 20개)에서 사진이 있는 글을 앞에 두고 4개를 고른다. 사진이 없으면 분야 아이콘을 그린다.
+// 고수 노하우: 첫 페이지(최신 20개)에서 사진이 있는 글을 앞에 두고 4개를 고른다. 사진이 없으면 분야 아이콘을 그린다.
+// 고수에게 묻다: 대분류마다 최신 질문 1개씩 최신순으로 4개를 고른다.
 const BOARDS = [
   { key: 'TIP', label: '고수 노하우' },
   { key: 'QUESTION', label: '고수에게 묻다' },
@@ -19,6 +20,33 @@ function pick(list) {
   const rest = list.filter((p) => !p.thumbnailUrl);
   return [...withPhoto, ...rest].slice(0, SHOW);
 }
+
+// '고수에게 묻다'는 여러 서비스가 골고루 보이도록 대분류마다 가장 최근 질문 1개만 고른다 (질문이 없는 분야는 건너뜀)
+// 기존 목록 API만 쓴다: 최신순 페이지를 차례로 읽으며 처음 나온 분야의 글을 모으고 4개가 차면 멈춘다(보통 1~2번).
+// 5페이지까지 읽어도 모자라면 남은 분야는 분야 필터(firstCategoryId)로 1페이지씩 확인한다.
+const MAX_PAGES = 5;
+const firstIdOf = (p) => p.category?.firstCategoryId ?? null;
+
+async function latestQuestionPerCategory() {
+  const picked = new Map();
+  for (let page = 1; page <= MAX_PAGES && picked.size < SHOW; page++) {
+    const res = await getPosts('QUESTION', page);
+    for (const p of res.content) {
+      const id = firstIdOf(p);
+      if (id != null && !picked.has(id)) picked.set(id, p);
+    }
+    if (res.lastPage || res.content.length === 0) break;
+    if (page === MAX_PAGES && picked.size < SHOW) {
+      const rest = CATEGORIES.filter((c) => !picked.has(c.id));
+      const found = await Promise.all(rest.map((c) => getPosts('QUESTION', 1, undefined, { firstCategoryId: c.id }).then((r) => r.content[0] ?? null).catch(() => null)));
+      found.forEach((p) => { if (p && firstIdOf(p) != null && !picked.has(firstIdOf(p))) picked.set(firstIdOf(p), p); });
+    }
+  }
+  const content = [...picked.values()].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, SHOW);
+  return { content, picked: true };
+}
+
+const loadBoard = (board) => (board === 'QUESTION' ? latestQuestionPerCategory() : getPosts(board, 1));
 
 function PostThumb({ p, i }) {
   if (p.thumbnailUrl) {
@@ -38,7 +66,7 @@ function PostThumb({ p, i }) {
 
 export default function Community() {
   const [board, setBoard] = useState('TIP');
-  const list = useLoad(() => getPosts(board, 1), [board]);
+  const list = useLoad(() => loadBoard(board), [board]);
 
   return (
     <section id="community" className="section" aria-labelledby="com-title">
@@ -111,7 +139,7 @@ export default function Community() {
           )}
           {list.state.kind === 'ok' && list.state.data.content.length > 0 && (
             <ul className="post-grid">
-              {pick(list.state.data.content).map((p, i) => (
+              {(list.state.data.picked ? list.state.data.content : pick(list.state.data.content)).map((p, i) => (
                 <li key={p.postId}>
                   <article className="post-card">
                     <PostThumb p={p} i={i} />

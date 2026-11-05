@@ -1,4 +1,5 @@
 import { useSession } from '../auth/session';
+import { useRoleSwitch } from '../hooks/useRoleSwitch';
 import { BOARDS, BOARD_LABEL } from '../lib/labels';
 
 // 공통 푸터. 실제로 구현된 화면으로만 연결한다.
@@ -18,7 +19,8 @@ export function showFooter(path) {
 }
 
 export default function Footer({ home = false }) {
-  const { status } = useSession();
+  const { status, me } = useSession();
+  const { busy, switchTo } = useRoleSwitch();
   return (
     <footer className="footer">
       <div className="container">
@@ -33,11 +35,20 @@ export default function Footer({ home = false }) {
               <li>
                 <a href="#/">서비스 찾기</a>
               </li>
+              {me?.role !== 'EXPERT' && (
+                <li>
+                  <a href="#/requests/new">요청서 작성</a>
+                </li>
+              )}
               <li>
-                <a href="#/requests/new">요청서 작성</a>
-              </li>
-              <li>
-                <a href="#/expert/intro">고수 등록</a>
+                {me?.role === 'EXPERT' ? (
+                  // 헤더 사용자 메뉴의 '고객으로 전환'과 같은 흐름 (useRoleSwitch: 역할 변경 → 회원 정보 다시 읽기 → 안내)
+                  <button type="button" className="footer-link-btn" disabled={busy} aria-busy={busy} onClick={() => switchTo('USER')}>
+                    {busy ? '전환하는 중' : '고객으로 전환'}
+                  </button>
+                ) : (
+                  <a href="#/expert/intro">고수 등록</a>
+                )}
               </li>
             </ul>
           </nav>

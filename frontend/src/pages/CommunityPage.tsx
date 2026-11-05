@@ -10,6 +10,8 @@ import { useLoad } from '../hooks/useLoad';
 import { BOARDS, BOARD_LABEL, smartTime } from '../lib/labels';
 import CategoryIcon from '../components/CategoryIcon';
 
+const COMMUNITY_BOARDS: BoardType[] = ['TIP', 'QUESTION', 'RECRUIT', 'PROMOTION'];
+
 const count = (n: number) => (n > 999 ? '999+' : n.toLocaleString('ko-KR'));
 
 function PostRow({ p, showBoard }: { p: PostSummary; showBoard?: boolean }) {
@@ -48,14 +50,14 @@ function BoardTabs({ board, mine }: { board?: BoardType; mine?: boolean }) {
   const { status } = useSession();
   return (
     <div className="tabs">
-      {BOARDS.map((b) => <a key={b} className={`tab${b === board ? ' on' : ''}`} href={`#/community?board=${b}`}>{BOARD_LABEL[b]}</a>)}
+      {COMMUNITY_BOARDS.map((b) => <a key={b} className={`tab${b === board ? ' on' : ''}`} href={`#/community?board=${b}`}>{BOARD_LABEL[b]}</a>)}
       <a className={`tab${mine ? ' on' : ''}`} href={status === 'member' ? '#/community/mine' : `#/login?redirect=${encodeURIComponent('/community/mine')}`}>내 글</a>
     </div>
   );
 }
 
 export function CommunityPage({ params }: { params: URLSearchParams }) {
-  const board = (BOARDS.includes(params.get('board') as BoardType) ? params.get('board') : 'QUESTION') as BoardType;
+  const board = (BOARDS.includes(params.get('board') as BoardType) ? params.get('board') : 'TIP') as BoardType;
   const page = Math.max(1, Number(params.get('page') ?? 1) || 1);
   const keyword = params.get('q') ?? '';
   const [q, setQ] = useState(keyword);
