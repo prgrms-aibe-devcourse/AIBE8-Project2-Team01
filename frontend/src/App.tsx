@@ -69,7 +69,7 @@ const ROUTES: Route[] = [
   { re: /^\/credit\/result$/, access: ['EXPERT'], render: (_m, q) => <PaymentResultPage params={q} /> },
   { re: /^\/chats$/, access: ['USER', 'EXPERT'], render: () => <ChatListPage /> },
   { re: /^\/chats\/(\d+)$/, access: ['USER', 'EXPERT'], render: (m) => <ChatListPage roomId={Number(m[1])} /> },
-  { re: /^\/bookmarks$/, access: ['USER'], render: (_m, q) => <BookmarksPage params={q} /> },
+  { re: /^\/bookmarks$/, access: ['USER', 'ADMIN'], render: (_m, q) => <BookmarksPage params={q} /> },
 
   { re: /^\/admin\/members$/, access: ['ADMIN'], render: (_m, q) => <AdminMembersPage params={q} /> },
   { re: /^\/admin\/posts$/, access: ['ADMIN'], render: (_m, q) => <AdminPostsPage params={q} /> },

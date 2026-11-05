@@ -12,12 +12,15 @@ import './styles/app.css';
 import { App } from './App.tsx';
 import { SessionProvider } from './auth/session';
 import { ToastProvider } from './components/toast';
+import { LoginPromptProvider } from './components/loginPrompt';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ToastProvider>
       <SessionProvider>
-        <App />
+        <LoginPromptProvider>
+          <App />
+        </LoginPromptProvider>
       </SessionProvider>
     </ToastProvider>
   </React.StrictMode>,

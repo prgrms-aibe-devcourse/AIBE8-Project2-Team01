@@ -8,26 +8,26 @@
 
 | 고수 | 로컬 계정 | 서비스 ID | 활동 지역 |
 | --- | --- | --- | --- |
-| 한결이사 | profile101@example.com | 101, 102, 103 | 서울 강남구, 서울 서초구, 서울 송파구 |
-| 반짝홈케어 | profile102@example.com | 102, 101, 103, 104 | 서울 |
-| 윤선생 영어 | profile103@example.com | 129, 127 | 서울 마포구, 서울 서대문구 |
-| 소리공방 | profile104@example.com | 165, 166 | 서울 마포구 |
+| 한결이사 | hangyeol.move@example.com | 101, 102, 103 | 서울 강남구, 서울 서초구, 서울 송파구 |
+| 반짝홈케어 | sparkle.home@example.com | 102, 101, 103, 104 | 서울 |
+| 윤선생 영어 | yoon.english@example.com | 129, 127 | 서울 마포구, 서울 서대문구 |
+| 소리공방 | sori.music@example.com | 165, 166 | 서울 마포구 |
 | 코드메이트 | seed-dev@example.com | 139, 138 | 전국 |
 | 바른설비 | seed-plumb@example.com | 109, 107, 108 | 부산 해운대구, 부산 수영구 |
-| 온집 인테리어 | profile107@example.com | 113, 112, 114, 115 | 대구 |
-| 담다 스냅 | profile108@example.com | 120, 118 | 전국 |
-| 정리하는 하루 | profile109@example.com | 103, 101 | 인천 연수구, 인천 남동구 |
-| 김코치 피트니스 | profile110@example.com | 174 | 서울 강남구 |
-| 문고리 수리 | profile111@example.com | 108, 107, 109 | 서울 송파구, 서울 강동구 |
-| 해운대 이사짐센터 | profile112@example.com | 101, 102 | 부산 |
-| 커리어노트 | profile113@example.com | 150, 151 | 대구 수성구 |
-| 그림숲 아틀리에 | profile114@example.com | 167, 165 | 인천 연수구 |
-| 새길 노무 | profile115@example.com | 187, 186 | 전국 |
-| 마음쉼표 상담 | profile116@example.com | 190 | 서울, 경기 |
-| 한빛 카케어 | profile117@example.com | 184 | 부산 해운대구, 부산 수영구 |
-| 맑은창 줄눈 | profile118@example.com | 113, 112 | 서울 마포구, 서울 은평구 |
-| 하늘 웨딩플래너 | profile119@example.com | 118, 119, 120 | 부산 |
-| 오늘의 요가 | profile120@example.com | 174 | 대구 수성구 |
+| 온집 인테리어 | onjip@example.com | 113, 112, 114, 115 | 대구 |
+| 담다 스냅 | damda.snap@example.com | 120, 118 | 전국 |
+| 정리하는 하루 | tidyday@example.com | 103, 101 | 인천 연수구, 인천 남동구 |
+| 김코치 피트니스 | kimcoach@example.com | 174 | 서울 강남구 |
+| 문고리 수리 | doorknob@example.com | 108, 107, 109 | 서울 송파구, 서울 강동구 |
+| 해운대 이사짐센터 | haeundae.move@example.com | 101, 102 | 부산 |
+| 커리어노트 | career.note@example.com | 150, 151 | 대구 수성구 |
+| 그림숲 아틀리에 | forest.art@example.com | 167, 165 | 인천 연수구 |
+| 새길 노무 | saegil@example.com | 187, 186 | 전국 |
+| 마음쉼표 상담 | mindcomma@example.com | 190 | 서울, 경기 |
+| 한빛 카케어 | hanbit.car@example.com | 184 | 부산 해운대구, 부산 수영구 |
+| 맑은창 줄눈 | cleargrout@example.com | 113, 112 | 서울 마포구, 서울 은평구 |
+| 하늘 웨딩플래너 | haneul.wed@example.com | 118, 119, 120 | 부산 |
+| 오늘의 요가 | pilates.today@example.com | 174 | 대구 수성구 |
 
 예시의 작업 사진 수·최근 찜 증가 수는 실제 데이터처럼 저장하지 않는다. 프로필 이미지와 고수 작업 사진은 별개다. 커뮤니티 사진은 기존 Supabase 시드 파일을 재사용한다.
 
@@ -83,7 +83,7 @@
 
 프론트 예시 사진은 고수별 원본 한 장만 참조한다. 큰 카드와 원형 아바타가 같은 공개 URL을 사용하며 원형 표시는 CSS로 처리한다. 이미 실제 회원의 사진에 연결된 Storage 파일은 삭제하지 않는다. 로컬 H2 시드의 고수 프로필 32개와 MariaDB의 프로필 30개 모두 회원 소유의 공개 프로필 사진을 갖는다.
 
-MariaDB 예시 고수 `profile101@example.com`~`profile120@example.com`의 잘못된 해시 값을 기존 데모 계정과 같은 BCrypt 해시로 바로잡았다. 안내된 비밀번호 `12341234`를 사용하며 기존 17개 계정의 해시는 변경하지 않는다. 이 수정은 시드 파일에 반영한 것으로 기존 운영 DB에는 자동 적용하지 않는다.
+MariaDB 예시 고수 `hangyeol.move@example.com`~`pilates.today@example.com`의 잘못된 해시 값을 기존 데모 계정과 같은 BCrypt 해시로 바로잡았다. 안내된 비밀번호 `12341234`를 사용하며 기존 17개 계정의 해시는 변경하지 않는다. 이 수정은 시드 파일에 반영한 것으로 기존 운영 DB에는 자동 적용하지 않는다.
 
 ## 발표용 이미지 재배정
 

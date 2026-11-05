@@ -106,7 +106,7 @@ export function CreditHistoryPage({ params }: { params: URLSearchParams }) {
     <main className="page">
       <PageHead title="충전·사용 내역" back={{ href: '#/credit', label: '크레딧 충전' }} />
       <div className="split hist-split">
-        <section className="col gap">
+        <section className="col gap hist-main">
           <div className="tabs">
             {TYPES.map((t) => <button type="button" key={t || 'all'} className={`tab${t === type ? ' on' : ''}`} onClick={() => go(1, t)}>{t ? HISTORY_LABEL[t] : '전체'}</button>)}
           </div>
@@ -117,18 +117,20 @@ export function CreditHistoryPage({ params }: { params: URLSearchParams }) {
                   {data.content.map((h) => (
                     <div className="hist" key={h.id}>
                       <span className={`h-ic ${h.amount >= 0 ? 'plus' : 'minus'}`} aria-hidden="true">{h.amount >= 0 ? '+' : '−'}</span>
-                      <div className="col grow"><b>{HISTORY_LABEL[h.historyType]}</b><small className="sub">{shortDateTime(h.createAt)}{h.paymentId ? ` · 결제 #${h.paymentId}` : ''}{h.quoteId ? ` · 견적 #${h.quoteId}` : ''}</small></div>
+                      <div className="col grow"><b>{HISTORY_LABEL[h.historyType]}</b><small className="sub">{shortDateTime(h.createAt)}{h.paymentId ? ` · 결제 #${h.paymentId}` : ''}{h.quoteId ? ` · ${h.customerNickname ? `${h.customerNickname}님에게 보낸 견적` : '견적'}` : ''}</small></div>
                       <div className="col end"><b className={h.amount >= 0 ? 'blue-t' : ''}>{h.amount >= 0 ? `+${h.amount}` : h.amount}</b><small className="sub">잔액 {h.balanceAfter}</small></div>
                     </div>
                   ))}
                 </div>
-                <Pager page={data.pageNumber} totalPages={data.totalPages} onPage={(p) => go(p)} />
-                <small className="sub center">{data.pageNumber} / {Math.max(1, data.totalPages)} 페이지 · 총 {data.totalElements}건</small>
+                <div className="col gap">
+                  <Pager page={data.pageNumber} totalPages={data.totalPages} onPage={(p) => go(p)} />
+                  <small className="sub center">{data.pageNumber} / {Math.max(1, data.totalPages)} 페이지 · 총 {data.totalElements}건</small>
+                </div>
               </>
             )}
           </LoadBox>
         </section>
-        <aside className="col gap">
+        <aside className="col gap hist-summary">
           <LoadBox load={side.state} title="잔액을 불러오지 못했어요" onRetry={() => side.reload()}>
             {({ balance, reservations }) => (
               <div className="card">

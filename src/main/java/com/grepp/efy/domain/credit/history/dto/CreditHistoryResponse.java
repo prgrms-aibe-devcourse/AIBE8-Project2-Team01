@@ -12,10 +12,11 @@ public record CreditHistoryResponse(
         Long balanceAfter,
         Long paymentId,
         Long quoteId,
+        String customerNickname,
         LocalDateTime createAt
 ) {
-    public static CreditHistoryResponse from(CreditHistory history) {
+    public static CreditHistoryResponse from(CreditHistory history, String customerNickname) {
         return new CreditHistoryResponse(history.getId(), history.getHistoryType(), history.getAmount(),
-                history.getBalanceAfter(), history.getPaymentId(), history.getQuoteId(), history.getCreatedAt());
+                history.getBalanceAfter(), history.getPaymentId(), history.getQuoteId(), customerNickname, history.getCreatedAt());
     }
 }

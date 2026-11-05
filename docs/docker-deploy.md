@@ -1,11 +1,11 @@
 # Docker 배포 준비
 
-BlogRest와 같이 Java 25 JDK 이미지에서 Gradle로 실행 JAR을 만들고 Java 25 JRE 이미지에서 실행한다. 컨테이너에는 JAR만 복사한다. 로컬 `build/libs`의 기존 JAR을 가져오는 방식이 아니다.
+Node 22에서 프론트를 빌드하고 결과물을 Spring Boot의 정적 파일로 포함한다. Java 25 JDK 이미지에서 Gradle로 실행 JAR을 만들며 실행 이미지에는 Java 25 JRE와 통합 JAR만 둔다.
 
-## 추가한 파일
+- `Dockerfile`은 프론트 빌드, JAR 패키징, 실행 이미지의 세 단계로 구성한다. 포트는 8080이며 기본 프로필은 `prod`다.
+- `.dockerignore`는 프론트 소스와 공개 파일, Gradle 설정과 백엔드 소스를 빌드에 전달한다. 비밀 설정, 환경 파일, 로컬 빌드 결과와 수동 시드는 제외한다.
 
-- `Dockerfile`: 2단계 빌드, 8080 포트, 기본 `prod` 프로필, 한국 시간, UID/GID 1000 실행
-- `.dockerignore`: Gradle 설정과 `src/main`만 빌드 컨텍스트에 허용한다. 실제 비밀 설정·예제·환경 파일·키 파일·프론트·테스트·로컬 빌드 결과·수동 시드는 제외한다.
+시드는 제외한다.
 
 시드는 [MariaDB 시드 안내](mariadb-seed.md)에 따라 DB에 수동 적용한다. 이미지에 시드 파일을 넣거나 시작할 때 실행하지 않는다. `prod`의 `spring.sql.init.mode=never`와 상속되는 `ddl-auto=update`는 현재 설정대로 유지한다.
 
@@ -19,7 +19,11 @@ cd /Users/goonbam/study/grepp/project2/AIBE8-Project2-Team01
 docker build -t efy:local .
 ```
 
-이미지 빌드는 `bootJar`만 실행한다. 테스트는 위처럼 별도로 실행한다. 첫 빌드는 JDK 이미지와 Gradle·의존성 다운로드에 시간이 걸릴 수 있다.
+이미지 빌드는 `npm ci`, 프론트 타입 검사와 Vite 빌드, Gradle `bootJar`를 실행한다. 테스트는 위처럼 별도로 실행한다. 첫 빌드는 JDK 이미지와 Gradle·의존성 다운로드에 시간이 걸릴 수 있다.
+
+프론트는 해시 경로를 사용한다. `/#/mypage` 같은 화면을 새로고침해도 서버는 루트의 HTML을 제공한다. API와 WebSocket은 화면과 같은 주소를 사용한다.
+
+토스 테스트 결제창을 포함하려면 Docker 빌드 인자 `VITE_TOSS_CLIENT_KEY`에 브라우저 공개용 테스트 클라이언트 키를 설정한다. 서버 전용 `TOSS_SECRET_KEY`는 실행 환경변수로만 설정한다.
 
 ## 클라우드타입 설정안
 
@@ -54,14 +58,14 @@ MariaDB와 같은 배포환경에 배치한다. 로컬에서 사용하는 외부
 | `DB_USERNAME` | 현재 DB 연결 검증에 사용한 `root` |
 | `DB_PASSWORD` | 클라우드타입 MariaDB 생성 시 정한 비밀번호. 시드 계정 비밀번호와 다름 |
 | `JWT_SECRET` | 현재 사용한 서명 키. 32바이트 이상이며 서버 재배포 시에도 같은 값 사용 |
-| `FRONTEND_URL` | 실제 배포한 프론트 주소. 로컬 확인은 `http://localhost:5176` |
+| `FRONTEND_URL` | 통합 서비스의 공개 주소. 로컬 Docker 확인은 `http://localhost:18080` |
 | `SUPABASE_URL` | 기존 팀 Supabase 프로젝트 URL |
 | `SUPABASE_SERVICE_KEY` | 서버 전용 service_role 키 |
-| `SUPABASE_BUCKET_PUBLIC` | 기존 공개 버킷명 `public-files` |
-| `SUPABASE_BUCKET_PRIVATE` | 기존 비공개 버킷명 `private-files` |
+| `SUPABASE_BUCKET_PUBLIC` | 프로젝트에 설정된 공개 버킷명 |
+| `SUPABASE_BUCKET_PRIVATE` | 프로젝트에 설정된 비공개 버킷명 |
 | `TOSS_SECRET_KEY` | 팀 결제 담당자의 토스 테스트 시크릿 키 |
 
-`JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=50.0`과 `TZ=Asia/Seoul`은 이미지 기본값이다. 최대 Java 힙을 컨테이너 메모리의 50%로 제한하고 나머지는 JVM·스레드·네이티브 메모리에 남긴다. 최종 메모리는 힙 이외에도 사용되므로 실행 후 워크로드를 확인한다.
+`JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=40.0 -XX:+UseSerialGC -XX:ActiveProcessorCount=2`과 `TZ=Asia/Seoul`은 이미지 기본값이다. 최대 Java 힙을 컨테이너 메모리의 40%로 제한하고 나머지는 JVM·스레드·네이티브 메모리에 남긴다. 최종 메모리는 힙 이외에도 사용되므로 실행 후 워크로드를 확인한다.
 
 ## 확인한 결과
 

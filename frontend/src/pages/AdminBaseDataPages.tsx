@@ -75,14 +75,14 @@ function TwoLevelAdmin({ cfg }: { cfg: Config }) {
     <main className="page admin">
       <div className="admin-layout">
         <AdminNav current={cfg.kind} />
-        <section className="col gap">
+        <section className="col gap admin-panel">
           <div className="col"><h1 className="page-title">{cfg.title}</h1><small className="sub">{cfg.desc}</small></div>
-          <div className="grid-2 align-start">
+          <div className="grid-2 align-start admin-base-grid">
             <div className="card">
               <b className="card-title">{cfg.upper} {upper.state.kind === 'ok' ? upper.state.data.length : ''}</b>
               <LoadBox load={upper.state} title={`${cfg.upper}를 불러오지 못했어요`} onRetry={() => upper.reload()}>
                 {(items) => items.length === 0 ? <p className="sub">등록된 {cfg.upper}가 없어요.</p> : (
-                  <div className="admin-list">
+                  <div className="admin-list" tabIndex={0} role="region" aria-label={cfg.upper}>
                     {items.map((u) => (
                       <ItemRow key={u.id} cfg={cfg} item={u} active={u.id === selId} onSelect={() => setSelId(u.id)}
                         onSave={(n, c) => cfg.updateUpper(u.id, n, c)} onDelete={() => cfg.deleteUpper(u.id)} onDone={() => upper.reload(true).catch(() => undefined)} label={cfg.upper}
@@ -100,7 +100,7 @@ function TwoLevelAdmin({ cfg }: { cfg: Config }) {
                   <small className="sub">{cfg.withCode ? '지역명과 코드 앞뒤의 공백은 자동으로 지워져요' : '이름 앞뒤의 공백은 자동으로 지워져요'}</small>
                   <LoadBox load={lower.state} title={`${cfg.lower}를 불러오지 못했어요`} onRetry={() => lower.reload()}>
                     {(items) => items.length === 0 ? <p className="sub">이 {cfg.upper}에는 아직 {cfg.lower}가 없어요.</p> : (
-                      <div className="admin-list">
+                      <div className="admin-list" tabIndex={0} role="region" aria-label={cfg.lower}>
                         {items.map((l) => (
                           <ItemRow key={l.id} cfg={cfg} item={l} onSave={(n, c) => cfg.updateLower(l.id, n, c, sel.id)} onDelete={() => cfg.deleteLower(l.id)}
                             onDone={() => lower.reload(true).catch(() => undefined)} label={cfg.lower} />

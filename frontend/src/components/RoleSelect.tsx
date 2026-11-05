@@ -10,7 +10,7 @@ export type RoleOption<T extends string> = { value: T; label: string };
 
 type Props<T extends string> = {
   value: T;
-  current: T; // 회원의 지금 역할 (목록에 '현재'로 표시)
+  current?: T; // 회원의 지금 역할 (목록에 '현재'로 표시)
   options: RoleOption<T>[];
   onChange: (value: T) => void;
   label: string; // 스크린리더용 이름 (예: '고객하나 역할 선택')
@@ -110,7 +110,7 @@ export function RoleSelect<T extends string>({ value, current, options, onChange
     }
   };
 
-  const changed = value !== current;
+  const changed = current !== undefined && value !== current;
 
   return (
     <>

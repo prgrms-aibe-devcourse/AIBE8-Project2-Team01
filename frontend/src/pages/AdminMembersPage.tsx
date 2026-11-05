@@ -16,6 +16,8 @@ import { friendly } from '../lib/messages';
 import { AdminNav } from './AdminBaseDataPages';
 
 const SORTS: { key: string; label: string }[] = [{ key: 'id', label: 'ID' }, { key: 'nickname', label: '닉네임' }, { key: 'email', label: '이메일' }, { key: 'createdAt', label: '가입일' }];
+const SORT_OPTIONS = SORTS.map(({ key, label }) => ({ value: key, label }));
+const ORDER_OPTIONS = [{ value: 'asc', label: '오름차순' }, { value: 'desc', label: '내림차순' }];
 const ROLE_OPTIONS = (['USER', 'EXPERT', 'ADMIN'] as MemberRole[]).map((r) => ({ value: r, label: roleLabel(r) }));
 
 export function AdminMembersPage({ params }: { params: URLSearchParams }) {
@@ -42,54 +44,58 @@ export function AdminMembersPage({ params }: { params: URLSearchParams }) {
   });
 
   return (
-    <main className="page admin">
+    <main className="page admin admin-members">
       <div className="admin-layout">
         <AdminNav current="members" />
-        <section className="col gap">
+        <section className="col gap admin-panel">
           <div className="row between wrap">
             <div className="col"><h1 className="page-title">회원 관리</h1><small className="sub">탈퇴하지 않은 회원만 보여요{list.state.kind === 'ok' ? ` · 총 ${list.state.data.totalElements}명` : ''}</small></div>
-            <div className="row">
+            <div className="row admin-sort-controls">
               <span className="sub">정렬</span>
-              <select className="input sm" value={sortBy} onChange={(e) => go(1, e.target.value)}>{SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}</select>
-              <select className="input sm" value={order} onChange={(e) => go(1, sortBy, e.target.value)}><option value="asc">오름차순</option><option value="desc">내림차순</option></select>
+              <RoleSelect value={sortBy} options={SORT_OPTIONS} label="정렬 기준" onChange={(value) => go(1, value)} />
+              <RoleSelect value={order} options={ORDER_OPTIONS} label="정렬 방향" onChange={(value) => go(1, sortBy, value)} />
             </div>
           </div>
+          <div className="col gap">
           <LoadBox load={list.state} title="회원 목록을 불러오지 못했어요" onRetry={() => list.reload()}>
             {(data) => (
               <>
                 <div className="card table-card">
-                  <table className="tbl stack-m member-tbl">
-                    <thead><tr><th>ID</th><th>이메일</th><th>닉네임</th><th>전화번호</th><th>역할</th><th>관리</th></tr></thead>
-                    <tbody>
-                      {data.content.map((m) => {
-                        const self = m.id === me?.id;
-                        const sel = picked[m.id] ?? m.role;
-                        return (
-                          <tr key={m.id}>
-                            <td>{m.id}</td><td className="ellipsis-c">{m.email}</td>
-                            <td>{m.nickname}{self && <small className="sub"> (나)</small>}</td>
-                            <td>{formatPhone(m.phone)}</td>
-                            <td><span className={`role-tag ${m.role === 'EXPERT' ? 'expert' : m.role === 'ADMIN' ? 'admin' : 'user'}`}>{roleLabel(m.role)}</span></td>
-                            <td className="act-c">
-                              {self ? <small className="sub">본인 권한은 바꿀 수 없어요</small> : (
-                                <span className="row">
-                                  <RoleSelect value={sel} current={m.role} options={ROLE_OPTIONS} label={`${m.nickname} 역할 선택`} onChange={(r) => setPicked((p) => ({ ...p, [m.id]: r }))} />
-                                  <button type="button" className="btn small" disabled={sel === m.role} onClick={() => { setErr(''); setAct({ kind: 'role', m, role: sel }); }}>변경</button>
-                                  <button type="button" className="btn small danger-ghost" onClick={() => { setErr(''); setAct({ kind: 'delete', m }); }}>탈퇴</button>
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                  <div className="admin-table-scroll" tabIndex={0} role="region" aria-label="관리 목록">
+                    <table className="tbl stack-m member-tbl">
+                      <thead><tr><th>ID</th><th>이메일</th><th>닉네임</th><th>전화번호</th><th>역할</th><th>관리</th></tr></thead>
+                      <tbody>
+                        {data.content.map((m) => {
+                          const self = m.id === me?.id;
+                          const sel = picked[m.id] ?? m.role;
+                          return (
+                            <tr key={m.id}>
+                              <td>{m.id}</td><td className="ellipsis-c">{m.email}</td>
+                              <td>{m.nickname}{self && <small className="sub"> (나)</small>}</td>
+                              <td>{formatPhone(m.phone)}</td>
+                              <td><span className={`role-tag ${m.role === 'EXPERT' ? 'expert' : m.role === 'ADMIN' ? 'admin' : 'user'}`}>{roleLabel(m.role)}</span></td>
+                              <td className="act-c">
+                                {self ? <small className="sub">본인 권한은 바꿀 수 없어요</small> : (
+                                  <span className="row">
+                                    <RoleSelect value={sel} current={m.role} options={ROLE_OPTIONS} label={`${m.nickname} 역할 선택`} onChange={(r) => setPicked((p) => ({ ...p, [m.id]: r }))} />
+                                    <button type="button" className="btn small" disabled={sel === m.role} onClick={() => { setErr(''); setAct({ kind: 'role', m, role: sel }); }}>변경</button>
+                                    <button type="button" className="btn small danger-ghost" onClick={() => { setErr(''); setAct({ kind: 'delete', m }); }}>탈퇴</button>
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
                 <Pager page={data.pageNumber} totalPages={data.totalPages} onPage={(p) => go(p)} />
                 <small className="sub center">10명씩 · {data.pageNumber} / {Math.max(1, data.totalPages)} 페이지</small>
               </>
             )}
           </LoadBox>
+          </div>
         </section>
       </div>
       {act && (

@@ -8,19 +8,19 @@
 
 | 계정 | 역할과 시연 내용 |
 | --- | --- |
-| `admin@demo.efy.example` | 관리자 1명. 회원·카테고리·지역 관리 |
-| `customer1@demo.efy.example` | 견적 대기 요청 3개와 찜 4개 |
-| `customer2@demo.efy.example` | 요청 5개에 각각 견적 3개. 비교 화면과 찜 4개 |
-| `customer3@demo.efy.example` | 매칭된 요청 4개와 채팅방 4개. 찜 4개 |
-| `customer4@demo.efy.example` | 진행 중 요청 4개와 취소 요청 2개. 찜 3개 |
-| `customer5@demo.efy.example` | 활동이 없는 신규 사용자. 빈 화면과 새 요청 작성 |
-| `expert1@demo.efy.example` ~ `expert3@demo.efy.example` | 이사 고수 3명 |
-| `expert4@demo.efy.example` ~ `expert6@demo.efy.example` | 입주 청소 고수 3명 |
-| `expert7@demo.efy.example` ~ `expert9@demo.efy.example` | 개발 외주 고수 3명 |
-| `expert10@demo.efy.example` | 전국 활동 개발 고수. 견적을 새로 보내는 시연 |
-| `withdraw@demo.efy.example` | 정상 상태로 시작하는 탈퇴 전용 계정. 다른 활동과 연결하지 않음 |
+| `admin@example.com` | 관리자 1명. 회원·카테고리·지역 관리 |
+| `haneul123@example.com` | 견적 대기 요청 3개와 찜 4개 |
+| `jiuzzzang@example.com` | 요청 5개에 각각 견적 3개. 비교 화면과 찜 4개 |
+| `minseo.park@example.com` | 매칭된 요청 4개와 채팅방 4개. 찜 4개 |
+| `lovesaltbread@example.com` | 진행 중 요청 4개와 취소 요청 2개. 찜 3개 |
+| `customer@example.com` | 활동이 없는 신규 사용자. 빈 화면과 새 요청 작성 |
+| `expert@example.com`, `seojun.move@example.com`, `doyoon.move@example.com` | 이사 고수 3명 |
+| `subin.clean@example.com`, `jian.clean@example.com`, `hayoon.clean@example.com` | 입주 청소 고수 3명 |
+| `jio.web@example.com`, `hyunwoo.dev@example.com`, `seoa.design@example.com` | 개발 외주 고수 3명 |
+| `yunseo.web@example.com` | 전국 활동 개발 고수. 견적을 새로 보내는 시연 |
+| `daeun.choi@example.com` | 정상 상태로 시작하는 탈퇴 전용 계정. 다른 활동과 연결하지 않음 |
 
-기존 계정 17개와 고수 프로필 10개에 홈 예시 고수 20명을 추가해 총 계정 37개와 프로필 30개를 생성한다. 추가 계정은 `profile101@example.com`~`profile120@example.com`이며 비밀번호는 동일하게 `12341234`다. 프로필 사진 30개와 작업 사진 32개도 연결한다. 자세한 매핑은 `docs/seed-profile-images.md`에서 확인한다. 고수의 제공 서비스·활동 지역은 견적을 보낸 요청과 맞춘다. 서울 전체 활동, 개별 시군구, 경기 전체 활동, 전국 활동을 포함한다.
+기존 계정 17개와 고수 프로필 10개에 홈 예시 고수 20명을 추가해 프로필 30개를 생성한다. 프로필에 연결된 계정의 비밀번호는 동일하게 `12341234`다. 찜 집계에 사용하는 회원 13명을 포함하면 총 계정은 50개다. 프로필 사진 30개와 작업 사진 32개도 연결한다. 자세한 매핑은 `docs/seed-profile-images.md`에서 확인한다. 고수의 제공 서비스·활동 지역은 견적을 보낸 요청과 맞춘다. 서울 전체 활동, 개별 시군구, 경기 전체 활동, 전국 활동을 포함한다.
 
 | 데이터 | 수량 |
 | --- | ---: |

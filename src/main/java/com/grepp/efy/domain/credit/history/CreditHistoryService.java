@@ -15,7 +15,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -48,8 +51,15 @@ public class CreditHistoryService {
         Page<CreditHistory> page = (type == null)
                 ? creditHistoryRepository.findByCreditWalletId(wallet.getId(), pageable)
                 : creditHistoryRepository.findByCreditWalletIdAndHistoryType(wallet.getId(), type, pageable);
+        List<Long> quoteIds = page.stream().map(CreditHistory::getQuoteId)
+                .filter(Objects::nonNull).distinct().toList();
+        Map<Long, String> customers = new HashMap<>();
+        if (!quoteIds.isEmpty()) {
+            creditHistoryRepository.findQuoteCustomers(quoteIds)
+                    .forEach(row -> customers.put(row.getQuoteId(), row.getCustomerNickname()));
+        }
         List<CreditHistoryResponse> content = page.getContent().stream()
-                .map(CreditHistoryResponse::from)
+                .map(history -> CreditHistoryResponse.from(history, customers.get(history.getQuoteId())))
                 .toList();
         return PageResponse.of(page, content);
     }

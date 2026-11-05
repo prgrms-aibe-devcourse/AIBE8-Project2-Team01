@@ -8,6 +8,7 @@ import { CATEGORIES, getSub } from '../data/categoryMeta.js';
 import { createServiceRequest, getQuestions } from '../api/mvp';
 import { useSession } from '../auth/session';
 import { useToast } from './toast';
+import { useLoginPrompt } from './loginPrompt';
 import { navigate } from '../hooks/useHashRoute';
 import { useSingleFlight } from '../hooks/useSingleFlight';
 import { friendly } from '../lib/messages';
@@ -27,6 +28,7 @@ export function readSavedDraft() {
 // 질문 번호는 GET /api/questions 응답을 표시 순서대로 맞춰 쓰고 응답을 받지 못하면 기준 데이터 번호를 쓴다.
 export default function RequestSheet({ open, draft, setDraft, onClose }) {
   const { status, me } = useSession();
+  const askLogin = useLoginPrompt();
   const toast = useToast();
   const { busy, run } = useSingleFlight();
   const [answers, setAnswers] = useState({});
@@ -55,6 +57,8 @@ export default function RequestSheet({ open, draft, setDraft, onClose }) {
     requestAnimationFrame(() => titleRef.current?.focus());
 
     const onKey = (e) => {
+      // 시트 위에 로그인 안내 같은 모달이 떠 있으면 키 처리는 모달에 맡긴다
+      if (document.querySelector('.dim')) return;
       if (e.key === 'Escape') onClose();
       if (e.key === 'Tab') {
         const nodes = panelRef.current?.querySelectorAll(
@@ -106,14 +110,19 @@ export default function RequestSheet({ open, draft, setDraft, onClose }) {
       document.getElementById(target)?.focus();
       return;
     }
-    // 로그인하지 않았으면 작성한 내용을 보관하고 로그인 화면으로 보낸다
+    // 로그인하지 않았으면 안내 모달을 띄운다. 로그인·회원가입으로 갈 때만 작성한 내용을 보관하고 돌아오면 다시 연다
     if (status !== 'member') {
-      try {
-        sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ subId: draft.sub.id, region: draft.region, answers }));
-      } catch {
-        // 저장할 수 없으면 로그인 뒤 다시 작성한다
-      }
-      navigate('/login', { redirect: '/?resume=request' });
+      askLogin({
+        message: '요청서는 로그인한 뒤에 보낼 수 있어요.\n작성한 내용은 보관했다가 로그인하면 다시 열어 드려요.',
+        redirect: '/?resume=request',
+        onLeave: () => {
+          try {
+            sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ subId: draft.sub.id, region: draft.region, answers }));
+          } catch {
+            // 저장할 수 없으면 로그인 뒤 다시 작성한다
+          }
+        },
+      });
       return;
     }
     if (me?.role !== 'USER') {
