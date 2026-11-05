@@ -37,6 +37,39 @@ class TestAccountSeedTests {
     @Autowired ObjectMapper objectMapper;
 
     @Test
+    void 커뮤니티_게시글과_댓글의_반복_문구가_없다() {
+        assertEquals(20, count("select count(distinct title) from post where id<=20"));
+        assertEquals(20, count("select count(distinct content) from post where id<=20"));
+        assertEquals(40, count("select count(distinct content) from post_comment where post_id<=20"));
+        assertEquals(0, count("select count(*) from post where title like '팀원%'"));
+        assertEquals(5, count("select count(distinct f.storage_path) from post p join post_images pi on p.id=pi.post_id and pi.sort_order=0 join file f on pi.file_id=f.id where p.id<=20 and p.board_type='TIP'"));
+    }
+
+    @Test
+    void MariaDB_예시_고수의_비밀번호_해시가_안내와_일치한다() throws Exception {
+        String sql = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/resources/data-mariadb.sql"));
+        java.util.regex.Matcher hashes = java.util.regex.Pattern.compile("VALUES \\('profile[0-9]+@example.com','([^']+)'").matcher(sql);
+        int found = 0;
+        while (hashes.find()) {
+            assertTrue(passwordEncoder.matches("12341234", hashes.group(1)));
+            found++;
+        }
+        assertEquals(20, found);
+    }
+
+    @Test
+    void 자연스러운_닉네임과_기존_고수의_사진_연결을_확인한다() {
+        assertEquals("다민고객", jdbcTemplate.queryForObject("select nickname from member where email='customer11@example.com'", String.class));
+        assertEquals("민서고수", jdbcTemplate.queryForObject("select nickname from member where email='expert11@example.com'", String.class));
+        assertEquals(0, count("select count(*) from member where nickname like '팀원%'"));
+        assertEquals(count("select count(*) from member"), count("select count(distinct nickname) from member"));
+        assertEquals(32, count("select count(*) from expert_profile ep join member m on ep.member_id=m.id join file f on m.image_id=f.id and f.uploader_id=m.id where f.visibility='PUBLIC' and f.deleted_at is null"));
+        assertEquals(34, count("select count(*) from work_image"));
+        assertEquals(0, count("select count(*) from work_image wi join expert_profile ep on wi.expert_profile_id=ep.id join file f on wi.file_id=f.id where ep.member_id<>f.uploader_id or f.visibility<>'PUBLIC' or f.deleted_at is not null"));
+        assertEquals(0, count("select count(*) from post_images pi join post p on pi.post_id=p.id join file f on pi.file_id=f.id where p.member_id<>f.uploader_id or f.visibility<>'PUBLIC' or f.deleted_at is not null"));
+    }
+
+    @Test
     void 예시_고수_20명의_사진과_서비스와_지역을_조회한다() throws Exception {
         for (String nickname : List.of("한결이사", "반짝홈케어", "윤선생 영어", "소리공방", "코드메이트", "바른설비", "온집 인테리어", "담다 스냅", "정리하는 하루", "김코치 피트니스", "문고리 수리", "해운대 이사짐센터", "커리어노트", "그림숲 아틀리에", "새길 노무", "마음쉼표 상담", "한빛 카케어", "맑은창 줄눈", "하늘 웨딩플래너", "오늘의 요가")) {
             Map<String, Object> profile = jdbcTemplate.queryForMap("select ep.id, m.id member_id, f.id file_id from expert_profile ep join member m on ep.member_id=m.id join file f on m.image_id=f.id and f.uploader_id=m.id where m.nickname=?", nickname);

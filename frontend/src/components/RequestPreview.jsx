@@ -1,3 +1,4 @@
+import { Avatar } from './ui';
 import { sampleQuotesFor } from '../data/sampleData.js';
 import { formatWon, regionLabel } from '../lib/homeFormat.js';
 import { expertFace, getSub, objectSrc } from '../data/categoryMeta.js';
@@ -32,7 +33,7 @@ export default function RequestPreview({ draft }) {
         <p className="preview-arrived">
           <span className="pq-stack" aria-hidden="true">
             {quotes.map(({ expert }) => (
-              <img key={expert.id} src={expertFace(expert.id)} alt="" width="28" height="28" />
+              <Avatar key={expert.id} url={expertFace(expert.id)} size={28} />
             ))}
           </span>
           <span>
@@ -42,7 +43,7 @@ export default function RequestPreview({ draft }) {
         <ul>
           {quotes.map(({ expert, price }, i) => (
             <li key={expert.id} className="pq" style={{ '--i': i }}>
-              <img className="pq-avatar" src={expertFace(expert.id)} alt="" width="40" height="40" />
+              <Avatar url={expertFace(expert.id)} size={40} />
               <p className="pq-name">
                 {expert.nickname}
                 <span>경력 {expert.careerYears}년</span>

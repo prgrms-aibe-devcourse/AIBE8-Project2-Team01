@@ -1,3 +1,4 @@
+import { Avatar } from './ui';
 import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronLeft, Pause, Play, Send } from 'lucide-react';
 import { sampleQuotesFor } from '../data/sampleData.js';
@@ -144,7 +145,7 @@ export default function FlowDemo({ draft }) {
             <p className="fr-sub">서비스와 지역이 맞는 고수에게 전달했습니다</p>
             <span className="sent-stack">
               {quotes.map(({ expert }, i) => (
-                <img key={expert.id} src={expertFace(expert.id)} alt="" width="36" height="36" style={{ '--i': i }} />
+                <Avatar key={expert.id} url={expertFace(expert.id)} size={36} />
               ))}
             </span>
           </div>
@@ -158,7 +159,7 @@ export default function FlowDemo({ draft }) {
             <ul>
               {quotes.map(({ expert, price }, i) => (
                 <li key={expert.id} className={i === 0 ? 'fl-row tap-target is-first' : 'fl-row'} style={{ '--i': i }}>
-                  <img src={expertFace(expert.id)} alt="" width="36" height="36" />
+                  <Avatar url={expertFace(expert.id)} size={36} />
                   <span className="fl-name">
                     {expert.nickname}
                     <small>경력 {expert.careerYears}년</small>
@@ -178,7 +179,7 @@ export default function FlowDemo({ draft }) {
               견적 상세
             </p>
             <div className="fd-profile">
-              <img src={expertFace(picked.expert.id)} alt="" width="64" height="64" />
+              <Avatar url={expertFace(picked.expert.id)} size={64} />
               <div>
                 <p className="fr-title">{picked.expert.nickname}</p>
                 <p className="fr-sub">경력 {picked.expert.careerYears}년</p>
@@ -199,7 +200,7 @@ export default function FlowDemo({ draft }) {
         {step === 4 && (
           <div className="scene scene-chat" key={sceneKey} aria-hidden="true">
             <p className="fc-head">
-              <img src={expertFace(picked.expert.id)} alt="" width="28" height="28" />
+              <Avatar url={expertFace(picked.expert.id)} size={28} />
               {picked.expert.nickname}
             </p>
             <p className="fc-system">

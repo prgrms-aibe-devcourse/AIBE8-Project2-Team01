@@ -126,4 +126,4 @@ npm run dev
 - `src/data/sampleData.js`: 메인의 고수·게시글 예시 (시안용)
 - `src/data/categoryMeta.js`: 분야별 입체 아이콘, 상황별 묶음, 서버 응답 이름으로 아이콘 찾기
 - `public/brand/`: 팀 로고 투명 PNG와 파비콘
-- `public/efy-assets/`: 입체 아이콘(`icons/`, 화면용 `icons-256/`)과 가상 인물 프로필 사진(`portraits/`, 작업 장면 v2)과 작은 아바타용 얼굴 사본(`faces/`)
+- `public/efy-assets/`: 입체 아이콘(`icons-256/`)과 이미지 출처 안내. 고수 사진은 `src/data/expertImages.json`의 Supabase 공개 URL 사용

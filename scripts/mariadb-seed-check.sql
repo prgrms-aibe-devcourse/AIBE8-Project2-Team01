@@ -77,6 +77,10 @@ UNION ALL SELECT 'withdraw_activity', SUM(n) FROM (
 ) withdraw_check;
 
 -- 홈 예시 고수의 사진과 작업 사진 연결 검사
-SELECT 'profile_photos' AS item, 20 AS expected, COUNT(*) AS actual FROM member m JOIN file f ON m.image_id=f.id WHERE f.storage_path LIKE 'seed/expert-profiles/%'
+SELECT 'profile_photos' AS item, 20 AS expected, COUNT(*) AS actual FROM member m JOIN file f ON m.image_id=f.id WHERE f.storage_path LIKE 'seed/expert-portraits/%'
 UNION ALL SELECT 'work_images', 16, COUNT(*) FROM work_image wi JOIN file f ON wi.file_id=f.id WHERE f.storage_path LIKE 'seed/expert-work/%';
 SELECT 'image_owner' AS violations, COUNT(*) AS actual FROM work_image wi JOIN expert_profile ep ON wi.expert_profile_id=ep.id JOIN file f ON wi.file_id=f.id WHERE ep.member_id<>f.uploader_id;
+
+SELECT 'all_profile_photos' AS item, 30 AS expected, COUNT(*) AS actual FROM expert_profile ep JOIN member m ON ep.member_id=m.id JOIN file f ON m.image_id=f.id AND f.uploader_id=m.id AND f.visibility='PUBLIC' AND f.deleted_at IS NULL;
+SELECT 'all_work_images' AS item, 32 AS expected, COUNT(*) AS actual FROM work_image;
+SELECT 'post_image_owner' AS violations, COUNT(*) AS actual FROM post_images pi JOIN post p ON pi.post_id=p.id JOIN file f ON pi.file_id=f.id WHERE p.member_id<>f.uploader_id OR f.visibility<>'PUBLIC' OR f.deleted_at IS NOT NULL;
