@@ -67,7 +67,7 @@ class ChatRoomListTests {
                 .andExpect(jsonPath("$.content[0].partner.memberId").value(expertMemberId.intValue()))
                 .andExpect(jsonPath("$.content[0].partnerLeft").value(false))
                 .andExpect(jsonPath("$.content[0].partner.nickname").value("매칭고수"))
-                .andExpect(jsonPath("$.content[0].partner.profileImageUrl").isEmpty())
+                .andExpect(jsonPath("$.content[0].partner.profileImageUrl").isNotEmpty())
                 .andExpect(jsonPath("$.content[0].lastMessagePreview").value("테스트 메시지"))
                 .andExpect(jsonPath("$.content[0].lastMessageAt").isNotEmpty())
                 .andExpect(jsonPath("$.content[0].createdAt").isNotEmpty());
