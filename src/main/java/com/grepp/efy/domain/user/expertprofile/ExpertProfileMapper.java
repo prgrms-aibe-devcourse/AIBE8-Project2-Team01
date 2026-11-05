@@ -32,7 +32,8 @@ public interface ExpertProfileMapper {
     ExpertProfile toEntity(ExpertProfileCreateRequest expertProfileRequest);
 
     @Mapping(target = "nickname", source = "expertProfile.member.nickname")
-    PublicExpertSummary toPublicSummary(ExpertProfile expertProfile, String imageUrl, String representativeWorkImageUrl);
+    PublicExpertSummary toPublicSummary(ExpertProfile expertProfile, String imageUrl, String representativeWorkImageUrl,
+                                        long bookmarkCount, long weeklyBookmarkCount);
 
     @Mapping(target = "nickname", source = "expertProfile.member.nickname")
     @Mapping(target = "imageId", source = "expertProfile.member.image.id")

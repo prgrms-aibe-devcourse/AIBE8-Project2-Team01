@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,17 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
           and b.expertProfile.member.deletedAt is null
         """)
     long countActive(@Param("memberId") Long memberId);
+
+    // [고수 프로필 ID, 누적 찜 수, since 이후 찜 수] — 공개 고수 목록용. 고수마다 세지 않도록 group by 한 번으로
+    // 활성 찜만, 탈퇴한 회원이 남긴 찜은 뺀다. 찜이 없는 고수는 행이 없다
+    @Query("""
+        select b.expertProfile.id, count(b), sum(case when b.bookmarkedAt >= :since then 1 else 0 end)
+        from Bookmark b
+        where b.expertProfile.id in :ids and b.active = true and b.member.deletedAt is null
+        group by b.expertProfile.id
+        """)
+    List<Object[]> countByExpertProfiles(@Param("ids") Collection<Long> expertProfileIds,
+                                         @Param("since") LocalDateTime since);
 
     // 활성일 때만 비활성으로 바꾸고 바뀐 행 수를 돌려준다. 동시에 두 번 취소해도 한 번만 1이 나온다
     @Modifying

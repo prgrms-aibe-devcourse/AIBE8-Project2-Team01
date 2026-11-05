@@ -16,6 +16,8 @@ public record PublicExpertSummary(
         SecondCategoryResponse primaryCategory,
         boolean nationwide,
         Set<FirstRegionResponse> wholeRegions,
-        Set<SecondRegionResponse> regions
+        Set<SecondRegionResponse> regions,
+        long bookmarkCount,       // 누적 찜 수
+        long weeklyBookmarkCount  // 최근 7일 찜 수
 ) {
 }
