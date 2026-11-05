@@ -2530,13 +2530,13 @@ WHERE email = 'profile119@example.com'
                   WHERE member_id = (SELECT id FROM member WHERE email = 'profile119@example.com'));
 INSERT INTO file (uploader_id, storage_path, original_name, content_type, size, visibility, created_at)
 VALUES ((SELECT id FROM member WHERE email = 'profile119@example.com'),
-        'seed/expert-portraits/23fc54320fddad75b686b37b70e15606ce25e3bed139a01d0765ba581b96465d.jpg', 'expert-119.jpg',
-        'image/jpeg', 206410, 'PUBLIC', CURRENT_TIMESTAMP);
+        'seed/expert-portraits/1b8f1285627f6d0db896d8bf6a61d7af770a50b3bc1750080173bae5c0cf1121.jpg', 'expert-119.jpg',
+        'image/jpeg', 303645, 'PUBLIC', CURRENT_TIMESTAMP);
 UPDATE member
 SET image_id=(SELECT id
               FROM file
               WHERE storage_path =
-                    'seed/expert-portraits/23fc54320fddad75b686b37b70e15606ce25e3bed139a01d0765ba581b96465d.jpg')
+                    'seed/expert-portraits/1b8f1285627f6d0db896d8bf6a61d7af770a50b3bc1750080173bae5c0cf1121.jpg')
 WHERE email = 'profile119@example.com';
 INSERT INTO member (email, password, nickname, phone, role, created_at, token_version)
 VALUES ('profile120@example.com', '$2a$10$N8on.wPrFPr5oauwmXJQeeZoSnGoNxkC6q4I7eHMxNy88fcZdaO6C', '오늘의 요가',

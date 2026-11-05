@@ -1,7 +1,8 @@
 -- 시드 적용 직후 실행합니다. count 행은 기대값과 일치하고 violations 행은 모두 0이어야 합니다.
-SELECT 'members' AS item, 37 AS expected, COUNT(*) AS actual FROM member
+SELECT 'members' AS item, 50 AS expected, COUNT(*) AS actual FROM member
 UNION ALL SELECT 'admins', 1, COUNT(*) FROM member WHERE role='ADMIN'
-UNION ALL SELECT 'users_with_withdraw', 6, COUNT(*) FROM member WHERE role='USER'
+UNION ALL SELECT 'users_with_withdraw', 6, COUNT(*) FROM member WHERE role='USER' AND email NOT IN ('jian.choi@example.com', 'weekendwalk@example.com', 'dohyun.park@example.com', 'mocha.cup@example.com', 'sua.lee@example.com', 'clear.today@example.com', 'jimin.yoon@example.com', 'star.collector@example.com', 'hajun.jung@example.com', 'greencloud@example.com', 'seojin.han@example.com', 'slow.afternoon@example.com', 'dal.kong@example.com')
+UNION ALL SELECT 'bookmark_demo_users', 13, COUNT(*) FROM member WHERE role='USER' AND email IN ('jian.choi@example.com', 'weekendwalk@example.com', 'dohyun.park@example.com', 'mocha.cup@example.com', 'sua.lee@example.com', 'clear.today@example.com', 'jimin.yoon@example.com', 'star.collector@example.com', 'hajun.jung@example.com', 'greencloud@example.com', 'seojin.han@example.com', 'slow.afternoon@example.com', 'dal.kong@example.com')
 UNION ALL SELECT 'experts', 30, COUNT(*) FROM expert_profile
 UNION ALL SELECT 'first_categories', 11, COUNT(*) FROM first_category
 UNION ALL SELECT 'second_categories', 108, COUNT(*) FROM second_category
@@ -11,12 +12,12 @@ UNION ALL SELECT 'requests', 18, COUNT(*) FROM service_request
 UNION ALL SELECT 'answers', 72, COUNT(*) FROM request_answer
 UNION ALL SELECT 'quotes', 27, COUNT(*) FROM quote
 UNION ALL SELECT 'reservations', 27, COUNT(*) FROM credit_reservation
-UNION ALL SELECT 'used_credits', 4, COUNT(*) FROM credit_history
+UNION ALL SELECT 'used_credits', 7, COUNT(*) FROM credit_history
 UNION ALL SELECT 'posts', 15, COUNT(*) FROM post
-UNION ALL SELECT 'comments', 30, COUNT(*) FROM post_comment
-UNION ALL SELECT 'bookmarks', 15, COUNT(*) FROM bookmark
-UNION ALL SELECT 'rooms', 4, COUNT(*) FROM chat_room
-UNION ALL SELECT 'messages', 24, COUNT(*) FROM chat_message;
+UNION ALL SELECT 'comments', 42, COUNT(*) FROM post_comment
+UNION ALL SELECT 'bookmarks', 78, COUNT(*) FROM bookmark
+UNION ALL SELECT 'rooms', 7, COUNT(*) FROM chat_room
+UNION ALL SELECT 'messages', 30, COUNT(*) FROM chat_message;
 
 SELECT 'post_like_count' AS violations, COUNT(*) AS actual FROM post p
 WHERE p.like_count <> (SELECT COUNT(*) FROM post_like l WHERE l.post_id=p.id)
@@ -42,7 +43,7 @@ AND NOT EXISTS (SELECT 1 FROM expert_profile_regions er WHERE er.expert_profile_
 AND NOT EXISTS (SELECT 1 FROM expert_profile_whole_regions ew WHERE ew.expert_profile_id=ep.id AND ew.whole_regions_id=sr.first_region_id)
 UNION ALL SELECT 'wallet_balance', COUNT(*) FROM credit_wallet w
 JOIN member wm ON wm.id=w.member_id
-WHERE w.balance <> (CASE WHEN wm.email LIKE 'profile%@example.com' THEN 20 ELSE 50 END) + COALESCE((SELECT SUM(h.amount) FROM credit_history h WHERE h.credit_wallet_id=w.id),0)
+WHERE w.balance <> (CASE WHEN wm.email = 'expert@example.com' THEN 10 WHEN wm.email IN ('hangyeol.move@example.com', 'sparkle.home@example.com', 'yoon.english@example.com', 'sori.music@example.com', 'codemate@example.com', 'bareun.fix@example.com', 'onjip@example.com', 'damda.snap@example.com', 'tidyday@example.com', 'kimcoach@example.com', 'doorknob@example.com', 'haeundae.move@example.com', 'career.note@example.com', 'forest.art@example.com', 'saegil@example.com', 'mindcomma@example.com', 'hanbit.car@example.com', 'cleargrout@example.com', 'haneul.wed@example.com', 'pilates.today@example.com') THEN 20 ELSE 50 END) + COALESCE((SELECT SUM(h.amount) FROM credit_history h WHERE h.credit_wallet_id=w.id),0)
 OR w.balance < COALESCE((SELECT SUM(r.amount) FROM credit_reservation r WHERE r.credit_wallet_id=w.id AND r.reservation_status='RESERVED'),0)
 UNION ALL SELECT 'quote_reservation', COUNT(*) FROM quote q
 LEFT JOIN credit_reservation r ON r.quote_id=q.id
@@ -78,7 +79,10 @@ UNION ALL SELECT 'withdraw_activity', SUM(n) FROM (
 
 -- 홈 예시 고수의 사진과 작업 사진 연결 검사
 SELECT 'profile_photos' AS item, 20 AS expected, COUNT(*) AS actual FROM member m JOIN file f ON m.image_id=f.id WHERE f.storage_path LIKE 'seed/expert-portraits/%'
-UNION ALL SELECT 'work_images', 16, COUNT(*) FROM work_image wi JOIN file f ON wi.file_id=f.id WHERE f.storage_path LIKE 'seed/expert-work/%';
+UNION ALL SELECT 'home_expert_work_images', 16, COUNT(*)
+FROM work_image wi JOIN expert_profile ep ON wi.expert_profile_id=ep.id
+JOIN member m ON m.id=ep.member_id
+WHERE m.email REGEXP '^profile1(0[1-9]|1[0-9]|20)@example[.]com$';
 SELECT 'image_owner' AS violations, COUNT(*) AS actual FROM work_image wi JOIN expert_profile ep ON wi.expert_profile_id=ep.id JOIN file f ON wi.file_id=f.id WHERE ep.member_id<>f.uploader_id;
 
 SELECT 'all_profile_photos' AS item, 30 AS expected, COUNT(*) AS actual FROM expert_profile ep JOIN member m ON ep.member_id=m.id JOIN file f ON m.image_id=f.id AND f.uploader_id=m.id AND f.visibility='PUBLIC' AND f.deleted_at IS NULL;

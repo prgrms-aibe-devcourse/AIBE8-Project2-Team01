@@ -63,7 +63,7 @@ class TestAccountSeedTests {
         assertEquals("민서고수", jdbcTemplate.queryForObject("select nickname from member where email='expert11@example.com'", String.class));
         assertEquals(0, count("select count(*) from member where nickname like '팀원%'"));
         assertEquals(count("select count(*) from member"), count("select count(distinct nickname) from member"));
-        assertEquals(32, count("select count(*) from expert_profile ep join member m on ep.member_id=m.id join file f on m.image_id=f.id and f.uploader_id=m.id where f.visibility='PUBLIC' and f.deleted_at is null"));
+        assertEquals(28, count("select count(*) from expert_profile ep join member m on ep.member_id=m.id join file f on m.image_id=f.id and f.uploader_id=m.id where f.visibility='PUBLIC' and f.deleted_at is null"));
         assertEquals(34, count("select count(*) from work_image"));
         assertEquals(0, count("select count(*) from work_image wi join expert_profile ep on wi.expert_profile_id=ep.id join file f on wi.file_id=f.id where ep.member_id<>f.uploader_id or f.visibility<>'PUBLIC' or f.deleted_at is not null"));
         assertEquals(0, count("select count(*) from post_images pi join post p on pi.post_id=p.id join file f on pi.file_id=f.id where p.member_id<>f.uploader_id or f.visibility<>'PUBLIC' or f.deleted_at is not null"));
@@ -113,8 +113,8 @@ class TestAccountSeedTests {
 
     @Test
     void 신규_크레딧_상품은_기존_시드_ID와_겹치지_않는다() {
-        jdbcTemplate.update("insert into credit_product (name, price, credit_amount, bonus_credit, is_active, created_at) values (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
-                "신규 상품 검증", 1000, 1, 0, true);
+        jdbcTemplate.update("insert into credit_product (name, price, credit_amount, is_active, created_at) values (?, ?, ?, ?, CURRENT_TIMESTAMP)",
+                "신규 상품 검증", 1000, 1, true);
         assertEquals(5L, jdbcTemplate.queryForObject("select id from credit_product where name = ?", Long.class, "신규 상품 검증"));
     }
 
