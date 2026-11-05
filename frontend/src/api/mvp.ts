@@ -69,7 +69,7 @@ export interface CreditBalance { balance: number; reservedCredit: number; availa
 export interface CreditProduct { id: number; name: string; price: number; creditAmount: number }
 export interface CreditReservation { quoteId: number; amount: number; reservedAt: string }
 export type CreditHistoryType = 'CHARGE' | 'USE' | 'REFUND';
-export interface CreditHistory { id: number; historyType: CreditHistoryType; amount: number; balanceAfter: number; paymentId: number | null; quoteId: number | null; createAt: string }
+export interface CreditHistory { id: number; historyType: CreditHistoryType; amount: number; balanceAfter: number; paymentId: number | null; quoteId: number | null; customerNickname?: string | null; createAt: string }
 export const getCredit = () => request<CreditBalance>('/api/members/me/credit');
 export const getCreditProducts = () => request<CreditProduct[]>('/api/credit-products');
 export const getCreditReservations = () => request<CreditReservation[]>('/api/members/me/credit-reservations');
