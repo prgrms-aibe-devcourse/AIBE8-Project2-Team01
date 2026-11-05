@@ -2867,3 +2867,8 @@ main.page.admin {
   border-radius: calc(var(--r-tile) - 4px);
   object-fit: cover;
 }
+
+/* 원본 사진은 유지하고 작은 데모 아바타에서만 얼굴 쪽을 확대한다. */
+.avatar.is-face img { transform: scale(2); transform-origin: 50% 0; }
+
+.sent-stack .avatar + .avatar, .pq-stack .avatar + .avatar { margin-left: -8px; }

@@ -1,3 +1,4 @@
+import { Avatar } from './ui';
 import { Heart } from 'lucide-react';
 import { RISING_EXPERTS as RISING } from '../data/sampleData.js';
 import { expertFace } from '../data/categoryMeta.js';
@@ -28,7 +29,7 @@ export default function RisingExperts({ bookmarks, onToggleBookmark }) {
                   {i + 1}
                   <span className="sr-only">위</span>
                 </span>
-                <img className="rank-avatar" src={expertFace(e.id)} alt="" width="52" height="52" loading="lazy" />
+                <Avatar url={expertFace(e.id)} size={52} />
                 <div className="rank-body">
                   <p className="rank-name">
                     <a href={`#/experts/sample/${e.id}`}>{e.nickname}</a>

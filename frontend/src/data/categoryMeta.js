@@ -1,4 +1,5 @@
 import { FIRST_CATEGORIES } from './baseData.js';
+import expertImages from './expertImages.json';
 
 // 대분류마다 입체 오브젝트를 하나씩 정한다.
 // 아이콘은 public/efy-assets/icons의 생성 이미지를 쓴다. 화면에는 256px 사본(icons-256)을 쓴다.
@@ -19,10 +20,9 @@ const META = {
 // 기존 슬롯 이름과 efy-assets 파일 이름 연결 (efy-assets/README.md 표 기준)
 const ICON_FILE = { truck: 'moving-truck', paint_roller: 'paint-roller' };
 export const objectSrc = (name) => `/efy-assets/icons-256/${ICON_FILE[name] ?? name}.png`;
-// 시안용 가상 인물 사진 (AI 생성). 실제 고수 사진이 아니다.
-export const expertImage = (id) => `/efy-assets/portraits/expert-${id}.jpg`;
-// 작은 원형 아바타용 얼굴 사진. 프로필 v2는 작업 장면이라 원본을 줄이면 얼굴이 작아서 얼굴 주변을 따로 잘랐다.
-export const expertFace = (id) => `/efy-assets/faces/expert-${id}.jpg`;
+// 시안용 AI 인물 원본 한 장을 공유한다. 작은 아바타는 CSS로 원형 표시한다.
+export const expertImage = (id) => expertImages[id];
+export const expertFace = expertImage;
 
 export const CATEGORIES = FIRST_CATEGORIES.map((c) => ({ ...c, ...META[c.id] }));
 

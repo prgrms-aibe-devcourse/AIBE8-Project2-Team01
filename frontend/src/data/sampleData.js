@@ -99,7 +99,7 @@ export const SAMPLE_EXPERTS = [
     workImageCount: 18, joinedDaysAgo: 200, bookmarkGain7d: 31,
   },
   {
-    id: 120, nickname: '오늘의 요가', shortIntro: '소규모 그룹과 1:1 요가 수업', careerYears: 6,
+    id: 120, nickname: '오늘의 필라테스', shortIntro: '기구 필라테스와 1:1 자세 교정 수업', careerYears: 6,
     primaryCategoryId: 174, serviceCount: 1, nationwide: false, wholeRegions: [], regions: ['대구 수성구'],
     workImageCount: 10, joinedDaysAgo: 45, bookmarkGain7d: 24,
   },
