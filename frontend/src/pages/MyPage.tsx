@@ -113,6 +113,7 @@ export function MyPage() {
           <b className="card-title">관리</b>
           <div className="quick-grid">
             <a className="quick" href="#/admin/members">회원 관리</a>
+            <a className="quick" href="#/bookmarks">찜한 고수</a>
             <a className="quick" href="#/admin/categories">카테고리 관리</a>
             <a className="quick" href="#/admin/regions">지역 관리</a>
           </div>

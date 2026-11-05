@@ -17,13 +17,15 @@ import { friendly } from '../lib/messages';
 import { AdminNav } from './AdminBaseDataPages';
 
 const pageOf = (q: URLSearchParams) => Math.max(1, Number(q.get('page') ?? 1) || 1);
+import { RoleSelect } from '../components/RoleSelect';
+
+const ORDER_OPTIONS = [{ value: 'desc', label: '내림차순' }, { value: 'asc', label: '오름차순' }];
 const orderOf = (q: URLSearchParams) => (q.get('order') === 'asc' ? 'asc' : 'desc');
 
-function Head({ title, sub, right }: { title: string; sub: string; right?: JSX.Element }) {
+function Head({ title, sub }: { title: string; sub: string }) {
   return (
     <div className="row between wrap">
       <div className="col"><h1 className="page-title">{title}</h1><small className="sub">{sub}</small></div>
-      {right}
     </div>
   );
 }
@@ -72,52 +74,60 @@ export function AdminPostsPage({ params }: { params: URLSearchParams }) {
     <main className="page admin">
       <div className="admin-layout">
         <AdminNav current="posts" />
-        <section className="col gap">
-          <Head title="게시글 관리" sub={`문제가 있는 글을 숨기거나 다시 공개해요${list.state.kind === 'ok' ? ` · 총 ${list.state.data.totalElements}개` : ''}`} />
-          <div className="tabs">
-            <button type="button" className={`tab${!board ? ' on' : ''}`} onClick={() => go({ board: undefined })}>전체</button>
-            {BOARDS.map((b) => <button type="button" key={b} className={`tab${b === board ? ' on' : ''}`} onClick={() => go({ board: b })}>{BOARD_LABEL[b]}</button>)}
-          </div>
-          <div className="row wrap admin-filters">
-            <form className="row search grow" onSubmit={search} role="search">
+        <section className="col gap admin-panel">
+          <div className="row between wrap admin-filters admin-post-heading">
+            <Head title="게시글 관리" sub={`문제가 있는 글을 숨기거나 다시 공개해요${list.state.kind === 'ok' ? ` · 총 ${list.state.data.totalElements}개` : ''}`} />
+            <form className="row search" onSubmit={search} role="search">
               <input className="input" placeholder="제목·본문 검색 (최대 50자)" value={q} maxLength={50} onChange={(e) => setQ(e.target.value)} aria-label="검색어" />
               <button className="btn" type="submit">검색</button>
             </form>
-            <select className="input sm" aria-label="공개 상태" value={params.get('vis') ?? ''} onChange={(e) => go({ vis: e.target.value || undefined })}>
-              <option value="">공개 상태 전체</option><option value="shown">공개 중</option><option value="hidden">숨김</option>
-            </select>
-            <select className="input sm" aria-label="정렬 기준" value={sortBy} onChange={(e) => go({ sort: e.target.value })}>{POST_SORTS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}</select>
-            <select className="input sm" aria-label="정렬 순서" value={order} onChange={(e) => go({ order: e.target.value })}><option value="desc">내림차순</option><option value="asc">오름차순</option></select>
           </div>
-          <LoadBox load={list.state} title="게시글을 불러오지 못했어요" onRetry={() => list.reload()}>
-            {(data) => data.content.length === 0 ? <Empty title="조건에 맞는 게시글이 없어요" /> : (
-              <>
-                <div className="card table-card">
-                  <table className="tbl stack-m admin-post-tbl">
-                    <thead><tr><th>게시판</th><th>제목</th><th>작성자</th><th className="num-c">조회·좋아요·댓글</th><th>상태</th><th className="act-c">관리</th></tr></thead>
-                    <tbody>
-                      {data.content.map((p) => (
-                        <tr key={p.postId}>
-                          <td><Badge text={BOARD_LABEL[p.boardType]} tone="gray" /></td>
-                          <td className="ellipsis-c"><a className="strong-link" href={`#/community/${p.postId}`}>{p.title}</a><br /><small className="sub">{shortDateTime(p.createdAt)}</small></td>
-                          <td>{p.memberNickname}</td>
-                          <td className="num-c">{p.viewCount} · {p.likeCount} · {p.commentCount}</td>
-                          <td><Badge text={p.isVisible ? '공개' : '숨김'} tone={p.isVisible ? 'blue' : 'red'} /></td>
-                          <td className="act-c">
-                            <span className="row">
-                              <button type="button" className="btn small" onClick={() => setHistoryOf(p)}>이력</button>
-                              <button type="button" className={`btn small ${p.isVisible ? 'danger-ghost' : 'primary'}`} onClick={() => { setErr(''); setReason(''); setTarget(p); }}>{p.isVisible ? '숨기기' : '다시 공개'}</button>
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <Pager page={data.pageNumber} totalPages={data.totalPages} onPage={(p) => go({ page: p })} />
-              </>
-            )}
-          </LoadBox>
+          <div className="col gap admin-results">
+            <div className="row between wrap">
+              <div className="tabs">
+                <button type="button" className={`tab${!board ? ' on' : ''}`} onClick={() => go({ board: undefined })}>전체</button>
+                {BOARDS.map((b) => <button type="button" key={b} className={`tab${b === board ? ' on' : ''}`} onClick={() => go({ board: b })}>{BOARD_LABEL[b]}</button>)}
+              </div>
+              <div className="row wrap admin-sort-controls">
+                <RoleSelect label="공개 상태" value={params.get('vis') ?? ''} options={[{ value: '', label: '공개 상태 전체' }, { value: 'shown', label: '공개 중' }, { value: 'hidden', label: '숨김' }]} onChange={(value) => go({ vis: value || undefined })} />
+                <span className="sub">정렬</span>
+                <RoleSelect label="정렬 기준" value={sortBy} options={POST_SORTS.map(({ key, label }) => ({ value: key, label }))} onChange={(value) => go({ sort: value })} />
+                <RoleSelect label="정렬 방향" value={order} options={ORDER_OPTIONS} onChange={(value) => go({ order: value })} />
+              </div>
+            </div>
+
+            <LoadBox load={list.state} title="게시글을 불러오지 못했어요" onRetry={() => list.reload()}>
+              {(data) => data.content.length === 0 ? <Empty title="조건에 맞는 게시글이 없어요" /> : (
+                <>
+                  <div className="card table-card">
+                    <div className="admin-table-scroll" tabIndex={0} role="region" aria-label="관리 목록">
+                      <table className="tbl stack-m admin-post-tbl">
+                        <thead><tr><th>게시판</th><th>제목</th><th>작성자</th><th className="num-c">조회·좋아요·댓글</th><th>상태</th><th className="act-c">관리</th></tr></thead>
+                        <tbody>
+                          {data.content.map((p) => (
+                            <tr key={p.postId}>
+                              <td><Badge text={BOARD_LABEL[p.boardType]} tone="gray" /></td>
+                              <td className="ellipsis-c"><a className="strong-link" href={`#/community/${p.postId}`}>{p.title}</a><br /><small className="sub">{shortDateTime(p.createdAt)}</small></td>
+                              <td>{p.memberNickname}</td>
+                              <td className="num-c">{p.viewCount} · {p.likeCount} · {p.commentCount}</td>
+                              <td><Badge text={p.isVisible ? '공개' : '숨김'} tone={p.isVisible ? 'blue' : 'red'} /></td>
+                              <td className="act-c">
+                                <span className="row">
+                                  <button type="button" className="btn small" onClick={() => setHistoryOf(p)}>이력</button>
+                                  <button type="button" className={`btn small ${p.isVisible ? 'danger-ghost' : 'primary'}`} onClick={() => { setErr(''); setReason(''); setTarget(p); }}>{p.isVisible ? '숨기기' : '다시 공개'}</button>
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <Pager page={data.pageNumber} totalPages={data.totalPages} onPage={(p) => go({ page: p })} />
+                </>
+              )}
+            </LoadBox>
+          </div>
         </section>
       </div>
 
@@ -180,37 +190,44 @@ export function AdminRequestsPage({ params }: { params: URLSearchParams }) {
     <main className="page admin">
       <div className="admin-layout">
         <AdminNav current="requests" />
-        <section className="col gap">
-          <Head title="요청서 현황" sub={`고객이 보낸 요청서를 상태별로 봐요${list.state.kind === 'ok' ? ` · 총 ${list.state.data.totalElements}건` : ''}`}
-            right={<div className="row">
-              <select className="input sm" aria-label="정렬 기준" value={sortBy} onChange={(e) => go({ sort: e.target.value })}><option value="createdAt">작성일</option><option value="id">번호</option><option value="requestStatus">상태</option></select>
-              <select className="input sm" aria-label="정렬 순서" value={order} onChange={(e) => go({ order: e.target.value })}><option value="desc">내림차순</option><option value="asc">오름차순</option></select>
-            </div>} />
-          <div className="tabs">{REQ_STATUS.map((s) => <button type="button" key={s.label} className={`tab${(status ?? '') === s.key ? ' on' : ''}`} onClick={() => go({ status: s.key || undefined })}>{s.label}</button>)}</div>
-          <LoadBox load={list.state} title="요청서 목록을 불러오지 못했어요" onRetry={() => list.reload()}>
-            {(data) => data.content.length === 0 ? <Empty title="조건에 맞는 요청서가 없어요" /> : (
-              <>
-                <div className="card table-card">
-                  <table className="tbl stack-m admin-req-tbl">
-                    <thead><tr><th>번호</th><th>서비스</th><th>지역</th><th>고객</th><th>상태</th><th className="num-c">작성</th></tr></thead>
-                    <tbody>
-                      {data.content.map((r) => (
-                        <tr key={r.requestId}>
-                          <td>{r.requestId}</td>
-                          <td><b>{r.secondCategoryName}</b></td>
-                          <td>{r.secondRegionName}</td>
-                          <td>{r.customerNickname}</td>
-                          <td><Badge {...requestBadge(r.requestStatus, r.createdAt)} /></td>
-                          <td className="num-c">{shortDateTime(r.createdAt)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <Pager page={data.pageNumber} totalPages={data.totalPages} onPage={(p) => go({ page: p })} />
-              </>
-            )}
-          </LoadBox>
+        <section className="col gap admin-panel">
+          <Head title="요청서 현황" sub={`고객이 보낸 요청서를 상태별로 봐요${list.state.kind === 'ok' ? ` · 총 ${list.state.data.totalElements}건` : ''}`} />
+          <div className="col gap admin-results">
+            <div className="row between wrap">
+              <div className="tabs">{REQ_STATUS.map((s) => <button type="button" key={s.label} className={`tab${(status ?? '') === s.key ? ' on' : ''}`} onClick={() => go({ status: s.key || undefined })}>{s.label}</button>)}</div>
+              <div className="row wrap admin-sort-controls">
+                <span className="sub">정렬</span>
+                <RoleSelect label="정렬 기준" value={sortBy} options={[{ value: 'createdAt', label: '작성일' }, { value: 'id', label: '번호' }, { value: 'requestStatus', label: '상태' }]} onChange={(value) => go({ sort: value })} />
+                <RoleSelect label="정렬 방향" value={order} options={ORDER_OPTIONS} onChange={(value) => go({ order: value })} />
+              </div>
+            </div>
+            <LoadBox load={list.state} title="요청서 목록을 불러오지 못했어요" onRetry={() => list.reload()}>
+              {(data) => data.content.length === 0 ? <Empty title="조건에 맞는 요청서가 없어요" /> : (
+                <>
+                  <div className="card table-card">
+                    <div className="admin-table-scroll" tabIndex={0} role="region" aria-label="관리 목록">
+                      <table className="tbl stack-m admin-req-tbl">
+                        <thead><tr><th>번호</th><th>서비스</th><th>지역</th><th>고객</th><th>상태</th><th className="num-c">작성</th></tr></thead>
+                        <tbody>
+                          {data.content.map((r) => (
+                            <tr key={r.requestId}>
+                              <td>{r.requestId}</td>
+                              <td><b>{r.secondCategoryName}</b></td>
+                              <td>{r.secondRegionName}</td>
+                              <td>{r.customerNickname}</td>
+                              <td><Badge {...requestBadge(r.requestStatus, r.createdAt)} /></td>
+                              <td className="num-c">{shortDateTime(r.createdAt)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <Pager page={data.pageNumber} totalPages={data.totalPages} onPage={(p) => go({ page: p })} />
+                </>
+              )}
+            </LoadBox>
+          </div>
         </section>
       </div>
     </main>
@@ -234,37 +251,44 @@ export function AdminQuotesPage({ params }: { params: URLSearchParams }) {
     <main className="page admin">
       <div className="admin-layout">
         <AdminNav current="quotes" />
-        <section className="col gap">
-          <Head title="견적 현황" sub={`고수가 보낸 견적을 상태별로 봐요${list.state.kind === 'ok' ? ` · 총 ${list.state.data.totalElements}건` : ''}`}
-            right={<div className="row">
-              <select className="input sm" aria-label="정렬 기준" value={sortBy} onChange={(e) => go({ sort: e.target.value })}><option value="sentAt">발송일</option><option value="price">금액</option><option value="id">번호</option><option value="quoteStatus">상태</option></select>
-              <select className="input sm" aria-label="정렬 순서" value={order} onChange={(e) => go({ order: e.target.value })}><option value="desc">내림차순</option><option value="asc">오름차순</option></select>
-            </div>} />
-          <div className="tabs">{QT_STATUS.map((s) => <button type="button" key={s.label} className={`tab${(status ?? '') === s.key ? ' on' : ''}`} onClick={() => go({ status: s.key || undefined })}>{s.label}</button>)}</div>
-          <LoadBox load={list.state} title="견적 목록을 불러오지 못했어요" onRetry={() => list.reload()}>
-            {(data) => data.content.length === 0 ? <Empty title="조건에 맞는 견적이 없어요" /> : (
-              <>
-                <div className="card table-card">
-                  <table className="tbl stack-m admin-quote-tbl">
-                    <thead><tr><th>번호</th><th>요청서</th><th>고수 → 고객</th><th className="num-c">금액</th><th>상태</th><th className="num-c">발송</th></tr></thead>
-                    <tbody>
-                      {data.content.map((x) => (
-                        <tr key={x.quoteId}>
-                          <td>{x.quoteId}</td>
-                          <td><b>{x.secondCategoryName}</b><br /><small className="sub">{x.secondRegionName} · 요청서 {x.serviceRequestId}</small></td>
-                          <td><a className="strong-link" href={`#/experts/${x.expertProfileId}`}>{x.expertNickname}</a> → {x.customerNickname}</td>
-                          <td className="num-c"><b>{won(x.price)}</b></td>
-                          <td><Badge {...quoteBadge(x.quoteStatus)} /></td>
-                          <td className="num-c">{shortDateTime(x.sentAt)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <Pager page={data.pageNumber} totalPages={data.totalPages} onPage={(p) => go({ page: p })} />
-              </>
-            )}
-          </LoadBox>
+        <section className="col gap admin-panel">
+          <Head title="견적 현황" sub={`고수가 보낸 견적을 상태별로 봐요${list.state.kind === 'ok' ? ` · 총 ${list.state.data.totalElements}건` : ''}`} />
+          <div className="col gap admin-results">
+            <div className="row between wrap">
+              <div className="tabs">{QT_STATUS.map((s) => <button type="button" key={s.label} className={`tab${(status ?? '') === s.key ? ' on' : ''}`} onClick={() => go({ status: s.key || undefined })}>{s.label}</button>)}</div>
+              <div className="row wrap admin-sort-controls">
+                <span className="sub">정렬</span>
+                <RoleSelect label="정렬 기준" value={sortBy} options={[{ value: 'sentAt', label: '발송일' }, { value: 'price', label: '금액' }, { value: 'id', label: '번호' }, { value: 'quoteStatus', label: '상태' }]} onChange={(value) => go({ sort: value })} />
+                <RoleSelect label="정렬 방향" value={order} options={ORDER_OPTIONS} onChange={(value) => go({ order: value })} />
+              </div>
+            </div>
+            <LoadBox load={list.state} title="견적 목록을 불러오지 못했어요" onRetry={() => list.reload()}>
+              {(data) => data.content.length === 0 ? <Empty title="조건에 맞는 견적이 없어요" /> : (
+                <>
+                  <div className="card table-card">
+                    <div className="admin-table-scroll" tabIndex={0} role="region" aria-label="관리 목록">
+                      <table className="tbl stack-m admin-quote-tbl">
+                        <thead><tr><th>번호</th><th>요청서</th><th>고수 → 고객</th><th className="num-c">금액</th><th>상태</th><th className="num-c">발송</th></tr></thead>
+                        <tbody>
+                          {data.content.map((x) => (
+                            <tr key={x.quoteId}>
+                              <td>{x.quoteId}</td>
+                              <td><b>{x.secondCategoryName}</b><br /><small className="sub">{x.secondRegionName} · 요청서 {x.serviceRequestId}</small></td>
+                              <td><a className="strong-link" href={`#/experts/${x.expertProfileId}`}>{x.expertNickname}</a> → {x.customerNickname}</td>
+                              <td className="num-c"><b>{won(x.price)}</b></td>
+                              <td><Badge {...quoteBadge(x.quoteStatus)} /></td>
+                              <td className="num-c">{shortDateTime(x.sentAt)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <Pager page={data.pageNumber} totalPages={data.totalPages} onPage={(p) => go({ page: p })} />
+                </>
+              )}
+            </LoadBox>
+          </div>
         </section>
       </div>
     </main>

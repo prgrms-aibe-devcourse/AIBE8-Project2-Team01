@@ -1,9 +1,7 @@
 // 홈의 '최근 2주 사이 새로 합류한 고수'와 '이번 주 찜이 빠르게 늘고 있는 고수'
 // 공개 고수 목록 응답(GET /api/public/expert-profiles)만 쓰고 프론트에서 거르고 정렬한다.
 // 해당하는 고수가 없으면 섹션을 그리지 않는다.
-// [임시 미리보기] 백엔드가 createdAt · bookmarkCount · weeklyBookmarkCount를 아직 내려 주지 않아서
-//   그 값이 응답에 없을 때만 실제 고수에 미리보기용 값을 채워 화면 모양을 확인한다.
-//   백엔드 필드가 들어오면 실제 값을 그대로 쓰고 미리보기 값은 쓰지 않는다. 배포 전에는 PREVIEW_WHEN_MISSING을 false로 바꾸거나 이 블록을 지운다.
+// 새로 합류한 고수는 응답의 createdAt만 쓴다. 등록일이 없거나 읽을 수 없는 고수는 빼고 예시 날짜를 만들지 않는다.
 import { useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { PublicExpertSummary } from '../api/types';
@@ -19,32 +17,13 @@ const DAY = 24 * 60 * 60 * 1000;
 const NEW_DAYS = 14;
 const RISING_SHOW = 6; // 두 줄 격자라 짝수로 맞춘다
 
-// 응답에 그 값이 실려 오는지 (필드 자체가 없으면 undefined)
-const hasField = (list: PublicExpertSummary[], key: keyof PublicExpertSummary) => list.some((e) => e[key] !== undefined);
-
 const joinedLabel = (days: number) => (days <= 0 ? '오늘 합류' : `${days}일 전 합류`);
 
-const PREVIEW_WHEN_MISSING = true;
-const PREVIEW_DAYS_AGO = [1, 2, 4, 6, 9, 12, 20, 30, 45, 60]; // 10명 중 6명이 14일 안
-const PREVIEW_WEEKLY = [7, 0, 5, 3, 0, 9, 2, 0, 4, 1, 0, 6]; // 0은 이번 주 증가 없음
-
-// 응답에 없는 값만 고수 id 순서로 정해진 미리보기 값으로 채운다 (새로 고쳐도 같은 결과)
-function withPreview(all: PublicExpertSummary[]): PublicExpertSummary[] {
-  if (!PREVIEW_WHEN_MISSING) return all;
-  const needDate = !hasField(all, 'createdAt');
-  const needBookmark = !hasField(all, 'weeklyBookmarkCount');
-  if (!needDate && !needBookmark) return all;
-  const order = new Map([...all].sort((a, b) => a.id - b.id).map((e, i) => [e.id, i]));
-  const now = Date.now();
-  return all.map((e) => {
-    const i = order.get(e.id) ?? 0;
-    const weekly = PREVIEW_WEEKLY[i % PREVIEW_WEEKLY.length];
-    return {
-      ...e,
-      ...(needDate && { createdAt: new Date(now - PREVIEW_DAYS_AGO[i % PREVIEW_DAYS_AGO.length] * DAY - 2 * 60 * 60 * 1000).toISOString() }),
-      ...(needBookmark && { weeklyBookmarkCount: weekly, bookmarkCount: weekly + 8 + ((e.id * 7) % 40) }),
-    };
-  });
+// 서버의 LocalDateTime(예: 2026-10-06T22:53:02.36354)을 시각(ms)으로 바꾼다. 읽을 수 없으면 NaN
+// 소수점 아래 초가 3자리를 넘으면 브라우저마다 해석이 달라서 3자리로 자른다
+function parseCreatedAt(value: string | null | undefined) {
+  if (typeof value !== 'string' || value.trim() === '') return NaN;
+  return new Date(value.trim().replace(/(\.\d{3})\d+/, '$1')).getTime();
 }
 
 export function NewPublicExperts({ list, bookmarks }: { list: Load<PublicExpertSummary[]>; bookmarks?: HomeBookmarks }) {
@@ -52,11 +31,9 @@ export function NewPublicExperts({ list, bookmarks }: { list: Load<PublicExpertS
   const { ref, edge, update, step } = useRail();
   const items = useMemo(() => {
     if (list.kind !== 'ok') return [];
-    const all = withPreview(uniqueById(list.data));
-    if (!hasField(all, 'createdAt')) return [];
     const now = Date.now();
-    return all
-      .map((e) => ({ e, t: e.createdAt ? new Date(e.createdAt).getTime() : NaN }))
+    return uniqueById(list.data)
+      .map((e) => ({ e, t: parseCreatedAt(e.createdAt) }))
       .filter(({ t }) => Number.isFinite(t) && now - t <= NEW_DAYS * DAY)
       .sort((a, b) => b.t - a.t)
       .map(({ e, t }) => ({ e, days: Math.max(0, Math.floor((now - t) / DAY)) }));
@@ -96,9 +73,7 @@ export function RisingPublicExperts({ list, bookmarks }: { list: Load<PublicExpe
   const firstRegions = useFirstRegions();
   const items = useMemo(() => {
     if (list.kind !== 'ok') return [];
-    const all = withPreview(uniqueById(list.data));
-    if (!hasField(all, 'weeklyBookmarkCount')) return [];
-    return all
+    return uniqueById(list.data)
       .filter((e) => (e.weeklyBookmarkCount ?? 0) >= 1)
       // 증가량이 같으면 누적 찜이 많은 고수를 앞에 둔다
       .sort((a, b) => (b.weeklyBookmarkCount ?? 0) - (a.weeklyBookmarkCount ?? 0) || (b.bookmarkCount ?? 0) - (a.bookmarkCount ?? 0))

@@ -106,7 +106,7 @@ export function CreditHistoryPage({ params }: { params: URLSearchParams }) {
     <main className="page">
       <PageHead title="충전·사용 내역" back={{ href: '#/credit', label: '크레딧 충전' }} />
       <div className="split hist-split">
-        <section className="col gap">
+        <section className="col gap hist-main">
           <div className="tabs">
             {TYPES.map((t) => <button type="button" key={t || 'all'} className={`tab${t === type ? ' on' : ''}`} onClick={() => go(1, t)}>{t ? HISTORY_LABEL[t] : '전체'}</button>)}
           </div>
@@ -122,13 +122,15 @@ export function CreditHistoryPage({ params }: { params: URLSearchParams }) {
                     </div>
                   ))}
                 </div>
-                <Pager page={data.pageNumber} totalPages={data.totalPages} onPage={(p) => go(p)} />
-                <small className="sub center">{data.pageNumber} / {Math.max(1, data.totalPages)} 페이지 · 총 {data.totalElements}건</small>
+                <div className="col gap">
+                  <Pager page={data.pageNumber} totalPages={data.totalPages} onPage={(p) => go(p)} />
+                  <small className="sub center">{data.pageNumber} / {Math.max(1, data.totalPages)} 페이지 · 총 {data.totalElements}건</small>
+                </div>
               </>
             )}
           </LoadBox>
         </section>
-        <aside className="col gap">
+        <aside className="col gap hist-summary">
           <LoadBox load={side.state} title="잔액을 불러오지 못했어요" onRetry={() => side.reload()}>
             {({ balance, reservations }) => (
               <div className="card">

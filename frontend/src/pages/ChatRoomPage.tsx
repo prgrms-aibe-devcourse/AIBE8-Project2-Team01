@@ -4,11 +4,12 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
 import { ImagePlus } from 'lucide-react';
 import { ApiError, errorText, refreshAccessToken, tokenStore } from '../api/client';
-import { getChatMessages, getQuote, leaveChatRoom, readChatRoom, uploadPrivateImage, type ChatMessage, type ChatRoomSummary, type Quote } from '../api/mvp';
+import { getChatMessages, getQuote, getServiceRequest, leaveChatRoom, readChatRoom, uploadPrivateImage, type ChatMessage, type ChatRoomSummary } from '../api/mvp';
 import { useSession } from '../auth/session';
 import { useToast } from '../components/toast';
 import { Avatar, Banner, ErrorView, Lines, LoadingView, Modal, Spinner } from '../components/ui';
 import { navigate } from '../hooks/useHashRoute';
+import { useLoad } from '../hooks/useLoad';
 import { useSingleFlight } from '../hooks/useSingleFlight';
 import { dotDate, timeOnly, won } from '../lib/labels';
 import { friendly } from '../lib/messages';
@@ -27,7 +28,12 @@ export function ChatRoomPanel({ roomId, summary, onActivity }: { roomId: number;
   const [cursor, setCursor] = useState<number | null>(null);
   const [hasNext, setHasNext] = useState(false);
   const [older, setOlder] = useState<'idle' | 'loading' | 'error'>('idle');
-  const [quote, setQuote] = useState<Quote | null>(null);
+  const [detail, setDetail] = useState<'request' | 'quote' | null>(null);
+  const quoteId = summary?.quoteId;
+  const quoteLoad = useLoad(() => getQuote(quoteId!), [quoteId], quoteId != null);
+  const quote = quoteLoad.state.kind === 'ok' ? quoteLoad.state.data : null;
+  const requestId = quote?.serviceRequestId;
+  const requestLoad = useLoad(() => getServiceRequest(requestId!), [requestId], detail === 'request' && requestId != null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -78,11 +84,6 @@ export function ChatRoomPanel({ roomId, summary, onActivity }: { roomId: number;
       setState(e instanceof ApiError && e.status === 403 ? 'forbidden' : 'error');
     });
   }, [loadLatest, markRead]);
-
-  useEffect(() => {
-    if (!summary?.quoteId) return;
-    getQuote(summary.quoteId).then(setQuote).catch(() => setQuote(null));
-  }, [summary?.quoteId]);
 
   // 웹소켓 연결: 끊기면 다시 연결하고 놓친 메시지를 불러온다
   const connect = useCallback(() => {
@@ -262,9 +263,39 @@ export function ChatRoomPanel({ roomId, summary, onActivity }: { roomId: number;
         <div className="col grow">
           <b className="ellipsis">{partner?.nickname ?? '대화 상대'}</b>
           {quote && <small className="sub">{quote.secondCategoryName} · {won(quote.price)} 견적</small>}
+          {quoteId != null && (
+            <div className="row wrap">
+              <button type="button" className="link-btn inline" onClick={() => setDetail('request')}>요청서 상세</button>
+              <button type="button" className="link-btn inline" onClick={() => setDetail('quote')}>견적서 상세</button>
+            </div>
+          )}
         </div>
         <button type="button" className="btn small" onClick={() => setAskLeave(true)}>나가기</button>
       </div>
+      {detail && (
+        <Modal title={detail === 'request' ? '요청서 상세' : '견적서 상세'} onClose={() => setDetail(null)}
+          actions={<button type="button" className="btn" onClick={() => setDetail(null)}>닫기</button>}>
+          {quoteLoad.state.kind === 'error' ? (
+            <ErrorView title="연결된 견적을 불러오지 못했어요" message={errorText(quoteLoad.state.error)} onRetry={() => quoteLoad.reload()} />
+          ) : !quote ? <LoadingView /> : detail === 'quote' ? (
+            <dl className="req-answers">
+              <div><dt>서비스 · 지역</dt><dd>{quote.secondCategoryName} · {quote.secondRegionName}</dd></div>
+              <div><dt>고수</dt><dd>{quote.expertNickname}</dd></div>
+              <div><dt>제안 금액</dt><dd>{won(quote.price)}</dd></div>
+              <div><dt>서비스 설명</dt><dd>{quote.description}</dd></div>
+            </dl>
+          ) : requestLoad.state.kind === 'error' ? (
+            <ErrorView title="요청서를 불러오지 못했어요" message={errorText(requestLoad.state.error)} onRetry={() => requestLoad.reload()} />
+          ) : requestLoad.state.kind === 'loading' ? <LoadingView /> : (
+            <dl className="req-answers">
+              <div><dt>서비스 · 지역</dt><dd>{requestLoad.state.data.secondCategoryName} · {requestLoad.state.data.secondRegionName}</dd></div>
+              {requestLoad.state.data.answers.filter((answer) => answer.content?.trim()).map((answer) => (
+                <div key={answer.questionId}><dt>{answer.questionContent}</dt><dd>{answer.content}</dd></div>
+              ))}
+            </dl>
+          )}
+        </Modal>
+      )}
       {conn === 'retrying' && <div className="chat-conn"><Lines text={'연결이 끊겼어요.\n다시 연결하는 중이에요.'} /></div>}
       {conn === 'failed' && <div className="chat-conn err">연결하지 못했어요. <button type="button" className="link-btn inline" onClick={() => { retries.current = 0; connect(); }}>다시 연결</button></div>}
       <div className="chat-body" ref={listRef} onScroll={onScroll}>

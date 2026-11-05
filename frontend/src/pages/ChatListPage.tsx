@@ -40,12 +40,13 @@ export function ChatListPage({ roomId }: { roomId?: number }) {
                         <a key={r.roomId} href={`#/chats/${r.roomId}`} className={`chat-item${r.roomId === roomId ? ' on' : ''}`}>
                           <Avatar url={r.partner?.profileImageUrl} size={44} />
                           <div className="col grow">
-                            <span className="row between"><b className="ellipsis">{r.partner?.nickname ?? '알 수 없는 사용자'}</b><small className="sub">{smartTime(r.lastMessageAt ?? r.createdAt)}</small></span>
-                            <span className="row between">
-                              <span className="sub ellipsis">{r.partnerLeft ? '상대방이 대화를 나갔어요' : r.lastMessagePreview ?? '아직 메시지가 없어요'}</span>
-                              {r.unreadCount > 0 && <span className="unread">{r.unreadCount > 99 ? '99+' : r.unreadCount}</span>}
-                            </span>
+                            <b className="ellipsis">{r.partner?.nickname ?? '알 수 없는 사용자'}</b>
+                            <span className="sub ellipsis">{r.partnerLeft ? '상대방이 대화를 나갔어요' : r.lastMessagePreview ?? '아직 메시지가 없어요'}</span>
                           </div>
+                          <span className="chat-unread-slot">
+                            <small className="sub">{smartTime(r.lastMessageAt ?? r.createdAt)}</small>
+                            {r.unreadCount > 0 && <span className="unread" aria-label={`안 읽은 메시지 ${r.unreadCount}개`}>{r.unreadCount > 99 ? '99+' : r.unreadCount}</span>}
+                          </span>
                         </a>
                       ))}
                     </div>

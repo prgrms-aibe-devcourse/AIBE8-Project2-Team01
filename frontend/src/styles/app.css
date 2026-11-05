@@ -1353,6 +1353,33 @@ main.page.admin {
   grid-template-columns: minmax(0, 1fr) 340px;
 }
 
+@media (min-width: 768px) {
+  .page .hist-split {
+    row-gap: 16px;
+    align-items: stretch;
+  }
+
+  .page .hist-main {
+    display: grid;
+    grid-column: 1;
+    grid-row: 1 / span 3;
+    grid-template-rows: subgrid;
+  }
+
+  .page .hist-summary {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .page .hist-summary > .card {
+    flex: 1;
+  }
+
+  .page .hist-summary > .card > .btn {
+    margin-top: auto;
+  }
+}
+
 .page .split-detail {
   min-width: 0;
 }
@@ -1608,6 +1635,16 @@ main.page.admin {
 
 .page .chat-item.on {
   background: var(--blue-soft);
+}
+
+.page .chat-unread-slot {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  align-self: stretch;
+  gap: 4px;
+  white-space: nowrap;
 }
 
 .page .unread {
@@ -1966,6 +2003,17 @@ main.page.admin {
   gap: 6px;
   padding: 6px 8px;
   border-radius: var(--r-control);
+}
+
+.page .admin-base-grid .admin-item + .admin-item::before {
+  content: '';
+  position: absolute;
+  inset: -3px 0 auto;
+  border-top: 1px solid var(--ink-100);
+}
+
+.page .admin-base-grid .admin-item {
+  position: relative;
 }
 
 .page .admin-item.on {
@@ -2798,8 +2846,26 @@ main.page.admin {
 }
 
 /* 관리자 필터 줄과 공개 이력 */
+.page .admin-post-heading {
+  padding-top: 16px;
+}
+
 .page .admin-filters .search {
-  flex: 1 1 280px;
+  flex: 0 1 360px;
+  min-width: 0;
+}
+
+.page .admin-results > .row > .tabs {
+  margin-bottom: 0;
+}
+
+.page .admin-sort-controls {
+  margin-inline-start: auto;
+}
+
+.page .admin-results > .row > .tabs .tab,
+.page .admin-sort-controls :is(.sub, .role-pick) {
+  font-size: 13px;
 }
 
 .page .vis-history {
@@ -2968,6 +3034,61 @@ main.page.admin {
   min-height: 120px;
 }
 
+@media (min-width: 768px) {
+  .page .received-split {
+    align-items: stretch;
+  }
+
+  .page .received-split .split-detail {
+    display: grid;
+  }
+
+  .page .received-split .received-card,
+  .page .received-card.with-form .quote-form {
+    flex: 1;
+  }
+
+  .page .received-card.with-form .m-actions {
+    margin-top: auto;
+  }
+
+  .page .received-card.with-form .req-summary {
+    gap: 8px;
+    padding: 16px 20px;
+  }
+
+  .page .received-card.with-form .req-answers {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+    height: 112px;
+    overflow-y: auto;
+  }
+
+  .page .received-card.with-form .req-answers > div {
+    padding: 0;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .page .received-card.with-form .quote-form {
+    gap: 8px;
+    padding: 12px 20px 16px;
+  }
+
+  .page .received-card.with-form .quote-form fieldset {
+    gap: 8px;
+  }
+
+  .page .received-card.with-form .quote-form .input.area {
+    min-height: 64px;
+  }
+
+  .page .received-card.with-form .credit-note {
+    padding-block: 8px;
+  }
+}
+
 /* 모바일 전용 뒤로 가기 링크는 넓은 화면에서 숨긴다 */
 @media (min-width: 768px) {
   .page .back.show-m {
@@ -3101,4 +3222,106 @@ main.page.admin {
 @media (prefers-reduced-motion: reduce) {
   .role-menu { animation: none; }
   .page .role-pick-icon { transition: none; }
+}
+
+/* 로그인 안내 모달의 회원가입 링크 (버튼을 링크 모양으로) */
+.dim .login-prompt-signup {
+  margin-top: 4px;
+}
+.dim .login-prompt-signup .strong-link {
+  padding: 0;
+  color: var(--blue);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.dim .login-prompt-signup .strong-link:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (min-width: 768px) {
+  .page.admin .admin-layout {
+    row-gap: 16px;
+  }
+
+  .page.admin .admin-panel {
+    display: grid;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    grid-template-rows: subgrid;
+    min-width: 0;
+  }
+
+  .page.admin .admin-nav {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .page.admin .admin-panel .tbl {
+    font-size: 15px;
+  }
+
+  .page.admin .admin-panel .tbl :is(th, td) {
+    padding: 9px 12px;
+  }
+
+  .page.admin .admin-panel .tbl :is(.role-pick, .btn.small) {
+    min-height: 34px;
+    padding-block: 4px;
+    font-size: 13px;
+  }
+
+  /* 표 카드: 바깥 여백은 카드가 맡고(상하좌우 16px로 통일) 스크롤은 안쪽 .admin-table-scroll이 맡는다 */
+  .page.admin .admin-panel .table-card {
+    max-height: clamp(300px, calc(100dvh - 380px), 576px);
+    padding: 16px;
+    overflow: hidden;
+  }
+
+  .page.admin .admin-panel .admin-table-scroll {
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .page.admin .admin-results {
+    height: clamp(340px, calc(100dvh - 300px), 576px);
+  }
+
+  .page.admin .admin-results > .table-card {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .page.admin .admin-results > :not(.table-card) {
+    flex-shrink: 0;
+  }
+
+  /* 머리글은 스크롤 영역 맨 위에 고정한다.
+     border-collapse 표에서는 고정된 칸의 아래 테두리가 행과 함께 올라가 버리므로 테두리 대신 안쪽 그림자로 구분선을 그린다.
+     배경을 불투명하게 칠하고 행보다 위에 두어 아래 행 글자가 비치지 않게 한다 */
+  .page.admin .admin-panel .tbl th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-bottom: 0;
+    background: var(--surface);
+    box-shadow: inset 0 -1px 0 var(--ink-100);
+  }
+
+  .page.admin .admin-base-grid > .card {
+    height: clamp(340px, calc(100dvh - 300px), 576px);
+    min-height: 0;
+  }
+
+  .page.admin .admin-base-grid .admin-list {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .page.admin .admin-base-grid > .card > :not(.admin-list) {
+    flex-shrink: 0;
+  }
 }

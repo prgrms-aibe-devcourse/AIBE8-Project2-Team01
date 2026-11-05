@@ -27,7 +27,11 @@ export default function HomePage({ params }) {
   const isExpert = status === 'member' && me?.role === 'EXPERT';
   // 공개 고수 목록은 한 번만 불러서 활동 고수·새로 합류한 고수·찜이 늘고 있는 고수 섹션이 함께 쓴다
   // 고수 홈에서는 부르지 않는다. 로그인 확인 중에는 역할을 모르므로 확인이 끝난 뒤 부른다
-  const experts = useLoad(() => getPublicExperts(), [], status !== 'loading' && !isExpert);
+  const experts = useLoad(async () => {
+    const profiles = await getPublicExperts();
+    const hiddenProfileId = Number(import.meta.env.VITE_HOME_HIDDEN_EXPERT_ID);
+    return profiles.filter((profile) => profile.id !== hiddenProfileId);
+  }, [], status !== 'loading' && !isExpert);
   const bookmarks = useHomeBookmarks();
   // 요청서 초안: 선택한 소분류와 시군구
   const [draft, setDraft] = useState({ sub: null, region: null });

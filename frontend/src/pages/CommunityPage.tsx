@@ -1,11 +1,12 @@
 // 커뮤니티 목록 (W·15) · 공개 조회 · 질문·팁·모집·홍보 게시판 · 내 글
 // 목록은 최신순 20개씩 페이지 이동 (정렬 옵션 API 없음). 팁 게시판은 이미지 카드로 보여 준다
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type MouseEvent } from 'react';
 import { getMyPosts, getPosts, type BoardType, type PostSummary } from '../api/mvp';
 import { useSession } from '../auth/session';
 import * as api from '../api/endpoints';
 import { Empty, LoadBox, Pager } from '../components/common';
 import { navigate } from '../hooks/useHashRoute';
+import { useLoginPrompt } from '../components/loginPrompt';
 import { useLoad } from '../hooks/useLoad';
 import { BOARDS, BOARD_LABEL, smartTime } from '../lib/labels';
 import CategoryIcon from '../components/CategoryIcon';
@@ -48,10 +49,11 @@ function TipCard({ p }: { p: PostSummary }) {
 
 function BoardTabs({ board, mine }: { board?: BoardType; mine?: boolean }) {
   const { status } = useSession();
+  const askLogin = useLoginPrompt();
   return (
     <div className="tabs">
       {COMMUNITY_BOARDS.map((b) => <a key={b} className={`tab${b === board ? ' on' : ''}`} href={`#/community?board=${b}`}>{BOARD_LABEL[b]}</a>)}
-      <a className={`tab${mine ? ' on' : ''}`} href={status === 'member' ? '#/community/mine' : `#/login?redirect=${encodeURIComponent('/community/mine')}`}>내 글</a>
+      <a className={`tab${mine ? ' on' : ''}`} href="#/community/mine" onClick={(e) => { if (status !== 'member') { e.preventDefault(); askLogin({ message: '내가 쓴 글은 로그인한 뒤에 볼 수 있어요.', redirect: '/community/mine' }); } }}>내 글</a>
     </div>
   );
 }
@@ -71,11 +73,17 @@ export function CommunityPage({ params }: { params: URLSearchParams }) {
   const canWrite = board === 'TIP' || board === 'PROMOTION' ? me?.role === 'EXPERT' : status !== 'member' || me?.role !== 'ADMIN';
   const go = (p: number, kw = keyword, fc = fcat, fr = freg) => navigate('/community', { board, page: p, ...(kw ? { q: kw } : {}), ...(fc ? { fcat: fc } : {}), ...(fr ? { freg: fr } : {}) });
   const search = (e: FormEvent) => { e.preventDefault(); const kw = q.trim(); if (kw.length > 50) return; go(1, kw); };
-  const writeHref = status === 'member' ? `#/community/write?board=${board}` : `#/login?redirect=${encodeURIComponent(`/community/write?board=${board}`)}`;
+  const askLogin = useLoginPrompt();
+  const writeHref = `#/community/write?board=${board}`;
+  const onWrite = (e: MouseEvent) => {
+    if (status === 'member') return;
+    e.preventDefault();
+    askLogin({ message: '글은 로그인한 뒤에 쓸 수 있어요.', redirect: `/community/write?board=${board}` });
+  };
 
   return (
     <main className="page">
-      <div className="row between"><h1 className="page-title">커뮤니티</h1>{canWrite && <a className="btn primary small fab-m" href={writeHref}>+ 글쓰기</a>}</div>
+      <div className="row between"><h1 className="page-title">커뮤니티</h1>{canWrite && <a className="btn primary small fab-m" href={writeHref} onClick={onWrite}>+ 글쓰기</a>}</div>
       <BoardTabs board={board} />
       <form className="row search" onSubmit={search} role="search">
         <input className="input" placeholder="제목·본문 검색 (최대 50자)" value={q} maxLength={50} onChange={(e) => setQ(e.target.value)} aria-label="검색어" />

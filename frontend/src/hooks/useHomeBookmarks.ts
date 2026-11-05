@@ -1,13 +1,12 @@
 // 홈 고수 카드의 찜(하트) 상태
 // 찜 여부 조회 API가 없어서 고객이면 내 찜 목록(20개씩 · 최대 500명)을 한 번 모두 읽어 둔다 (BookmarkButton과 같은 방식)
-// 찜은 고객 기능이다: 비로그인은 하트를 누르면 로그인으로 보내고 고수 상태·관리자·본인 프로필에는 하트를 보이지 않는다
+// 고객과 관리자는 찜을 사용할 수 있고 비로그인 사용자는 로그인 안내를 받는다
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { addBookmark, getBookmarks, removeBookmark } from '../api/mvp';
 import { useSession } from '../auth/session';
-import { currentRedirect } from '../components/Header';
+import { useLoginPrompt } from '../components/loginPrompt';
 import { useToast } from '../components/toast';
 import { friendly } from '../lib/messages';
-import { navigate } from './useHashRoute';
 
 const MAX_PAGES = 25;
 
@@ -21,7 +20,8 @@ export type HomeBookmarks = {
 export function useHomeBookmarks(): HomeBookmarks {
   const { status, me } = useSession();
   const toast = useToast();
-  const isCustomer = status === 'member' && me?.role === 'USER';
+  const askLogin = useLoginPrompt();
+  const canBookmark = status === 'member' && (me?.role === 'USER' || me?.role === 'ADMIN');
   const [ids, setIds] = useState<Set<number>>(() => new Set());
   const [ready, setReady] = useState(false);
   const pending = useRef(new Set<number>());
@@ -29,7 +29,7 @@ export function useHomeBookmarks(): HomeBookmarks {
   useEffect(() => {
     setIds(new Set());
     setReady(false);
-    if (!isCustomer) return undefined;
+    if (!canBookmark) return undefined;
     let alive = true;
     (async () => {
       const found = new Set<number>();
@@ -46,20 +46,20 @@ export function useHomeBookmarks(): HomeBookmarks {
     return () => {
       alive = false;
     };
-  }, [isCustomer, me?.id]);
+  }, [canBookmark, me?.id]);
 
   const shows = useCallback(
-    (ownerNickname: string) => status === 'guest' || (isCustomer && me?.nickname !== ownerNickname),
-    [status, isCustomer, me?.nickname],
+    (ownerNickname: string) => status === 'guest' || (canBookmark && me?.nickname !== ownerNickname),
+    [status, canBookmark, me?.nickname],
   );
 
   const toggle = useCallback(
     (expertProfileId: number) => {
       if (status !== 'member') {
-        navigate('/login', { redirect: currentRedirect() });
+        askLogin({ message: '찜은 로그인한 뒤에 할 수 있어요.\n찜한 고수는 마이페이지에서 모아 볼 수 있어요.' });
         return;
       }
-      if (!isCustomer || !ready || pending.current.has(expertProfileId)) return;
+      if (!canBookmark || !ready || pending.current.has(expertProfileId)) return;
       const on = ids.has(expertProfileId);
       const flip = (next: boolean) =>
         setIds((prev) => {
@@ -78,7 +78,7 @@ export function useHomeBookmarks(): HomeBookmarks {
         })
         .finally(() => pending.current.delete(expertProfileId));
     },
-    [status, isCustomer, ready, ids, toast],
+    [status, canBookmark, ready, ids, toast, askLogin],
   );
 
   const isOn = useCallback((id: number) => ids.has(id), [ids]);

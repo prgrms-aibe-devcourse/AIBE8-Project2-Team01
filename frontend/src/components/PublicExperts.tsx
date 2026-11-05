@@ -1,10 +1,10 @@
 // 고객·비로그인·관리자 홈의 실제 고수 목록 (#196 GET /api/public/expert-profiles)
-// 같은 고수는 한 번만 보여 준다. 카드를 누르면 기존 공개 프로필 상세(#/experts/{id})로 간다.
+// 지역 매칭 우선순위에 따라 대표 서비스별 고수 한 명을 보여 준다.
 // 카드 사진: 대표 작업 사진(representativeWorkImageUrl) → 프로필 사진(imageUrl) → 기본 이미지 순서
 // 지역 필터: 홈에서 고른 시·군·구(히어로 검색창과 같은 값)를 기준으로 목록 응답의 활동 지역을 프론트에서 거른다.
 //   전국 활동 고수 + 그 시·도 전체에서 활동하는 고수 + 그 시·군·구에서 활동하는 고수를 모두 보여 주고
 //   시·군·구 → 시·도 전체 → 전국 순서로 가까운 고수를 앞에 둔다.
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import { errorText } from '../api/client';
@@ -28,22 +28,40 @@ function matchLevel(e: PublicExpertSummary, region: HomeRegion) {
   return e.nationwide ? 1 : 0;
 }
 
-const CHIP_COUNT = 5;
+const HOME_REGION_IDS = [30, 39, 38, 40, 77]; // 마포, 강남, 서초, 송파, 해운대
+const HOME_REGIONS: HomeRegion[] = HOME_REGION_IDS.flatMap((id) => {
+  const first = FIRST_REGIONS.find((f) => f.subs.some((s) => s.id === id));
+  const second = first?.subs.find((s) => s.id === id);
+  return first && second ? [{ first: { id: first.id, name: first.name }, second }] : [];
+});
 
-// 지역 칩: 시·군·구를 직접 고른 고수가 많은 지역부터 몇 개를 보여 준다 (목록 응답의 활동 지역으로 센다)
-function topRegions(all: PublicExpertSummary[]): HomeRegion[] {
-  const count = new Map<number, number>();
-  all.forEach((e) => e.regions.forEach((r) => count.set(r.id, (count.get(r.id) ?? 0) + 1)));
-  const out: HomeRegion[] = [];
-  [...count.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
-    .some(([id]) => {
-      const first = FIRST_REGIONS.find((f: { subs: { id: number }[] }) => f.subs.some((s) => s.id === id));
-      const second = first?.subs.find((s: { id: number }) => s.id === id);
-      if (first && second) out.push({ first: { id: first.id, name: first.name }, second });
-      return out.length >= CHIP_COUNT;
-    });
-  return out;
+
+function onePerCategory<T extends { e: PublicExpertSummary }>(ranked: T[]) {
+  const categories = new Set<number>();
+  return ranked.filter(({ e }) => {
+    const id = e.primaryCategory?.id;
+    if (id == null || categories.has(id)) return false;
+    categories.add(id);
+    return true;
+  });
+}
+
+function activeExperts(all: PublicExpertSummary[], region: HomeRegion | null, firstPageSize: number) {
+  const ranked = all.map((e) => ({ e, level: 0 }));
+  const index = ranked.findIndex(({ e }) => e.nickname === '온집 인테리어');
+  if (index > 1) ranked.splice(1, 0, ranked.splice(index, 1)[0]);
+  const overall = onePerCategory(ranked);
+  if (!region) return overall;
+
+  const seen = new Set(overall.slice(0, firstPageSize).map(({ e }) => e.id));
+  for (const choice of [...HOME_REGIONS, region]) {
+    const picks = onePerCategory(all.map((e) => ({ e, level: matchLevel(e, choice) }))
+      .filter(({ level }) => level > 0)
+      .sort((a, b) => Number(seen.has(a.e.id)) - Number(seen.has(b.e.id)) || b.level - a.level));
+    if (choice.second.id === region.second.id) return picks;
+    for (const { e } of picks.slice(0, firstPageSize)) seen.add(e.id);
+  }
+  return [];
 }
 
 function matchLabel(level: number, region: HomeRegion) {
@@ -126,14 +144,23 @@ type Props = {
 export function PublicExperts({ list, onRetry, bookmarks, region = null, onRegionChange }: Props) {
   const firstRegions = useFirstRegions();
   const { ref, edge, update, step } = useRail();
-  const all = useMemo(() => (list.kind === 'ok' ? uniqueById(list.data) : []), [list]);
-  const experts = useMemo(() => {
-    if (!region) return all.map((e) => ({ e, level: 0 }));
-    return all
-      .map((e) => ({ e, level: matchLevel(e, region) }))
-      .filter((x) => x.level > 0)
-      .sort((a, b) => b.level - a.level); // 같은 단계 안에서는 응답 순서를 지킨다 (Array.sort는 안정 정렬)
-  }, [all, region]);
+  const all = useMemo(() => (list.kind === 'ok' ? uniqueById(list.data).filter((profile) => profile.nickname !== '하늘 웨딩플래너') : []), [list]);
+  const [firstPageSize, setFirstPageSize] = useState(3);
+  const experts = useMemo(() => activeExperts(all, region, firstPageSize), [all, region, firstPageSize]);
+
+  const hasExperts = experts.length > 0;
+  useEffect(() => {
+    const rail = ref.current as HTMLElement | null;
+    if (!rail) return;
+    const measure = () => {
+      const columns = Number.parseFloat(getComputedStyle(rail).getPropertyValue('--rail-n'));
+      if (columns > 0) setFirstPageSize(Math.ceil(columns));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(rail);
+    return () => observer.disconnect();
+  }, [ref, hasExperts]);
 
   // 지역을 바꾸면 레일을 처음으로 되돌리고 화살표 상태를 다시 잰다
   const regionKey = region?.second.id ?? 0;
@@ -145,12 +172,10 @@ export function PublicExperts({ list, onRetry, bookmarks, region = null, onRegio
 
   const title = region ? `${region.second.name}에서 활동하는 고수` : '활동 중인 고수';
 
-  // 칩 목록: 전체 + 많이 활동하는 지역. 히어로나 '다른 지역'에서 고른 지역이 목록에 없으면 앞에 끼워 넣는다
-  const chips = useMemo(() => {
-    const top = topRegions(all);
-    if (region && !top.some((r) => r.second.id === region.second.id)) top.unshift(region);
-    return [null, ...top] as (HomeRegion | null)[];
-  }, [all, region]);
+  // 지정된 지역 탭 뒤에 직접 고른 지역을 추가한다.
+  const chips = region && !HOME_REGIONS.some((r) => r.second.id === region.second.id)
+    ? [null, ...HOME_REGIONS, region]
+    : [null, ...HOME_REGIONS];
   const current = chips.findIndex((c) => (c?.second.id ?? 0) === regionKey);
   const pick = (c: HomeRegion | null) => onRegionChange?.(c);
   const onChipKey = (ev: KeyboardEvent<HTMLDivElement>) => {

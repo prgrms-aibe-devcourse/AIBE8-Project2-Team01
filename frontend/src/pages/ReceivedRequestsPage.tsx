@@ -48,7 +48,7 @@ export function ReceivedRequestsPage({ selected }: { selected: string | null }) 
 
   return (
     <main className={`page req-page${selId ? ' has-sel' : ''}`}>
-      <div className="split">
+      <div className="split received-split">
         <aside className="split-list col gap-s">
           <h1 className="page-title">받은 요청서 <span className="blue-t">{list.state.kind === 'ok' ? list.state.data.length : ''}</span></h1>
           <p className="sub">내가 맡은 서비스와 활동 지역에 맞는 요청서만 보여요</p>
@@ -118,7 +118,7 @@ function ReceivedDetail({ id, sentQuoteId, inList, onSent }: { id: number; sentQ
           </div>
         </div>
         {answered.length > 0 ? (
-          <dl className="req-answers">
+          <dl className="req-answers" tabIndex={canQuote ? 0 : undefined} aria-label="고객 요청 답변">
             {answered.map((a) => (
               <div key={a.questionId}>
                 <dt>{a.questionContent}</dt>
@@ -126,7 +126,7 @@ function ReceivedDetail({ id, sentQuoteId, inList, onSent }: { id: number; sentQ
               </div>
             ))}
           </dl>
-        ) : <p className="sub">고객이 남긴 요청 내용이 없어요.</p>}
+        ) : canQuote ? <div className="req-answers" aria-hidden="true" /> : <p className="sub">고객이 남긴 요청 내용이 없어요.</p>}
         <small className="sub">접수 마감 {shortDateTime(deadline.toISOString())}</small>
         {sentQuoteId ? (
           <>
@@ -185,7 +185,7 @@ function QuoteForm({ requestId, title, onSent }: { requestId: number; title: str
     <form className="quote-form" onSubmit={check} noValidate aria-label={`${title} 견적 보내기`}>
       <div className="col">
         <b className="card-title">견적 보내기</b>
-        <small className="sub">요청 내용을 보고 금액과 설명을 적어 주세요. 서비스와 지역은 요청서 내용으로 정해져요.</small>
+        <small className="sub">요청 내용을 확인하고 금액과 설명을 적어 주세요.</small>
       </div>
       <fieldset className="col gap" disabled={busy} style={{ border: 0, padding: 0, margin: 0 }}>
         <Field label="제안 가격" htmlFor="qf-price" error={errs.price}>

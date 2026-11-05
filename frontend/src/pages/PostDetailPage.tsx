@@ -7,7 +7,7 @@ import {
   type Comment, type Post
 } from '../api/mvp';
 import { useSession } from '../auth/session';
-import { currentRedirect } from '../components/Header';
+import { useLoginPrompt } from '../components/loginPrompt';
 import { Badge, Empty, Pager } from '../components/common';
 import { useToast } from '../components/toast';
 import { Avatar, Banner, ErrorView, Lines, LoadingView, Modal, Spinner } from '../components/ui';
@@ -29,10 +29,11 @@ export function PostDetailPage({ id }: { id: number }) {
   const like = useSingleFlight();
   const del = useSingleFlight();
   const [askDel, setAskDel] = useState(false);
-  const login = () => navigate('/login', { redirect: currentRedirect() });
+  const askLogin = useLoginPrompt();
+  const login = (message = '댓글은 로그인한 뒤에 쓸 수 있어요.') => askLogin({ message });
 
   const toggleLike = (p: Post) => {
-    if (status !== 'member') { login(); return; }
+    if (status !== 'member') { login('좋아요는 로그인한 뒤에 누를 수 있어요.'); return; }
     like.run(async () => {
       try {
         const r = await likePost(p.postId, !p.liked);
@@ -95,14 +96,14 @@ export function PostDetailPage({ id }: { id: number }) {
         <b className="card-title">댓글 <span className="blue-t">{p.commentCount}</span></b>
         {status === 'member'
           ? <CommentForm postId={id} onDone={() => { setCPage(1); comments.reload(true).catch(() => undefined); post.reload(true).catch(() => undefined); }} />
-          : <button type="button" className="btn" onClick={login}>로그인하고 댓글 쓰기</button>}
+          : <button type="button" className="btn" onClick={() => login()}>로그인하고 댓글 쓰기</button>}
         {comments.state.kind === 'loading' && <LoadingView label="댓글을 불러오는 중이에요" />}
         {comments.state.kind === 'error' && <ErrorView title="댓글을 불러오지 못했어요" message={errorText(comments.state.error)} onRetry={() => comments.reload()} />}
         {comments.state.kind === 'ok' && (comments.state.data.content.length === 0 ? <p className="sub">아직 댓글이 없어요.<br />첫 댓글을 남겨 보세요.</p> : (
           <>
             <div className="col">
               {comments.state.data.content.map((c) => (
-                <CommentItem key={c.commentId} c={c} mine={me?.id === c.memberId} loggedIn={status === 'member'} onLogin={login}
+                <CommentItem key={c.commentId} c={c} mine={me?.id === c.memberId} loggedIn={status === 'member'} onLogin={() => login('좋아요는 로그인한 뒤에 누를 수 있어요.')}
                   onChanged={() => { comments.reload(true).catch(() => undefined); post.reload(true).catch(() => undefined); }} />
               ))}
             </div>
