@@ -278,6 +278,12 @@
   overflow: hidden;
 }
 
+.expert-photo > .avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
 .expert-photo img {
   width: 100%;
   height: 100%;
@@ -991,7 +997,7 @@
   .card-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .card-grid > li:nth-child(4) {
+  .local-panel .card-grid > li:nth-child(4) {
     display: none;
   }
   .rail-viewport {
@@ -1019,7 +1025,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
-  .card-grid > li:nth-child(4) {
+  .local-panel .card-grid > li:nth-child(4) {
     display: block;
   }
   .rail-viewport {

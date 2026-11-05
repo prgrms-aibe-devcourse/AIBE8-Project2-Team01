@@ -3,7 +3,7 @@ import { request, tokenStore } from './client';
 import type {
   ExpertProfile, ExpertProfileCreateRequest, ExpertProfileUpdateRequest, FileUploadResponse,
   FirstCategory, FirstRegion, LoginResponse, Member, MemberRole, MemberUpdateRequest,
-  SecondCategory, SecondRegion
+  PublicExpertSummary, SecondCategory, SecondRegion
 } from './types';
 
 // ── 인증 (AuthController) ──
@@ -48,6 +48,8 @@ export const createExpertProfile = (body: ExpertProfileCreateRequest) =>
   request<ExpertProfile>('/api/members/me/expert-profile', { method: 'POST', body });
 export const updateExpertProfile = (body: ExpertProfileUpdateRequest) =>
   request<ExpertProfile>('/api/members/me/expert-profile', { method: 'PATCH', body });
+export const getPublicExperts = () =>
+  request<PublicExpertSummary[]>('/api/public/expert-profiles', { auth: false });
 export const getPublicExpertProfile = (expertProfileId: number) =>
   request<ExpertProfile>(`/api/public/expert-profiles/${expertProfileId}`, { auth: false });
 
