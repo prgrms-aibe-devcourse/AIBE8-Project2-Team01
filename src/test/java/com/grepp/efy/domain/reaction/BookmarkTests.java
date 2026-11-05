@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -73,6 +74,31 @@ class BookmarkTests {
             jdbcTemplate.update("delete from expert_profile where member_id = ?", id);
             jdbcTemplate.update("delete from member where id = ?", id);
         }
+    }
+
+    // ---------- 공개 고수 목록의 찜 수 ----------
+
+    @Test
+    void 공개_고수_목록은_활성_찜의_누적과_최근7일_수를_주고_없으면_0() throws Exception {
+        LocalDateTime now = LocalDateTime.now();
+        Long oldFan = member("USER");
+        Long canceledFan = member("USER");
+        Long withdrawnFan = member("USER");
+        bookmark(me, profileId, true, now.minusDays(1));                // 누적·최근 7일
+        bookmark(oldFan, profileId, true, now.minusDays(30));           // 누적만
+        bookmark(canceledFan, profileId, false, now.minusDays(1));      // 취소: 제외
+        bookmark(withdrawnFan, profileId, true, now.minusDays(1));      // 탈퇴 회원: 제외
+        jdbcTemplate.update("update member set deleted_at = CURRENT_TIMESTAMP where id = ?", withdrawnFan);
+        Long noBookmarks = expertProfile(member("EXPERT"));
+
+        String entry = "$[?(@.id == " + profileId + ")]";
+        String empty = "$[?(@.id == " + noBookmarks + ")]";
+        mockMvc.perform(get("/api/public/expert-profiles"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(entry + ".bookmarkCount").value(contains(2)))
+                .andExpect(jsonPath(entry + ".weeklyBookmarkCount").value(contains(1)))
+                .andExpect(jsonPath(empty + ".bookmarkCount").value(contains(0)))
+                .andExpect(jsonPath(empty + ".weeklyBookmarkCount").value(contains(0)));
     }
 
     // ---------- 목록 ----------

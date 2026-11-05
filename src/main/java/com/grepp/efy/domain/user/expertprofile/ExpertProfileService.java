@@ -6,6 +6,7 @@ import com.grepp.efy.domain.basedata.secondcategory.SecondCategory;
 import com.grepp.efy.domain.basedata.secondcategory.SecondCategoryService;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegion;
 import com.grepp.efy.domain.basedata.secondregion.SecondRegionService;
+import com.grepp.efy.domain.reaction.bookmark.BookmarkRepository;
 import com.grepp.efy.domain.file.UploadFile;
 import com.grepp.efy.domain.file.UploadFileService;
 import com.grepp.efy.domain.file.UploadFileVisibility;
@@ -22,9 +23,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -39,12 +43,26 @@ public class ExpertProfileService {
     private final SecondRegionService secondRegionService;
     private final UploadFileService uploadFileService;
     private final SupabaseStorageClient storageClient;
+    private final BookmarkRepository bookmarkRepository;
 
     public List<PublicExpertSummary> getPublicExperts() {
-        return expertProfileRepository.findByMemberRoleAndMemberDeletedAtIsNullOrderByIdDesc(MemberRole.EXPERT)
-                .stream()
-                .map(profile -> expertProfileMapper.toPublicSummary(
-                        profile, getImageUrl(profile), getRepresentativeWorkImageUrl(profile)))
+        List<ExpertProfile> profiles =
+                expertProfileRepository.findByMemberRoleAndMemberDeletedAtIsNullOrderByIdDesc(MemberRole.EXPERT);
+        if (profiles.isEmpty()) {
+            return List.of();
+        }
+        // 고수 프로필 ID → [누적 찜 수, 최근 7일 찜 수]. 찜이 없는 고수는 맵에 없으므로 0
+        Map<Long, long[]> counts = new HashMap<>();
+        List<Long> ids = profiles.stream().map(ExpertProfile::getId).toList();
+        for (Object[] row : bookmarkRepository.countByExpertProfiles(ids, LocalDateTime.now().minusDays(7))) {
+            counts.put((Long) row[0], new long[]{((Number) row[1]).longValue(), ((Number) row[2]).longValue()});
+        }
+        return profiles.stream()
+                .map(profile -> {
+                    long[] count = counts.getOrDefault(profile.getId(), new long[2]);
+                    return expertProfileMapper.toPublicSummary(profile, getImageUrl(profile),
+                            getRepresentativeWorkImageUrl(profile), count[0], count[1]);
+                })
                 .toList();
     }
 
