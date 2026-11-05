@@ -203,20 +203,19 @@ export default function FlowDemo({ draft }) {
               <Avatar url={expertFace(picked.expert.id)} size={28} />
               {picked.expert.nickname}
             </p>
+            {/* 실제 흐름: 고객이 채팅방을 열고 첫 메시지를 보내면 고수가 답한다. 보는 사람은 고객이라 고객 말풍선이 오른쪽이다 */}
             <p className="fc-system">
               <Check size={13} strokeWidth={2.6} />
-              채팅방이 열렸어요
+              채팅방이 열렸어요.
             </p>
-            <p className="bubble from-expert" style={{ '--d': '450ms' }}>
-              안녕하세요. 요청서 잘 받았습니다. 방문 가능한 날짜를 알려 주세요.
+            <p className="bubble from-me" style={{ '--d': '450ms' }}>
+              보내주신 견적 확인했어요. 토요일 오전에도 이사 가능할까요?
             </p>
-            <p className="bubble from-me" style={{ '--d': '1500ms' }}>
-              다음 주 화요일 오전 괜찮아요
+            <p className="bubble from-expert" style={{ '--d': '1400ms' }}>
+              네, 토요일 오전 10시에 가능해요. 그 시간 괜찮으세요?
             </p>
-            <p className="bubble from-expert typing" style={{ '--d': '2300ms' }}>
-              <span />
-              <span />
-              <span />
+            <p className="bubble from-me" style={{ '--d': '2400ms' }}>
+              네, 오전 10시 괜찮아요!
             </p>
           </div>
         )}
