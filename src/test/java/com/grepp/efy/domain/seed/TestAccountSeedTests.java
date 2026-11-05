@@ -37,9 +37,21 @@ class TestAccountSeedTests {
     @Autowired ObjectMapper objectMapper;
 
     @Test
+    void 예시_고수_20명의_사진과_서비스와_지역을_조회한다() throws Exception {
+        for (String nickname : List.of("한결이사", "반짝홈케어", "윤선생 영어", "소리공방", "코드메이트", "바른설비", "온집 인테리어", "담다 스냅", "정리하는 하루", "김코치 피트니스", "문고리 수리", "해운대 이사짐센터", "커리어노트", "그림숲 아틀리에", "새길 노무", "마음쉼표 상담", "한빛 카케어", "맑은창 줄눈", "하늘 웨딩플래너", "오늘의 요가")) {
+            Map<String, Object> profile = jdbcTemplate.queryForMap("select ep.id, m.id member_id, f.id file_id from expert_profile ep join member m on ep.member_id=m.id join file f on m.image_id=f.id and f.uploader_id=m.id where m.nickname=?", nickname);
+            Long id = ((Number) profile.get("id")).longValue();
+            assertEquals(1, count("select count(*) from expert_profile_services s join expert_profile ep on s.expert_profile_id=ep.id where ep.id=? and s.services_id=ep.primary_category_id", id));
+            assertEquals(1, count("select count(*) from credit_wallet where member_id=?", profile.get("member_id")));
+            mockMvc.perform(get("/api/public/expert-profiles/" + id))
+                    .andExpect(status().isOk());
+        }
+    }
+
+    @Test
     void 커뮤니티와_찜과_채팅이_기존_팀원_계정에_연결된다() throws Exception {
-        assertEquals(20, count("select count(*) from post"));
-        assertEquals(40, count("select count(*) from post_comment"));
+        assertEquals(20, count("select count(*) from post where id<=20"));
+        assertEquals(40, count("select count(*) from post_comment where post_id<=20"));
         assertEquals(15, count("select count(*) from bookmark where is_active=true"));
         assertEquals(6, count("select count(*) from chat_message"));
         assertEquals(0, count("select count(*) from post p where p.comment_count <> (select count(*) from post_comment c where c.post_id=p.id and c.deleted_at is null)"));
@@ -51,9 +63,10 @@ class TestAccountSeedTests {
         }
         for (String type : new String[]{"QUESTION", "TIP", "RECRUIT", "PROMOTION"}) {
             mockMvc.perform(get("/api/public/posts").param("boardType", type))
-                    .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(5));
+                    .andExpect(status().isOk());
+            assertEquals(5, count("select count(*) from post where id<=20 and board_type=?", type));
         }
-        for (Long postId : jdbcTemplate.queryForList("select id from post", Long.class)) {
+        for (Long postId : jdbcTemplate.queryForList("select id from post where id<=20", Long.class)) {
             mockMvc.perform(get("/api/public/posts/" + postId)).andExpect(status().isOk());
             mockMvc.perform(get("/api/public/posts/" + postId + "/comments"))
                     .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(2));
@@ -74,13 +87,13 @@ class TestAccountSeedTests {
 
     @Test
     void 기존_6개와_팀원별_30개_탈퇴용_5개가_중복없이_생성된다() {
-        assertEquals(41, count("select count(*) from member"));
+        assertEquals(41, count("select count(*) from member where id<=41"));
         for (String role : new String[]{"USER", "EXPERT", "ADMIN"}) {
             assertEquals(Map.of("USER", 17, "EXPERT", 13, "ADMIN", 11).get(role),
-                    count("select count(*) from member where role = ?", role));
+                    count("select count(*) from member where id<=41 and role = ?", role));
         }
-        assertEquals(41, count("select count(distinct nickname) from member"));
-        assertEquals(41, count("select count(distinct phone) from member"));
+        assertEquals(41, count("select count(distinct nickname) from member where id<=41"));
+        assertEquals(41, count("select count(distinct phone) from member where id<=41"));
         for (Map<String, Object> row : jdbcTemplate.queryForList("select password, phone from member")) {
             String hash = row.get("password").toString();
             assertTrue(hash.startsWith("$2a$"));
