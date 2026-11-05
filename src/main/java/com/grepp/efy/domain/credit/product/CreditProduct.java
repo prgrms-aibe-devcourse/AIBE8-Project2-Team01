@@ -26,9 +26,6 @@ public class CreditProduct {
     @Column(nullable = false)
     private Long creditAmount; // 지급 크레딧 (1크레딧 = 1,000원)
 
-    @Column(nullable = false)
-    private Long bonusCredit = 0L; // 추가 크레딧. MVP에서는 지급하지 않아 0
-
     @Column(name = "is_active", nullable = false)
     private boolean active = true; // 판매 중인 상품만 노출
 
