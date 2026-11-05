@@ -1,5 +1,6 @@
 package com.grepp.efy.domain.user.expertprofile;
 
+import com.grepp.efy.domain.user.expertprofile.dto.PublicExpertSummary;
 import com.grepp.efy.domain.user.expertprofile.docs.ExpertProfileControllerDocs;
 import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileResponse;
 import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileCreateRequest;
@@ -18,11 +19,19 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
 public class ExpertProfileController implements ExpertProfileControllerDocs {
     private final ExpertProfileService expertProfileService;
+
+    @Override
+    @GetMapping("/public/expert-profiles")
+    public List<PublicExpertSummary> getPublicExperts() {
+        return expertProfileService.getPublicExperts();
+    }
 
     @GetMapping("/public/expert-profiles/{expertProfileId}")
     @Override

@@ -73,6 +73,11 @@ export interface WorkImage { fileId: number; url: string; description: string | 
 export interface WorkImageRequest { fileId: number; description?: string }
 
 // ExpertProfileCreateRequest (imageId는 보내지 않음 · 프로필 사진은 회원 사진을 쓴다)
+export type PublicExpertSummary = Pick<ExpertProfile,
+  'id' | 'nickname' | 'shortIntro' | 'careerYears' | 'imageUrl' |
+  'primaryCategory' | 'nationwide' | 'wholeRegions' | 'regions'
+> & { representativeWorkImageUrl?: string | null };
+
 export interface ExpertProfileCreateRequest {
   shortIntro: string;
   description: string;

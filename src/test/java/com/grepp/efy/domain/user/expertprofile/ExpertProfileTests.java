@@ -268,11 +268,25 @@ class ExpertProfileTests {
                 .andExpect(jsonPath("$.email").doesNotExist())
                 .andExpect(jsonPath("$.phone").doesNotExist());
 
+        String entry = "$[?(@.id == " + profile.get("id").asLong() + ")]";
+        mockMvc.perform(get("/api/public/expert-profiles"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(entry + ".nickname").value(org.hamcrest.Matchers.contains(changedNickname)))
+                .andExpect(jsonPath(entry + ".email").isEmpty())
+                .andExpect(jsonPath(entry + ".phone").isEmpty());
+
         jdbcTemplate.update("update member set role = 'USER' where id = ?", memberId);
         mockMvc.perform(get(publicUrl)).andExpect(status().isOk())
                 .andExpect(jsonPath("$.nickname").value(changedNickname));
+        mockMvc.perform(get("/api/public/expert-profiles"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(entry).isEmpty());
+        jdbcTemplate.update("update member set role = 'EXPERT' where id = ?", memberId);
         jdbcTemplate.update("update member set deleted_at = CURRENT_TIMESTAMP where id = ?", memberId);
         mockMvc.perform(get(publicUrl)).andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/public/expert-profiles"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(entry).isEmpty());
     }
 
     @Test

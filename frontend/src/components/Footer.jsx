@@ -66,7 +66,7 @@ export default function Footer({ home = false }) {
           )}
         </div>
         <div className="footer-bottom">
-          {home && <p>메인 화면의 고수·견적 금액·합류일·찜 증가 수는 시안용 예시입니다. 고수 프로필 사진은 AI로 만든 가상 인물입니다. 카테고리·지역·요청서 질문은 실제 기준 데이터입니다.</p>}
+          {home && <p>요청서 작성 흐름의 견적 금액과 진행 화면은 예시입니다. 고수 목록과 카테고리·지역·요청서 질문은 실제 데이터를 사용합니다.</p>}
           <p>© 2026 EFY. 프로그래머스 AIBE8 Team01 프로젝트</p>
         </div>
       </div>

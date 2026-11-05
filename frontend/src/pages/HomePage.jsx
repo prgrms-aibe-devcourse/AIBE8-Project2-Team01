@@ -4,12 +4,10 @@ import { getSub } from '../data/categoryMeta.js';
 import Header from '../components/Header.jsx';
 import Hero from '../components/Hero.jsx';
 import CategoryShelf from '../components/CategoryShelf.jsx';
-import LocalExperts from '../components/LocalExperts.jsx';
-import NewExperts from '../components/NewExperts.jsx';
 import Collections from '../components/Collections.jsx';
-import RisingExperts from '../components/RisingExperts.jsx';
+import { PublicExperts } from '../components/PublicExperts';
+import { useSession } from '../auth/session';
 import Community from '../components/Community.jsx';
-import WorkShowcase from '../components/WorkShowcase.jsx';
 import ExpertJoin from '../components/ExpertJoin.jsx';
 import Footer from '../components/Footer.jsx';
 import RequestSheet, { readSavedDraft } from '../components/RequestSheet.jsx';
@@ -20,7 +18,7 @@ export default function HomePage({ params }) {
   const [draft, setDraft] = useState({ sub: null, region: null });
   const [sheetOpen, setSheetOpen] = useState(false);
   const [slipVisible, setSlipVisible] = useState(true);
-  const [bookmarks, setBookmarks] = useState(() => new Set());
+  const { status, me } = useSession();
   const slipRef = useRef(null);
   const returnFocusRef = useRef(null);
 
@@ -77,17 +75,6 @@ export default function HomePage({ params }) {
     if (el && typeof el.focus === 'function') requestAnimationFrame(() => el.focus());
   }, []);
 
-  const toggleBookmark = useCallback((id) => {
-    setBookmarks((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-
-  const cardProps = { bookmarks, onToggleBookmark: toggleBookmark };
-
   return (
     <>
       <Header path="/" draft={draft} showCompact={!slipVisible} onOpenRequest={() => openSheet()} />
@@ -95,10 +82,7 @@ export default function HomePage({ params }) {
         <Hero draft={draft} setDraft={setDraft} slipRef={slipRef} onStart={() => openSheet()} />
         <CategoryShelf onPickSub={(sub) => openSheet({ sub })} />
         <Collections onPickSub={(sub) => openSheet({ sub })} />
-        <LocalExperts {...cardProps} onRequest={(region) => openSheet(region ? { region } : undefined)} />
-        <NewExperts {...cardProps} />
-        <RisingExperts {...cardProps} />
-        <WorkShowcase />
+        {(status === 'guest' || me?.role === 'USER') && <PublicExperts />}
         <Community />
         <ExpertJoin />
       </main>

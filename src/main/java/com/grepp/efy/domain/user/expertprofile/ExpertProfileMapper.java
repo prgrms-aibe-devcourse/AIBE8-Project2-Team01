@@ -6,6 +6,7 @@ import com.grepp.efy.domain.basedata.secondregion.SecondRegionMapper;
 import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileCreateRequest;
 import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileResponse;
 import com.grepp.efy.domain.user.expertprofile.dto.WorkImageResponse;
+import com.grepp.efy.domain.user.expertprofile.dto.PublicExpertSummary;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -29,6 +30,9 @@ public interface ExpertProfileMapper {
     @Mapping(target = "regions", ignore = true)
     @Mapping(target = "workImages", ignore = true)
     ExpertProfile toEntity(ExpertProfileCreateRequest expertProfileRequest);
+
+    @Mapping(target = "nickname", source = "expertProfile.member.nickname")
+    PublicExpertSummary toPublicSummary(ExpertProfile expertProfile, String imageUrl, String representativeWorkImageUrl);
 
     @Mapping(target = "nickname", source = "expertProfile.member.nickname")
     @Mapping(target = "imageId", source = "expertProfile.member.image.id")

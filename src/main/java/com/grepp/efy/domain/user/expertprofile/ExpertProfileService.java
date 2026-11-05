@@ -40,6 +40,14 @@ public class ExpertProfileService {
     private final UploadFileService uploadFileService;
     private final SupabaseStorageClient storageClient;
 
+    public List<PublicExpertSummary> getPublicExperts() {
+        return expertProfileRepository.findByMemberRoleAndMemberDeletedAtIsNullOrderByIdDesc(MemberRole.EXPERT)
+                .stream()
+                .map(profile -> expertProfileMapper.toPublicSummary(
+                        profile, getImageUrl(profile), getRepresentativeWorkImageUrl(profile)))
+                .toList();
+    }
+
     public ExpertProfileResponse getExpertProfile(Long expertProfileId) {
         ExpertProfile expertProfile = getExpertProfileEntity(expertProfileId);
         memberService.getMemberEntity(expertProfile.getMember().getId());
@@ -183,11 +191,24 @@ public class ExpertProfileService {
         profile.getWorkImages().addAll(images);
     }
 
+    private String getRepresentativeWorkImageUrl(ExpertProfile profile) {
+        return profile.getWorkImages().stream()
+                .map(WorkImage::getFile)
+                .filter(this::isPublicWorkImage)
+                .findFirst()
+                .map(file -> storageClient.createUrl(file.getVisibility(), file.getStoragePath()))
+                .orElse(null);
+    }
+
+    private boolean isPublicWorkImage(UploadFile file) {
+        return file.getDeletedAt() == null && file.getVisibility() == UploadFileVisibility.PUBLIC;
+    }
+
     private List<WorkImageResponse> getWorkImages(ExpertProfile profile) {
         List<WorkImageResponse> responses = new ArrayList<>();
         for (WorkImage image : profile.getWorkImages()) {
             UploadFile file = image.getFile();
-            if (file.getDeletedAt() == null && file.getVisibility() == UploadFileVisibility.PUBLIC) {
+            if (isPublicWorkImage(file)) {
                 responses.add(new WorkImageResponse(file.getId(),
                         storageClient.createUrl(file.getVisibility(), file.getStoragePath()), image.getDescription()));
             }

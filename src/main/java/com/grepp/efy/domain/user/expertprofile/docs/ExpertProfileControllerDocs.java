@@ -3,6 +3,7 @@ package com.grepp.efy.domain.user.expertprofile.docs;
 import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileCreateRequest;
 import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileResponse;
 import com.grepp.efy.domain.user.expertprofile.dto.ExpertProfileUpdateRequest;
+import com.grepp.efy.domain.user.expertprofile.dto.PublicExpertSummary;
 import com.grepp.efy.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.grepp.efy.global.exception.ErrorResponse;
@@ -15,8 +16,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
+
 @Tag(name = "고수 프로필", description = "고수 프로필 등록·조회·수정 API")
 public interface ExpertProfileControllerDocs {
+
+    @Operation(summary = "공개 고수 목록 조회",
+            description = "로그인 없이 탈퇴하지 않은 고수의 카드 정보를 조회합니다. 프로필 ID 내림차순으로 반환합니다.")
+    List<PublicExpertSummary> getPublicExperts();
 
     @Operation(summary = "고수 프로필 공개 조회",
             description = "로그인 없이 프로필 ID로 조회합니다. 회원 닉네임(nickname)·소개·경력·제공 서비스·대표 서비스·활동 지역과 회원 공통 프로필 이미지 파일 ID(imageId)와 공개 URL(imageUrl)을 반환합니다. 회원 닉네임을 변경하면 최신 닉네임을 반환합니다. 사진이 없으면 두 값은 null이며 삭제되거나 비공개인 사진의 URL은 반환하지 않습니다. workImages는 파일 ID·공개 URL·설명을 표시 순서대로 반환하며 사진이 없으면 빈 배열입니다. 이메일·전화번호는 포함하지 않습니다. "
