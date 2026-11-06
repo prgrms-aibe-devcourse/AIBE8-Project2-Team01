@@ -30,7 +30,9 @@ export default function HomePage({ params }) {
   const experts = useLoad(async () => {
     const profiles = await getPublicExperts();
     const hiddenProfileId = Number(import.meta.env.VITE_HOME_HIDDEN_EXPERT_ID);
-    return profiles.filter((profile) => profile.id !== hiddenProfileId);
+    return profiles.filter(
+      (profile) => profile.id !== hiddenProfileId && profile.nickname !== '김경진',
+    );
   }, [], status !== 'loading' && !isExpert);
   const bookmarks = useHomeBookmarks();
   // 요청서 초안: 선택한 소분류와 시군구
