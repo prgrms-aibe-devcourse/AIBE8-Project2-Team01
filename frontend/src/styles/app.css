@@ -1354,9 +1354,17 @@ main.page.admin {
 }
 
 @media (min-width: 768px) {
+  /* 줄 구성: 1 필터 · 2 목록(또는 빈 안내) · 3 페이지 이동
+     오른쪽 잔액 카드는 1~2줄에 걸쳐 놓인다. 카드가 목록보다 길 때 남는 높이가 필터 줄로 가면
+     필터 버튼이 늘어나고 목록이 아래로 밀리므로 남는 높이는 목록 줄(1fr)만 받게 한다 */
   .page .hist-split {
+    grid-template-rows: auto 1fr auto;
     row-gap: 16px;
     align-items: stretch;
+  }
+
+  .page .hist-main > .tabs {
+    align-self: start;
   }
 
   .page .hist-main {

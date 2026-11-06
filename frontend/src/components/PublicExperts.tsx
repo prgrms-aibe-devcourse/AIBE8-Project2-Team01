@@ -36,8 +36,12 @@ const HOME_REGIONS: HomeRegion[] = HOME_REGION_IDS.flatMap((id) => {
 });
 
 
-function onePerCategory<T extends { e: PublicExpertSummary }>(ranked: T[]) {
-  const categories = new Set<number>();
+// 전체 탭에서 맨 앞 네 칸에 고정으로 보여 줄 고수 (닉네임 기준 · 이 순서대로)
+// 응답에 없는 고수는 건너뛰고 다음 고수가 앞으로 온다
+const OVERALL_FIRST = ['오늘의 필라테스', '온집 인테리어', '마음쉼표 상담', 'Jio Web Studio'];
+
+function onePerCategory<T extends { e: PublicExpertSummary }>(ranked: T[], taken: Iterable<number> = []) {
+  const categories = new Set<number>(taken);
   return ranked.filter(({ e }) => {
     const id = e.primaryCategory?.id;
     if (id == null || categories.has(id)) return false;
@@ -51,7 +55,7 @@ function activeExperts(all: PublicExpertSummary[], region: HomeRegion | null, fi
   const index = ranked.findIndex(({ e }) => e.nickname === '온집 인테리어');
   if (index > 1) ranked.splice(1, 0, ranked.splice(index, 1)[0]);
   const overall = onePerCategory(ranked);
-  if (!region) return overall;
+  if (!region) return withOverallFirst(ranked, overall);
 
   const seen = new Set(overall.slice(0, firstPageSize).map(({ e }) => e.id));
   for (const choice of [...HOME_REGIONS, region]) {
@@ -62,6 +66,16 @@ function activeExperts(all: PublicExpertSummary[], region: HomeRegion | null, fi
     for (const { e } of picks.slice(0, firstPageSize)) seen.add(e.id);
   }
   return [];
+}
+
+// 전체 탭 표시 순서: 고정 네 명을 먼저 두고 나머지는 기존 규칙(응답 순서 · 대표 서비스별 한 명)을 그대로 따른다
+// 지역 탭은 이 함수를 거치지 않는다
+function withOverallFirst<T extends { e: PublicExpertSummary }>(ranked: T[], overall: T[]) {
+  const first = OVERALL_FIRST.flatMap((nickname) => ranked.filter(({ e }) => e.nickname === nickname).slice(0, 1));
+  if (first.length === 0) return overall;
+  const firstIds = new Set(first.map(({ e }) => e.id));
+  const taken = first.map(({ e }) => e.primaryCategory?.id).filter((id): id is number => id != null);
+  return [...first, ...onePerCategory(ranked.filter(({ e }) => !firstIds.has(e.id)), taken)];
 }
 
 function matchLabel(level: number, region: HomeRegion) {
