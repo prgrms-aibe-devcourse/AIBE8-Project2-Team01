@@ -1,10 +1,11 @@
 package com.grepp.efy.global.config;
 
-import com.grepp.efy.domain.user.member.MemberRepository;
+import com.grepp.efy.domain.user.member.MemberService;
 import com.grepp.efy.global.security.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -36,16 +37,22 @@ public class SecurityConfig {
             "/error"                             // 스프링 기본 에러 경로
     };
 
+    private static final String[] FRONTEND_FILES = {
+            "/", "/index.html", "/assets/**", "/brand/**", "/efy-assets/**"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             CustomAuthenticationEntryPoint authenticationEntryPoint,
             CustomAccessDeniedHandler accessDeniedHandler,
             JwtProvider jwtProvider,
-            MemberRepository memberRepository) throws Exception {
+            MemberService memberService) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_URLS).permitAll()
+                        .requestMatchers(HttpMethod.GET, FRONTEND_FILES).permitAll()
+                        .requestMatchers(HttpMethod.HEAD, FRONTEND_FILES).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
@@ -57,7 +64,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtProvider, memberRepository),
+                        new JwtAuthenticationFilter(jwtProvider, memberService),
                         UsernamePasswordAuthenticationFilter.class
                 );
 

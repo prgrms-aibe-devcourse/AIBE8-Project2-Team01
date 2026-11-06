@@ -44,8 +44,10 @@ public class AuthController implements AuthControllerDocs {
 
     @PostMapping("/public/auth/refresh")
     @Override
-    public ResponseEntity<LoginResponse> refresh(@CookieValue(value = RefreshTokenCookie.NAME, required = false) String refreshToken) {
-        LoginResult loginResult = authService.refresh(refreshToken);
+    public ResponseEntity<LoginResponse> refresh(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+            @CookieValue(value = RefreshTokenCookie.NAME, required = false) String refreshToken) {
+        LoginResult loginResult = authService.refresh(authorization, refreshToken);
         LoginResponse loginResponse = new LoginResponse(loginResult.accessToken(), "Bearer");
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.create(loginResult.refreshToken()).toString())

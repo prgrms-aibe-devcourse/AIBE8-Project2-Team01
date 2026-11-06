@@ -1,12 +1,20 @@
 package com.grepp.efy.domain.user.member;
 
-import com.grepp.efy.domain.user.auth.RefreshTokenRepository;
-import com.grepp.efy.domain.user.member.dto.*;
+import com.grepp.efy.domain.file.UploadFile;
+import com.grepp.efy.domain.file.UploadFileService;
+import com.grepp.efy.domain.file.UploadFileVisibility;
+import com.grepp.efy.domain.user.auth.RefreshTokenService;
+import com.grepp.efy.domain.user.member.dto.MemberCreateRequest;
+import com.grepp.efy.domain.user.member.dto.MemberResponse;
+import com.grepp.efy.domain.user.member.dto.MemberRoleUpdateRequest;
+import com.grepp.efy.domain.user.member.dto.MemberUpdateRequest;
 import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
+import com.grepp.efy.global.storage.SupabaseStorageClient;
 import com.grepp.efy.global.util.PageableFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -26,11 +33,28 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final MemberRepository memberRepository;
     private final MemberMapper memberMapper;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenService refreshTokenService;
+    private final UploadFileService uploadFileService;
+    private final SupabaseStorageClient storageClient;
+
+    @Value("${app.password-min-length:4}")
+    private int passwordMinLength;
+
+    public PageResponse<MemberResponse> getMembers(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        Pageable pageable = PageableFactory.create(pageNumber, pageSize, sortBy, sortOrder, SORTABLE_FIELDS);
+        Page<Member> page = memberRepository.findByDeletedAtIsNull(pageable);
+        return PageResponse.of(page, page.getContent().stream().map(member -> memberMapper.toResponse(member, getImageUrl(member))).toList());
+    }
+
+    public MemberResponse getCurrentMember(Long memberId) {
+        Member member = getMemberEntity(memberId);
+        return memberMapper.toResponse(member, getImageUrl(member));
+    }
 
     @Transactional
     public Member create(MemberCreateRequest memberCreateRequest) {
 
+        checkPassword(memberCreateRequest.getPassword());
         ensureNotReserved(memberCreateRequest.getEmail(), memberCreateRequest.getNickname());
         if (memberRepository.existsByPhone(memberCreateRequest.getPhone())) {
             throw new BusinessException(ErrorCode.DUPLICATE_PHONE_EXCEPTION);
@@ -53,25 +77,12 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
-    public PageResponse<MemberResponse> getMembers(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
-        Pageable pageable = PageableFactory.create(pageNumber, pageSize, sortBy, sortOrder, SORTABLE_FIELDS);
-        Page<Member> page = memberRepository.findByDeletedAtIsNull(pageable);
-        return PageResponse.of(page, page.getContent().stream().map(memberMapper::toResponse).toList());
-    }
-
-    public MemberResponse getCurrentMember(Long memberId) {
-        Member member = getMemberEntity(memberId);
-        return memberMapper.toResponse(member);
-    }
-
-    public MemberPublicResponse getMemberById(Long memberId) {
-        Member member = getMemberEntity(memberId);
-        return memberMapper.toPublicResponse(member);
-    }
-
     @Transactional
     public MemberResponse updateMember(Long memberId, MemberUpdateRequest request) {
         Member member = getMemberEntity(memberId);
+        if (request.getPassword() != null) {
+            checkPassword(request.getPassword());
+        }
 
         if (request.getNickname() != null) {
             ensureNotReserved(null, request.getNickname());
@@ -89,10 +100,20 @@ public class MemberService {
         if (request.getPassword() != null) {
             member.setPassword(passwordEncoder.encode(request.getPassword()));
         }
-        return memberMapper.toResponse(member);
+        return memberMapper.toResponse(member, getImageUrl(member));
     }
 
-    // TODO: 고수 프로필 등록 여부를 확인한 뒤 본인의 USER ↔ EXPERT 전환을 연결
+    @Transactional
+    public MemberResponse updateImage(Long memberId, Long imageId) {
+        Member member = getMemberEntity(memberId);
+        UploadFile image = uploadFileService.getMyUploadFileEntity(imageId, memberId);
+        if (image.getVisibility() != UploadFileVisibility.PUBLIC) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION);
+        }
+        member.setImage(image);
+        return memberMapper.toResponse(member, getImageUrl(member));
+    }
+
     @Transactional
     public MemberResponse setRole(Long adminId, Long memberId, MemberRoleUpdateRequest request) {
         Member member = getMemberEntity(memberId);
@@ -103,7 +124,35 @@ public class MemberService {
         if (member.getRole() != request.getRole()) {
             member.setRole(request.getRole());
         }
-        return memberMapper.toResponse(member);
+        return memberMapper.toResponse(member, getImageUrl(member));
+    }
+
+    @Transactional
+    public MemberResponse changeMyRole(Long memberId, MemberRoleUpdateRequest request) {
+        Member member = getMemberEntity(memberId);
+        if (member.getRole() == MemberRole.ADMIN || request.getRole() == MemberRole.ADMIN) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
+        }
+        if (member.getRole() != request.getRole()) {
+            member.setRole(request.getRole());
+        }
+        return memberMapper.toResponse(member, getImageUrl(member));
+    }
+
+    // 첫 프로필 등록 시 일반 회원을 고수로 전환한다.
+    @Transactional
+    public void changeToExpert(Long memberId) {
+        Member member = getMemberEntity(memberId);
+        if (member.getRole() != MemberRole.USER) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_EXCEPTION);
+        }
+        member.setRole(MemberRole.EXPERT);
+    }
+
+    @Transactional
+    public void deleteImage(Long memberId) {
+        Member member = getMemberEntity(memberId);
+        member.setImage(null);
     }
 
     @Transactional
@@ -112,19 +161,42 @@ public class MemberService {
         member.setDeletedAt(LocalDateTime.now());
         member.setNickname("탈퇴한회원_" + memberId);
         member.setEmail("deleted_" + memberId + "@deleted.local");
-        member.setPhone(null);
+        member.setPhone("deleted_" + memberId);
         member.setPassword(null);
         invalidateTokens(member);
     }
 
+    // 탈퇴 회원은 제외하고 없으면 MEMBER_NOT_FOUND_EXCEPTION 발생
     public Member getMemberEntity(Long memberId) {
         return memberRepository.findByIdAndDeletedAtIsNull(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND_EXCEPTION));
     }
 
+    // 탈퇴 회원은 제외하고, 없으면 MEMBER_NOT_FOUND_EXCEPTION 발생
+    public Member getMemberEntityByEmail(String email) {
+        return memberRepository.findByEmailAndDeletedAtIsNull(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND_EXCEPTION));
+    }
+
+    private String getImageUrl(Member member) {
+        UploadFile image = member.getImage();
+        if (image == null || image.getDeletedAt() != null
+                || image.getVisibility() != UploadFileVisibility.PUBLIC) {
+            return null;
+        }
+        return storageClient.createUrl(image.getVisibility(), image.getStoragePath());
+    }
+
     private void invalidateTokens(Member member) {
-        refreshTokenRepository.deleteByMemberId(member.getId());
-        member.setTokenInValidBefore(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(1));
+        refreshTokenService.deleteByMemberId(member.getId());
+        member.setTokenVersion(member.getTokenVersion() + 1);
+    }
+
+    private void checkPassword(String password) {
+        if (password == null || password.isBlank()
+                || password.length() < passwordMinLength || password.length() > 20) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_EXCEPTION);
+        }
     }
 
     private void ensureNotReserved(String email, String nickname) {
@@ -133,4 +205,5 @@ public class MemberService {
             throw new BusinessException(ErrorCode.RESERVED_MEMBER_VALUE_EXCEPTION);
         }
     }
+
 }

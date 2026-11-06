@@ -1,0 +1,25 @@
+{
+  "name": "efy-frontend",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit -p . && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  },
+  "description": "EFY 웹·모바일 반응형 프론트엔드 (새 디자인 · 메인 화면 개편 · 다크 모드)"
+}

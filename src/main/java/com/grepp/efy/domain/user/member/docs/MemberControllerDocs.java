@@ -1,19 +1,20 @@
 package com.grepp.efy.domain.user.member.docs;
 
-import com.grepp.efy.domain.user.member.dto.MemberPublicResponse;
 import com.grepp.efy.domain.user.member.dto.MemberResponse;
+import com.grepp.efy.domain.user.member.dto.MemberImageUpdateRequest;
 import com.grepp.efy.domain.user.member.dto.MemberRoleUpdateRequest;
 import com.grepp.efy.domain.user.member.dto.MemberUpdateRequest;
 import com.grepp.efy.global.common.PageResponse;
 import com.grepp.efy.global.exception.ErrorResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 
 @Tag(name = "회원", description = "회원 정보 조회·수정·탈퇴 및 관리자 회원 관리 API")
@@ -49,7 +50,7 @@ public interface MemberControllerDocs {
     ResponseEntity<PageResponse<MemberResponse>> getMembers(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
 
     @Operation(summary = "내 정보 조회",
-            description = "로그인한 회원이 자신의 정보를 조회합니다. 비밀번호는 반환하지 않습니다.")
+            description = "로그인한 회원이 자신의 정보와 프로필 이미지 ID·공개 URL을 조회합니다. 사진이 없으면 이미지 정보는 null입니다. 삭제·비공개 파일의 URL과 비밀번호는 반환하지 않습니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공. 본인의 회원 정보 반환")
     @ApiResponse(responseCode = "401", description = "인증 정보가 없거나 유효하지 않음",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
@@ -69,30 +70,8 @@ public interface MemberControllerDocs {
             }))
     ResponseEntity<MemberResponse> getMyData(CustomUserDetails userDetails);
 
-    @Operation(summary = "회원 공개 정보 조회",
-            description = "로그인 없이 호출할 수 있습니다. 회원 ID·닉네임·권한만 반환하며 이메일과 전화번호는 공개하지 않습니다.")
-    @ApiResponse(responseCode = "200", description = "조회 성공. 공개 회원 정보 반환")
-    @ApiResponse(responseCode = "400", description = "회원 ID가 올바른 숫자 형식이 아님",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
-                    @ExampleObject(name = "회원 ID 형식 오류", value = """
-                            {
-                              "message": "경로 또는 쿼리 값의 타입이 올바르지 않습니다."
-                            }
-                            """)
-            }))
-    @ApiResponse(responseCode = "404", description = "회원이 없거나 탈퇴한 상태",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
-                    @ExampleObject(name = "회원 없음", value = """
-                            {
-                              "message": "회원을 찾을 수 없습니다."
-                            }
-                            """)
-            }))
-    @SecurityRequirements
-    ResponseEntity<MemberPublicResponse> getMember(Long memberId);
-
     @Operation(summary = "내 정보 수정",
-            description = "로그인한 회원이 자신의 닉네임·전화번호·비밀번호를 수정합니다. 생략하거나 null인 필드는 유지하며 비밀번호 변경 후에도 로그인은 유지됩니다.")
+            description = "로그인한 회원이 자신의 닉네임·전화번호·비밀번호를 수정합니다. 생략하거나 null인 필드는 유지합니다. 닉네임·전화번호는 앞뒤 공백을 제거하고 닉네임은 1~20자·전화번호는 숫자 11자리로 검사합니다. 본인의 기존 닉네임·전화번호는 사용할 수 있습니다. 비밀번호는 개발 4~20자·배포 8~20자이며 공백·대소문자를 변경하지 않습니다. 비밀번호 변경 후에도 로그인은 유지됩니다.")
     @ApiResponse(responseCode = "200", description = "수정 성공. 수정된 회원 정보 반환")
     @ApiResponse(responseCode = "400", description = "요청 데이터가 유효하지 않거나 탈퇴 회원용 예약 닉네임을 사용함",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
@@ -102,6 +81,11 @@ public interface MemberControllerDocs {
                               "errors": {
                                 "password": "비밀번호는 4자 이상 20자 이하로 입력해 주세요."
                               }
+                            }
+                            """),
+                    @ExampleObject(name = "환경별 비밀번호 최소 길이 또는 공백 검증", value = """
+                            {
+                              "message": "입력값이 올바르지 않습니다."
                             }
                             """),
                     @ExampleObject(name = "예약 닉네임", value = """
@@ -141,8 +125,37 @@ public interface MemberControllerDocs {
             }))
     ResponseEntity<MemberResponse> updateMember(CustomUserDetails userDetails, MemberUpdateRequest request);
 
+    @Operation(summary = "본인 프로필 사진 변경",
+            description = "공통 파일 업로드 후 받은 imageId를 전달합니다. 본인의 삭제되지 않은 PUBLIC 파일만 연결하며 기존 사진은 교체됩니다. 실패하면 기존 사진을 유지합니다. USER·EXPERT·ADMIN 모두 본인 사진을 변경할 수 있습니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "200", description = "변경된 회원 정보와 이미지 ID·URL 반환",
+            content = @Content(schema = @Schema(implementation = MemberResponse.class)))
+    @ApiResponse(responseCode = "400", description = "imageId 누락·null·형식 오류 또는 비공개 파일 선택")
+    @ApiResponse(responseCode = "401", description = "인증 실패 또는 탈퇴 회원")
+    @ApiResponse(responseCode = "403", description = "다른 회원의 파일 선택")
+    @ApiResponse(responseCode = "404", description = "파일이 없거나 삭제됨")
+    ResponseEntity<MemberResponse> updateImage(
+            @Parameter(hidden = true) CustomUserDetails userDetails, MemberImageUpdateRequest request);
+
+    @Operation(summary = "본인 역할 전환",
+            description = "로그인한 회원의 역할을 USER 또는 EXPERT로 전환합니다. EXPERT 전환에는 기존 고수 프로필이 필요합니다. "
+                    + "ADMIN은 본인 역할을 전환할 수 없고 ADMIN으로의 전환도 허용하지 않습니다. "
+                    + "동일 역할 재요청은 기존 상태를 유지합니다. 프로필과 연관 데이터 및 기존 로그인은 유지하고 다음 요청부터 현재 권한을 적용합니다.")
+    @ApiResponse(responseCode = "200", description = "역할 전환 성공 또는 기존 역할 유지",
+            content = @Content(schema = @Schema(implementation = MemberResponse.class)))
+    @ApiResponse(responseCode = "400", description = "역할 누락 또는 잘못된 역할 값",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "401", description = "인증 정보가 없거나 유효하지 않음",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "403", description = "ADMIN의 본인 전환 또는 ADMIN으로의 전환 요청",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "회원이 없거나 EXPERT 전환에 필요한 고수 프로필이 없음",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    ResponseEntity<MemberResponse> changeMyRole(
+            @Parameter(hidden = true) CustomUserDetails userDetails, MemberRoleUpdateRequest request);
+
     @Operation(summary = "회원 권한 변경",
-            description = "관리자만 다른 회원의 권한을 USER·EXPERT·ADMIN으로 변경할 수 있습니다. 본인의 관리자 권한은 변경할 수 없으며 대상 회원의 로그인은 유지됩니다.")
+            description = "관리자만 호출할 수 있습니다. 다른 회원의 권한을 USER·EXPERT·ADMIN으로 변경합니다. EXPERT 지정에는 기존 고수 프로필이 필요합니다. 본인의 관리자 권한은 변경할 수 없으며 대상 회원의 로그인은 유지되고 다음 요청부터 현재 권한이 적용됩니다.")
     @ApiResponse(responseCode = "200", description = "변경 성공. 변경된 회원 정보 반환")
     @ApiResponse(responseCode = "400", description = "요청 데이터가 유효하지 않거나 본인의 관리자 권한을 변경하려는 요청",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
@@ -176,11 +189,16 @@ public interface MemberControllerDocs {
                             }
                             """)
             }))
-    @ApiResponse(responseCode = "404", description = "대상 회원이 없거나 탈퇴한 상태",
+    @ApiResponse(responseCode = "404", description = "대상 회원이 없거나 탈퇴한 상태 또는 EXPERT 지정에 필요한 고수 프로필이 없음",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
                     @ExampleObject(name = "회원 없음", value = """
                             {
                               "message": "회원을 찾을 수 없습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "고수 프로필 없음", value = """
+                            {
+                              "message": "고수 프로필을 찾을 수 없습니다."
                             }
                             """)
             }))
@@ -208,7 +226,7 @@ public interface MemberControllerDocs {
     ResponseEntity<Void> deleteMember(CustomUserDetails userDetails);
 
     @Operation(summary = "관리자 회원 삭제",
-            description = "관리자만 회원을 논리 삭제할 수 있습니다. 대상 회원의 개인정보를 정리하고 기존 Access·Refresh 토큰을 차단합니다.")
+            description = "관리자만 호출할 수 있습니다. 회원을 논리 삭제합니다. 대상 회원의 개인정보를 정리하고 기존 Access·Refresh 토큰을 차단합니다.")
     @ApiResponse(responseCode = "204", description = "삭제 성공. 응답 본문 없음")
     @ApiResponse(responseCode = "400", description = "회원 ID가 올바른 숫자 형식이 아님",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
@@ -243,4 +261,11 @@ public interface MemberControllerDocs {
                             """)
             }))
     ResponseEntity<Void> deleteMemberByAdmin(Long memberId);
+    @Operation(summary = "본인 프로필 사진 연결 해제",
+            description = "회원의 사진 연결만 해제하고 저장소 파일은 삭제하지 않습니다. 사진이 없어도 성공합니다. 이후 내 정보와 고수 공개 조회의 이미지 ID·URL은 null입니다.")
+    @SecurityRequirement(name = "accessToken")
+    @ApiResponse(responseCode = "204", description = "사진 연결 해제 성공")
+    @ApiResponse(responseCode = "401", description = "인증 실패 또는 탈퇴 회원")
+    ResponseEntity<Void> deleteImage(@Parameter(hidden = true) CustomUserDetails userDetails);
+
 }

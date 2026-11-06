@@ -7,11 +7,13 @@ import com.grepp.efy.domain.user.member.dto.MemberResponse;
 import com.grepp.efy.global.security.CustomUserDetails;
 import com.grepp.efy.global.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 
@@ -19,16 +21,21 @@ import org.springframework.http.ResponseEntity;
 public interface AuthControllerDocs {
 
     @Operation(summary = "회원가입",
-            description = "이메일·비밀번호·닉네임·전화번호로 일반 사용자(USER) 계정을 생성합니다. 이메일은 앞뒤 공백 제거 및 소문자 변환 후 중복을 검사하며 비밀번호는 응답하지 않습니다.")
+            description = "이메일·비밀번호·닉네임·전화번호로 일반 사용자(USER) 계정을 생성합니다. 이메일은 앞뒤 공백 제거 및 소문자 변환 후 형식·최대 50자·중복을 검사합니다. 닉네임과 전화번호도 앞뒤 공백을 제거합니다. 닉네임은 1~20자이며 공백만 입력할 수 없고 전화번호는 숫자 11자리입니다. 비밀번호는 개발 4~20자·배포 8~20자이며 공백·대소문자를 변경하지 않고 응답에도 포함하지 않습니다.")
     @ApiResponse(responseCode = "201", description = "가입 성공. 생성된 회원 정보 반환")
     @ApiResponse(responseCode = "400", description = "입력값 검증 실패 또는 탈퇴 회원용 예약값 사용",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
-                    @ExampleObject(name = "비밀번호 길이", value = """
+                    @ExampleObject(name = "DTO 비밀번호 길이 검증", value = """
                             {
                               "message": "입력값이 올바르지 않습니다.",
                               "errors": {
                                 "password": "비밀번호는 4자 이상 20자 이하로 입력해 주세요."
                               }
+                            }
+                            """),
+                    @ExampleObject(name = "환경별 비밀번호 최소 길이 검증", value = """
+                            {
+                              "message": "입력값이 올바르지 않습니다."
                             }
                             """),
                     @ExampleObject(name = "전화번호 누락", value = """
@@ -92,18 +99,27 @@ public interface AuthControllerDocs {
     ResponseEntity<LoginResponse> login(LoginRequest loginRequest);
 
     @Operation(summary = "토큰 재발급",
-            description = "브라우저가 보내는 refreshToken 쿠키로 새 Access 토큰을 발급합니다. 기존 Refresh 토큰은 새 값으로 교체하며 이전 값의 재사용은 거절합니다. Authorization 헤더는 필요하지 않습니다.")
+            description = "Authorization 헤더에 Bearer 형식의 만료된 Access 토큰과 refreshToken 쿠키를 함께 보냅니다. 서명이 유효하고 같은 회원의 현재 토큰 버전인 경우에만 재발급합니다. 아직 유효한 Access는 400으로 거절합니다. 기존 Refresh 토큰은 새 값으로 교체하며 이전 값의 재사용은 거절합니다. 새 Access에는 현재 회원 권한을 반영합니다.")
     @ApiResponse(responseCode = "200", description = "재발급 성공. 새 Access 토큰 반환 및 Refresh 쿠키 교체")
-    @ApiResponse(responseCode = "401", description = "Refresh 쿠키 누락·만료·재사용 또는 탈퇴 회원의 토큰",
+    @ApiResponse(responseCode = "400", description = "Access 토큰이 아직 만료되지 않음",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Access 누락·형식·서명·회원·버전 오류 또는 Refresh 누락·만료·재사용·탈퇴 회원",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class), examples = {
-                    @ExampleObject(name = "유효하지 않은 토큰", value = """
+                    @ExampleObject(name = "유효하지 않은 Access", value = """
+                            {
+                              "message": "인증에 실패했습니다."
+                            }
+                            """),
+                    @ExampleObject(name = "유효하지 않은 Refresh", value = """
                             {
                               "message": "유효하지 않은 리프레시 토큰입니다."
                             }
                             """)
             }))
-    @SecurityRequirements
-    ResponseEntity<LoginResponse> refresh(String refreshToken);
+    @SecurityRequirement(name = "accessToken")
+    ResponseEntity<LoginResponse> refresh(
+            @Parameter(hidden = true) String authorization,
+            String refreshToken);
 
     @Operation(summary = "로그아웃",
             description = "로그인한 회원의 Refresh 토큰을 모두 삭제하고 Refresh 쿠키를 만료 처리합니다. 로그아웃 전에 발급된 Access 토큰도 무효화합니다.")

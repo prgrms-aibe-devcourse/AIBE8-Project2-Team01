@@ -1,8 +1,9 @@
 package com.grepp.efy.domain.user.member;
 
+import com.grepp.efy.domain.user.expertprofile.ExpertProfileService;
 import com.grepp.efy.domain.user.member.docs.MemberControllerDocs;
-import com.grepp.efy.domain.user.member.dto.MemberPublicResponse;
 import com.grepp.efy.domain.user.member.dto.MemberResponse;
+import com.grepp.efy.domain.user.member.dto.MemberImageUpdateRequest;
 import com.grepp.efy.domain.user.member.dto.MemberRoleUpdateRequest;
 import com.grepp.efy.domain.user.member.dto.MemberUpdateRequest;
 import com.grepp.efy.global.common.PageResponse;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController implements MemberControllerDocs {
 
     private final MemberService memberService;
+    private final ExpertProfileService expertProfileService;
     private final RefreshTokenCookie refreshTokenCookie;
 
     @GetMapping("/admin/members")
@@ -42,13 +44,6 @@ public class MemberController implements MemberControllerDocs {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/public/members/{memberId}")
-    @Override
-    public ResponseEntity<MemberPublicResponse> getMember(@PathVariable Long memberId) {
-        MemberPublicResponse response = memberService.getMemberById(memberId);
-        return ResponseEntity.ok(response);
-    }
-
     @PutMapping("/members/me")
     @Override
     public ResponseEntity<MemberResponse> updateMember(
@@ -59,6 +54,26 @@ public class MemberController implements MemberControllerDocs {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/members/me/image")
+    @Override
+    public ResponseEntity<MemberResponse> updateImage(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody MemberImageUpdateRequest request
+    ) {
+        MemberResponse response = memberService.updateImage(userDetails.getMemberId(), request.getImageId());
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/members/me/role")
+    @Override
+    public ResponseEntity<MemberResponse> changeMyRole(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody MemberRoleUpdateRequest request
+    ) {
+        MemberResponse response = expertProfileService.changeMyRole(userDetails.getMemberId(), request);
+        return ResponseEntity.ok(response);
+    }
+
     @PatchMapping("/admin/members/{memberId}/role")
     @Override
     public ResponseEntity<MemberResponse> setRole(
@@ -66,8 +81,15 @@ public class MemberController implements MemberControllerDocs {
             @PathVariable Long memberId,
             @Valid @RequestBody MemberRoleUpdateRequest request
     ) {
-        MemberResponse response = memberService.setRole(userDetails.getMemberId(), memberId, request);
+        MemberResponse response = expertProfileService.setRole(userDetails.getMemberId(), memberId, request);
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/members/me/image")
+    @Override
+    public ResponseEntity<Void> deleteImage(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        memberService.deleteImage(userDetails.getMemberId());
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/members/me")

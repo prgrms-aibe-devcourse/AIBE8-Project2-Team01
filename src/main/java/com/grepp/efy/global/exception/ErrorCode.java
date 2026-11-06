@@ -30,6 +30,7 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "회원을 찾을 수 없습니다."),
     DUPLICATE_EMAIL_EXCEPTION(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
     DUPLICATE_NICKNAME_EXCEPTION(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다."),
+    ACCESS_TOKEN_NOT_EXPIRED_EXCEPTION(HttpStatus.BAD_REQUEST, "Access 토큰이 아직 만료되지 않았습니다."),
     INVALID_REFRESH_TOKEN_EXCEPTION(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),
     LOGIN_FAILED_EXCEPTION(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."),
     PASSWORD_MISMATCH_EXCEPTION(HttpStatus.BAD_REQUEST, "현재 비밀번호가 올바르지 않습니다."),
@@ -49,22 +50,65 @@ public enum ErrorCode {
 
 
     // ③ 고수
-
+    EXPERT_PROFILE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "고수 프로필을 찾을 수 없습니다."),
+    DUPLICATE_EXPERT_PROFILE_EXCEPTION(HttpStatus.CONFLICT, "이미 등록된 고수 프로필이 있습니다."),
+    INVALID_EXPERT_SERVICE_EXCEPTION(HttpStatus.BAD_REQUEST, "제공 서비스는 중복 없이 선택하고 대표 서비스는 제공 서비스에 포함해 주세요."),
+    INVALID_EXPERT_REGION_EXCEPTION(HttpStatus.BAD_REQUEST, "활동 지역을 중복 없이 선택하고 전국과 개별 지역을 함께 선택하지 마세요."),
 
     // ④ 커뮤니티
-
+    INVALID_POST_IMAGE_EXCEPTION(HttpStatus.BAD_REQUEST, "사용할 수 없는 이미지가 포함되어 있습니다."),
+    POST_IMAGE_REQUIRED_EXCEPTION(HttpStatus.BAD_REQUEST, "팁 게시글에는 이미지를 1장 이상 첨부해 주세요."),
+    POST_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "존재하지 않는 게시물입니다."),
+    COMMENT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "존재하지 않는 댓글입니다."),
 
     // ⑤ 견적 요청·매칭
-
+    QUESTION_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "질문을 찾을 수 없습니다."),
+    REQUIRED_ANSWER_MISSING_EXCEPTION(HttpStatus.BAD_REQUEST, "필수 질문에 모두 답변해주세요."),
+    REQUEST_ANSWER_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "요청서 답변을 찾을 수 없습니다."),
+    DUPLICATE_SERVICE_REQUEST_EXCEPTION(HttpStatus.CONFLICT, "해당 카테고리에 이미 유효한 요청서가 존재합니다."),
+    DUPLICATE_ANSWER_EXCEPTION(HttpStatus.BAD_REQUEST, "동일한 질문에 중복 답변할 수 없습니다."),
+    REQUEST_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "요청서를 찾을 수 없습니다."),
+    INVALID_REQUEST_STATUS_EXCEPTION(HttpStatus.BAD_REQUEST, "취소할 수 없는 상태의 요청서입니다."),
+    CLOSED_REQUEST_QUOTE_NOT_ALLOWED_EXCEPTION(HttpStatus.BAD_REQUEST, "취소되었거나 종료된 요청서에는 견적을 발송할 수 없습니다."),
+    DUPLICATE_QUOTE_NOT_ALLOWED_EXCEPTION(HttpStatus.CONFLICT, "동일한 요청서에는 견적을 중복해서 발송할 수 없습니다."),
+    QUOTE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "견적서를 찾을 수 없습니다."),
+    QUOTE_DELETE_NOT_ALLOWED_EXCEPTION(HttpStatus.CONFLICT, "의뢰 요청된 견적서는 삭제할 수 없습니다. 변경 사항은 채팅으로 조율해주세요."),
+    EXPIRED_REQUEST_QUOTE_NOT_ALLOWED_EXCEPTION(HttpStatus.BAD_REQUEST, "견적 접수 기간(24시간)이 지난 요청서에는 견적을 발송할 수 없습니다."),
+    ALREADY_REQUESTED_QUOTE_EXCEPTION(HttpStatus.CONFLICT, "이미 의뢰 요청된 견적서입니다."),
+    CLOSED_REQUEST_QUOTE_REQUEST_NOT_ALLOWED_EXCEPTION(HttpStatus.BAD_REQUEST, "취소된 요청서의 견적서에는 의뢰 요청할 수 없습니다."),
 
     // ⑥ 리뷰·찜·좋아요
-
+    ALREADY_LIKED_POST_EXCEPTION(HttpStatus.CONFLICT, "이미 좋아요한 게시글입니다."),
+    ALREADY_LIKED_COMMENT_EXCEPTION(HttpStatus.CONFLICT, "이미 좋아요한 댓글입니다."),
+    LIKE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "좋아요한 기록이 없습니다."),
+    ALREADY_BOOKMARKED_EXCEPTION(HttpStatus.CONFLICT, "이미 북마크한 고수입니다."),
+    BOOKMARK_LIMIT_EXCEEDED_EXCEPTION(HttpStatus.CONFLICT, "북마크는 최대 500개까지 등록할 수 있습니다."),
+    BOOKMARK_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "존재하지 않는 북마크입니다."),
 
     // ⑦ 크레딧·결제
-
+    INSUFFICIENT_CREDIT_EXCEPTION(HttpStatus.CONFLICT, "사용 가능한 크레딧이 부족합니다."),
+    DUPLICATE_CREDIT_RESERVATION_EXCEPTION(HttpStatus.CONFLICT, "이미 크레딧이 예약된 견적서입니다."),
+    CREDIT_RESERVATION_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "견적서의 크레딧 예약을 찾을 수 없습니다."),
+    INVALID_CREDIT_RESERVATION_STATUS_EXCEPTION(HttpStatus.CONFLICT, "처리할 수 없는 크레딧 예약 상태입니다."),
+    CREDIT_PRODUCT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "충전 상품을 찾을 수 없습니다."),
+    PAYMENT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "결제 정보를 찾을 수 없습니다."),
+    PAYMENT_AMOUNT_MISMATCH_EXCEPTION(HttpStatus.BAD_REQUEST, "결제 금액이 주문 금액과 일치하지 않습니다."),
+    INVALID_PAYMENT_STATUS_EXCEPTION(HttpStatus.CONFLICT, "처리할 수 없는 결제 상태입니다."),
+    PAYMENT_CONFIRM_FAILED_EXCEPTION(HttpStatus.BAD_GATEWAY, "결제 승인에 실패했습니다."),
 
     // ⑧ 채팅
+    CHAT_ROOM_ALREADY_EXISTS_EXCEPTION(HttpStatus.CONFLICT, "이미 채팅방이 존재합니다."),
+    CHAT_IMAGE_NOT_PRIVATE_EXCEPTION(HttpStatus.BAD_REQUEST, "채팅 이미지는 비공개로 업로드한 파일만 사용할 수 있습니다."),
+    CHAT_PARTNER_LEFT_EXCEPTION(HttpStatus.CONFLICT, "상대방이 나간 채팅방에는 메시지를 보낼 수 없습니다."),
 
+    // ⑨ 파일 (공통)
+    FILE_EMPTY_EXCEPTION(HttpStatus.BAD_REQUEST, "빈 파일은 업로드할 수 없습니다."),
+    FILE_COUNT_EXCEEDED_EXCEPTION(HttpStatus.BAD_REQUEST, "파일은 한 번에 10개까지 업로드할 수 있습니다."),
+    FILE_TOO_LARGE_EXCEPTION(HttpStatus.CONTENT_TOO_LARGE, "파일 크기가 너무 큽니다."),
+    FILE_UPLOAD_FAILED_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),
+    FILE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "파일을 찾을 수 없습니다."),
+    FILE_FORBIDDEN_EXCEPTION(HttpStatus.FORBIDDEN, "본인이 업로드한 파일만 사용할 수 있습니다."),
+    FILE_INVALID_TYPE_EXCEPTION(HttpStatus.BAD_REQUEST, "허용하지 않는 파일 형식입니다."),
 
     ;
 

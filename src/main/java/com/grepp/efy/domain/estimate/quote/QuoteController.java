@@ -1,0 +1,86 @@
+package com.grepp.efy.domain.estimate.quote;
+
+import com.grepp.efy.domain.estimate.enums.QuoteStatus;
+import com.grepp.efy.domain.estimate.quote.docs.QuoteControllerDocs;
+import com.grepp.efy.domain.estimate.quote.dto.*;
+import com.grepp.efy.global.common.PageResponse;
+import com.grepp.efy.global.security.CustomUserDetails;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api")
+public class QuoteController implements QuoteControllerDocs {
+
+    private final QuoteService quoteService;
+
+    @Override
+    @GetMapping("/admin/quotes")
+    public ResponseEntity<PageResponse<AdminQuoteResponse>> getAdminQuotes(
+            @RequestParam(required = false) QuoteStatus status,
+            @RequestParam(defaultValue = "1") Integer pageNumber,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(defaultValue = "sentAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortOrder
+    ) {
+        PageResponse<AdminQuoteResponse> response =
+                quoteService.getAdminQuotes(status, pageNumber, pageSize, sortBy, sortOrder);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @GetMapping("/quotes")
+    public ResponseEntity<List<QuoteResponse>> getQuotes(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        List<QuoteResponse> response = quoteService.getQuotes(userDetails.getMemberId());
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @GetMapping("/quotes/{quoteId}")
+    public ResponseEntity<QuoteResponse> getQuote(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long quoteId
+    ) {
+        QuoteResponse response = quoteService.getQuote(userDetails.getMemberId(), quoteId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @GetMapping("/requests/{requestId}/quotes")
+    public ResponseEntity<List<QuoteRequestResponse>> getRequestQuotes(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long requestId
+    ) {
+        List<QuoteRequestResponse> response = quoteService.getRequestQuotes(userDetails.getMemberId(), requestId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @PostMapping("/requests/{requestId}/quotes")
+    public ResponseEntity<QuoteCreateResponse> createQuote(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long requestId,
+            @Valid @RequestBody QuoteCreateRequest request
+    ) {
+        QuoteCreateResponse response = quoteService.createQuote(userDetails.getMemberId(), requestId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @Override
+    @DeleteMapping("/quotes/{quoteId}")
+    public ResponseEntity<Void> deleteQuote(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long quoteId) {
+        quoteService.deleteQuote(userDetails.getMemberId(), quoteId);
+        return ResponseEntity.noContent().build();
+    }
+}

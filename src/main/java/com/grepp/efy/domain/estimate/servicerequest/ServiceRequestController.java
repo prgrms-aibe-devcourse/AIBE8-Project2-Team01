@@ -1,0 +1,83 @@
+package com.grepp.efy.domain.estimate.servicerequest;
+
+import com.grepp.efy.domain.estimate.enums.RequestStatus;
+import com.grepp.efy.domain.estimate.servicerequest.docs.ServiceRequestControllerDocs;
+import com.grepp.efy.domain.estimate.servicerequest.dto.*;
+import com.grepp.efy.global.common.PageResponse;
+import com.grepp.efy.global.security.CustomUserDetails;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api")
+public class ServiceRequestController implements ServiceRequestControllerDocs {
+
+    private final ServiceRequestService serviceRequestService;
+
+    @Override
+    @GetMapping("/admin/requests")
+    public ResponseEntity<PageResponse<AdminRequestResponse>> getAdminRequests(
+            @RequestParam(required = false) RequestStatus status,
+            @RequestParam(defaultValue = "1") Integer pageNumber,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortOrder
+    ) {
+        PageResponse<AdminRequestResponse> response =
+                serviceRequestService.getAdminRequests(status, pageNumber, pageSize, sortBy, sortOrder);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @GetMapping("/members/me/expert-profile/requests")
+    public ResponseEntity<List<RequestMatchedResponse>> getMatchedRequests(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<RequestMatchedResponse> requests = serviceRequestService.getMatchedRequests(userDetails.getMemberId());
+        return ResponseEntity.ok(requests);
+    }
+
+    @Override
+    @GetMapping("/members/me/requests")
+    public ResponseEntity<List<ServiceRequestListResponse>> getMyRequests(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        List<ServiceRequestListResponse> requests = serviceRequestService.getMyRequests(userDetails.getMemberId());
+        return ResponseEntity.ok(requests);
+    }
+
+    @Override
+    @GetMapping("/requests/{requestId}")
+    public ResponseEntity<ServiceRequestResponse> getRequest(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long requestId
+    ) {
+        ServiceRequestResponse response = serviceRequestService.getRequest(userDetails.getMemberId(), requestId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @PostMapping("/requests")
+    public ResponseEntity<ServiceRequestCreateResponse> createRequest(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody ServiceRequestCreateRequest request
+    ) {
+        ServiceRequestCreateResponse response = serviceRequestService.createRequest(userDetails.getMemberId(), request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @Override
+    @PatchMapping("/requests/{requestId}/cancel")
+    public ResponseEntity<Void> cancelRequest(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long requestId
+    ) {
+        serviceRequestService.cancelRequest(userDetails.getMemberId(), requestId);
+        return ResponseEntity.noContent().build();
+    }
+}

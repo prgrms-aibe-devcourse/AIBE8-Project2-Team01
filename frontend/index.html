@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f1222" media="(prefers-color-scheme: dark)" />
+    <script>
+      // 첫 화면이 그려지기 전에 테마를 정한다. 저장한 선택이 없으면 시스템 설정을 따른다
+      (function () {
+        var t = null;
+        try {
+          t = localStorage.getItem('efy.theme');
+        } catch (e) {}
+        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <meta name="description" content="요청서 한 장으로 여러 고수의 견적서를 받아보세요." />
+    <link rel="icon" type="image/png" href="/brand/favicon-64.png" />
+    <!-- 히어로 제목 전용 서체 (Black Han Sans). 본문 나눔스퀘어 네오는 src/styles/fonts.css에서 불러온다 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" />
+    <link rel="apple-touch-icon" href="/brand/efy-symbol.png" />
+    <title>EFY · Experts for you</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

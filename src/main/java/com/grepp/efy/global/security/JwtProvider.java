@@ -1,6 +1,10 @@
 package com.grepp.efy.global.security;
 
+import com.grepp.efy.global.exception.BusinessException;
+import com.grepp.efy.global.exception.ErrorCode;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +35,7 @@ public class JwtProvider {
                 .subject(String.valueOf(userDetails.getMemberId()))
                 .claim("email", userDetails.getEmail())
                 .claim("role", userDetails.getRole().name())
+                .claim("tokenVersion", userDetails.getTokenVersion())
                 .issuedAt(now)
                 .expiration(expiration)
                 .signWith(secretKey)
@@ -46,4 +51,17 @@ public class JwtProvider {
                 .parseSignedClaims(token)
                 .getPayload();
     }
+
+    // 만료된 Access 토큰인지 확인하고 토큰 안의 정보를 꺼내는 메서드
+    public Claims parseExpiredToken(String token) {
+        try {
+            parseToken(token);
+        } catch (ExpiredJwtException e) {
+            return e.getClaims();
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+        }
+        throw new BusinessException(ErrorCode.ACCESS_TOKEN_NOT_EXPIRED_EXCEPTION);
+    }
+
 }

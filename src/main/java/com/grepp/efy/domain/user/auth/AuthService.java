@@ -5,7 +5,6 @@ import com.grepp.efy.domain.user.auth.dto.LoginResult;
 import com.grepp.efy.domain.user.auth.dto.RefreshResult;
 import com.grepp.efy.domain.user.member.Member;
 import com.grepp.efy.domain.user.member.MemberMapper;
-import com.grepp.efy.domain.user.member.MemberRepository;
 import com.grepp.efy.domain.user.member.MemberService;
 import com.grepp.efy.domain.user.member.dto.MemberCreateRequest;
 import com.grepp.efy.domain.user.member.dto.MemberResponse;
@@ -13,6 +12,8 @@ import com.grepp.efy.global.exception.BusinessException;
 import com.grepp.efy.global.exception.ErrorCode;
 import com.grepp.efy.global.security.CustomUserDetails;
 import com.grepp.efy.global.security.JwtProvider;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,8 +22,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -34,8 +35,6 @@ public class AuthService {
 
     private final MemberService memberService;
     private final MemberMapper memberMapper;
-    private final MemberRepository memberRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
 
     // TODO: 비밀번호를 잊은 회원을 위해 본인 확인 후 비밀번호를 재설정하는 API를 추가합니다.
 
@@ -44,7 +43,7 @@ public class AuthService {
     public MemberResponse signup(MemberCreateRequest memberCreateRequest) {
 
         Member member = memberService.create(memberCreateRequest);
-        return memberMapper.toResponse(member);
+        return memberMapper.toResponse(member, null);
     }
 
     @Transactional
@@ -62,32 +61,46 @@ public class AuthService {
         if (!(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
             throw new BusinessException(ErrorCode.LOGIN_FAILED_EXCEPTION);
         }
-
+        Member member = memberService.getMemberEntity(userDetails.getMemberId());
         String accessToken = jwtProvider.createToken(userDetails);
-        String refreshToken = refreshTokenService.issued(userDetails.getMemberId());
+        String refreshToken = refreshTokenService.issued(member);
         return new LoginResult(accessToken, refreshToken);
     }
 
     @Transactional
-    public LoginResult refresh(String refreshToken) {
+    public LoginResult refresh(String authorization, String refreshToken) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+        }
+        Claims claims = jwtProvider.parseExpiredToken(authorization.substring("Bearer ".length()));
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN_EXCEPTION);
         }
 
         RefreshResult refreshResult = refreshTokenService.refresh(refreshToken);
+        CustomUserDetails userDetails = refreshResult.userDetails();
+        try {
+            Long tokenVersion = claims.get("tokenVersion", Long.class);
+            if (!String.valueOf(userDetails.getMemberId()).equals(claims.getSubject())
+                    || !Objects.equals(tokenVersion, userDetails.getTokenVersion())
+                    || (claims.getNotBefore() != null && claims.getNotBefore().after(new Date()))) {
+                throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+            }
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_EXCEPTION);
+        }
 
-        String accessToken = jwtProvider.createToken(refreshResult.userDetails());
+        String accessToken = jwtProvider.createToken(userDetails);
         return new LoginResult(accessToken, refreshResult.refreshToken());
     }
 
     @Transactional
     public void logout(Long memberId) {
-        Member member = memberRepository.findByIdAndDeletedAtIsNull(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND_EXCEPTION));
-
-        refreshTokenRepository.deleteByMemberId(memberId);
-
-        // 같은 초에 발급된 Access 토큰까지 무효화한다.
-        member.setTokenInValidBefore(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(1));
+        Member member = memberService.getMemberEntity(memberId);
+        refreshTokenService.deleteByMemberId(memberId);
+        // 이전 버전으로 발급한 Access 토큰을 무효화
+        member.setTokenVersion(member.getTokenVersion() + 1);
     }
+
+
 }
