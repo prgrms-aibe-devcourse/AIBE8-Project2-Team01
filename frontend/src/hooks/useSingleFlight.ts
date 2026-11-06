@@ -1,4 +1,4 @@
-// 처리 중 반복 클릭 방지: 첫 요청이 끝나기 전 추가 호출을 무시한다 (dummy/payment와 같은 방식)
+// 처리 중 반복 클릭 방지: 첫 요청이 끝나기 전 추가 호출을 무시한다
 import { useCallback, useRef, useState } from 'react';
 
 export function useSingleFlight() {

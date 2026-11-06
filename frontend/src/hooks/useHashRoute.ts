@@ -1,4 +1,4 @@
-// 해시 라우팅 (dummy/payment의 useHashRoute 방식을 이어서 사용)
+// 해시 라우팅
 // 정적 파일로 배포해도 새로고침 시 경로가 유지되도록 해시를 쓴다.
 import { useEffect, useState } from 'react';
 
